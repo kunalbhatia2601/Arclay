@@ -1,5 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
+import Category from "@/models/Category"; // Required for populate to work
 import { withAdmin } from "@/lib/auth";
 
 // GET single product
@@ -37,7 +38,7 @@ async function getHandler(req, { params }) {
 async function putHandler(req, { params }) {
     try {
         const { id } = await params;
-        const { name, images, regularPrice, salePrice, description, variations, category, isActive } = await req.json();
+        const { name, images, description, variationTypes, variants, category, isActive } = await req.json();
 
         await connectDB();
 
@@ -52,10 +53,9 @@ async function putHandler(req, { params }) {
 
         if (name !== undefined) product.name = name;
         if (images !== undefined) product.images = images;
-        if (regularPrice !== undefined) product.regularPrice = regularPrice;
-        if (salePrice !== undefined) product.salePrice = salePrice;
         if (description !== undefined) product.description = description;
-        if (variations !== undefined) product.variations = variations;
+        if (variationTypes !== undefined) product.variationTypes = variationTypes;
+        if (variants !== undefined) product.variants = variants;
         if (category !== undefined) product.category = category;
         if (isActive !== undefined) product.isActive = isActive;
 
@@ -73,7 +73,7 @@ async function putHandler(req, { params }) {
     } catch (error) {
         console.error("Update product error:", error);
         return Response.json(
-            { success: false, message: "Server error" },
+            { success: false, message: error.message || "Server error" },
             { status: 500 }
         );
     }

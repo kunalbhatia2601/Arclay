@@ -1,6 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
-import Category from "@/models/Category";
+import Category from "@/models/Category"; // Required for populate to work
+
 
 export async function GET(req) {
     try {
@@ -31,27 +32,6 @@ export async function GET(req) {
             query.category = category;
         }
 
-        // Price filter
-        if (minPrice || maxPrice) {
-            query.$and = query.$and || [];
-            if (minPrice) {
-                query.$and.push({
-                    $or: [
-                        { salePrice: { $gte: parseFloat(minPrice) } },
-                        { $and: [{ salePrice: null }, { regularPrice: { $gte: parseFloat(minPrice) } }] },
-                    ],
-                });
-            }
-            if (maxPrice) {
-                query.$and.push({
-                    $or: [
-                        { salePrice: { $lte: parseFloat(maxPrice) } },
-                        { $and: [{ salePrice: null }, { regularPrice: { $lte: parseFloat(maxPrice) } }] },
-                    ],
-                });
-            }
-        }
-
         // Sort options
         let sortOption = { createdAt: -1 }; // default: newest
         switch (sort) {
@@ -59,10 +39,9 @@ export async function GET(req) {
                 sortOption = { createdAt: 1 };
                 break;
             case "price-low":
-                sortOption = { regularPrice: 1 };
-                break;
             case "price-high":
-                sortOption = { regularPrice: -1 };
+                // Will sort in memory based on first variant price
+                sortOption = { createdAt: -1 };
                 break;
             case "name-asc":
                 sortOption = { name: 1 };
@@ -72,18 +51,42 @@ export async function GET(req) {
                 break;
         }
 
-        const skip = (page - 1) * limit;
-
-        const [products, total, categories] = await Promise.all([
+        let [products, categories] = await Promise.all([
             Product.find(query)
                 .sort(sortOption)
-                .skip(skip)
-                .limit(limit)
                 .populate("category", "name")
                 .lean(),
-            Product.countDocuments(query),
             Category.find({ isActive: true }).select("name").lean(),
         ]);
+
+        // Helper to get effective price from product (first variant's price)
+        const getProductPrice = (product) => {
+            const firstVariant = product.variants?.[0];
+            if (!firstVariant) return Infinity;
+            return firstVariant.salePrice || firstVariant.regularPrice;
+        };
+
+        // Price filter in memory (since prices are in variants)
+        if (minPrice) {
+            const min = parseFloat(minPrice);
+            products = products.filter(p => getProductPrice(p) >= min);
+        }
+        if (maxPrice) {
+            const max = parseFloat(maxPrice);
+            products = products.filter(p => getProductPrice(p) <= max);
+        }
+
+        // Sort by price if requested
+        if (sort === "price-low") {
+            products.sort((a, b) => getProductPrice(a) - getProductPrice(b));
+        } else if (sort === "price-high") {
+            products.sort((a, b) => getProductPrice(b) - getProductPrice(a));
+        }
+
+        // Pagination
+        const total = products.length;
+        const skip = (page - 1) * limit;
+        products = products.slice(skip, skip + limit);
 
         return Response.json({
             success: true,

@@ -66,8 +66,19 @@ export default function ProductsPage() {
         setSort("newest");
     };
 
-    const getEffectivePrice = (product) => {
-        return product.salePrice || product.regularPrice;
+    const getProductInfo = (product) => {
+        const firstVariant = product.variants?.[0];
+        if (!firstVariant) return { price: 0, originalPrice: null, hasSale: false, inStock: false };
+
+        const hasSale = firstVariant.salePrice && firstVariant.salePrice < firstVariant.regularPrice;
+        const totalStock = product.variants?.reduce((acc, v) => acc + (v.stock || 0), 0) || 0;
+
+        return {
+            price: hasSale ? firstVariant.salePrice : firstVariant.regularPrice,
+            originalPrice: hasSale ? firstVariant.regularPrice : null,
+            hasSale,
+            inStock: totalStock > 0
+        };
     };
 
     return (
@@ -75,7 +86,7 @@ export default function ProductsPage() {
             <Navbar />
             <main className="min-h-screen bg-background pt-20">
                 {/* Hero Section */}
-                <section className="bg-gradient-to-b from-primary/5 to-background py-12 lg:py-16">
+                <section className="bg-linear-to-b from-primary/5 to-background py-12 lg:py-16">
                     <div className="container mx-auto px-4 lg:px-8">
                         <h1 className="font-serif text-4xl lg:text-5xl font-bold text-foreground text-center">
                             Our Products
@@ -129,8 +140,8 @@ export default function ProductsPage() {
                                         <button
                                             onClick={() => setSelectedCategory("")}
                                             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === ""
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "text-foreground hover:bg-muted"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "text-foreground hover:bg-muted"
                                                 }`}
                                         >
                                             All Categories
@@ -140,8 +151,8 @@ export default function ProductsPage() {
                                                 key={cat._id}
                                                 onClick={() => setSelectedCategory(cat._id)}
                                                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat._id
-                                                        ? "bg-primary text-primary-foreground"
-                                                        : "text-foreground hover:bg-muted"
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-foreground hover:bg-muted"
                                                     }`}
                                             >
                                                 {cat.name}
@@ -236,55 +247,65 @@ export default function ProductsPage() {
                             ) : (
                                 <>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {products.map((product) => (
-                                            <Link
-                                                key={product._id}
-                                                href={`/products/${product._id}`}
-                                                className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                                            >
-                                                {/* Product Image */}
-                                                <div className="aspect-square bg-muted relative overflow-hidden">
-                                                    {product.images?.[0] ? (
-                                                        <img
-                                                            src={product.images[0]}
-                                                            alt={product.name}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-6xl">
-                                                            📦
-                                                        </div>
-                                                    )}
-                                                    {product.salePrice && (
-                                                        <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                                                            SALE
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Product Info */}
-                                                <div className="p-5">
-                                                    {product.category && (
-                                                        <p className="text-xs text-primary font-medium uppercase tracking-wide mb-1">
-                                                            {product.category.name}
-                                                        </p>
-                                                    )}
-                                                    <h3 className="font-serif text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                                                        {product.name}
-                                                    </h3>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-xl text-foreground">
-                                                            ₹{getEffectivePrice(product)}
-                                                        </span>
-                                                        {product.salePrice && (
-                                                            <span className="text-muted-foreground line-through text-sm">
-                                                                ₹{product.regularPrice}
-                                                            </span>
+                                        {products.map((product) => {
+                                            const { price, originalPrice, hasSale, inStock } = getProductInfo(product);
+                                            return (
+                                                <Link
+                                                    key={product._id}
+                                                    href={`/products/${product._id}`}
+                                                    className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                >
+                                                    {/* Product Image */}
+                                                    <div className="aspect-square bg-muted relative overflow-hidden">
+                                                        {product.images?.[0] ? (
+                                                            <img
+                                                                src={product.images[0]}
+                                                                alt={product.name}
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-6xl">
+                                                                📦
+                                                            </div>
+                                                        )}
+                                                        {hasSale && (
+                                                            <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                                                                SALE
+                                                            </div>
+                                                        )}
+                                                        {!inStock && (
+                                                            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                                                <span className="bg-destructive text-destructive-foreground px-4 py-2 rounded-full font-medium">
+                                                                    Out of Stock
+                                                                </span>
+                                                            </div>
                                                         )}
                                                     </div>
-                                                </div>
-                                            </Link>
-                                        ))}
+
+                                                    {/* Product Info */}
+                                                    <div className="p-5">
+                                                        {product.category && (
+                                                            <p className="text-xs text-primary font-medium uppercase tracking-wide mb-1">
+                                                                {product.category.name}
+                                                            </p>
+                                                        )}
+                                                        <h3 className="font-serif text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                                                            {product.name}
+                                                        </h3>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-xl text-foreground">
+                                                                ₹{price}
+                                                            </span>
+                                                            {hasSale && originalPrice && (
+                                                                <span className="text-muted-foreground line-through text-sm">
+                                                                    ₹{originalPrice}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })}
                                     </div>
 
                                     {/* Pagination */}
@@ -314,8 +335,8 @@ export default function ProductsPage() {
                                                             key={pageNum}
                                                             onClick={() => fetchProducts(pageNum)}
                                                             className={`w-10 h-10 rounded-lg transition-colors ${pagination.page === pageNum
-                                                                    ? "bg-primary text-primary-foreground"
-                                                                    : "border border-border text-foreground hover:bg-muted"
+                                                                ? "bg-primary text-primary-foreground"
+                                                                : "border border-border text-foreground hover:bg-muted"
                                                                 }`}
                                                         >
                                                             {pageNum}

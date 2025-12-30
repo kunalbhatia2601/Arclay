@@ -1,5 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
+import Category from "@/models/Category"; // Required for populate to work
 
 export async function GET(req, { params }) {
     try {

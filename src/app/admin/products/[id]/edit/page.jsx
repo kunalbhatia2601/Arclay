@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useMemo, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,9 @@ export default function EditProductPage({ params }) {
     const [formData, setFormData] = useState({
         name: "",
         images: [""],
-        regularPrice: "",
-        salePrice: "",
         description: "",
-        variations: [],
+        variationTypes: [],
+        variants: [],
         category: "",
         isActive: true,
     });
@@ -55,10 +54,17 @@ export default function EditProductPage({ params }) {
                 setFormData({
                     name: p.name || "",
                     images: p.images?.length ? p.images : [""],
-                    regularPrice: p.regularPrice?.toString() || "",
-                    salePrice: p.salePrice?.toString() || "",
                     description: p.description || "",
-                    variations: p.variations || [],
+                    variationTypes: p.variationTypes || [],
+                    variants: (p.variants || []).map(v => ({
+                        attributes: v.attributes instanceof Map
+                            ? Object.fromEntries(v.attributes)
+                            : (v.attributes || {}),
+                        regularPrice: v.regularPrice?.toString() || "",
+                        salePrice: v.salePrice?.toString() || "",
+                        stock: v.stock?.toString() || "0",
+                        sku: v.sku || ""
+                    })),
                     category: p.category?._id || p.category || "",
                     isActive: p.isActive,
                 });
@@ -73,6 +79,7 @@ export default function EditProductPage({ params }) {
         }
     };
 
+    // Image handlers
     const handleImageChange = (index, value) => {
         const newImages = [...formData.images];
         newImages[index] = value;
@@ -88,59 +95,154 @@ export default function EditProductPage({ params }) {
         setFormData({ ...formData, images: newImages.length ? newImages : [""] });
     };
 
-    const addVariation = () => {
+    // Variation Type handlers
+    const addVariationType = () => {
         setFormData({
             ...formData,
-            variations: [...formData.variations, { name: "", options: [{ value: "", priceModifier: 0 }] }],
+            variationTypes: [...formData.variationTypes, { name: "", options: [""] }],
         });
     };
 
-    const removeVariation = (index) => {
-        setFormData({
-            ...formData,
-            variations: formData.variations.filter((_, i) => i !== index),
-        });
+    const removeVariationType = (index) => {
+        const newTypes = formData.variationTypes.filter((_, i) => i !== index);
+        setFormData({ ...formData, variationTypes: newTypes, variants: [] });
     };
 
-    const handleVariationChange = (varIndex, field, value) => {
-        const newVariations = [...formData.variations];
-        newVariations[varIndex][field] = value;
-        setFormData({ ...formData, variations: newVariations });
+    const handleVariationTypeName = (index, value) => {
+        const newTypes = [...formData.variationTypes];
+        newTypes[index].name = value;
+        setFormData({ ...formData, variationTypes: newTypes });
     };
 
-    const addVariationOption = (varIndex) => {
-        const newVariations = [...formData.variations];
-        newVariations[varIndex].options.push({ value: "", priceModifier: 0 });
-        setFormData({ ...formData, variations: newVariations });
+    const addVariationOption = (typeIndex) => {
+        const newTypes = [...formData.variationTypes];
+        newTypes[typeIndex].options.push("");
+        setFormData({ ...formData, variationTypes: newTypes });
     };
 
-    const removeVariationOption = (varIndex, optIndex) => {
-        const newVariations = [...formData.variations];
-        newVariations[varIndex].options = newVariations[varIndex].options.filter((_, i) => i !== optIndex);
-        if (newVariations[varIndex].options.length === 0) {
-            newVariations[varIndex].options = [{ value: "", priceModifier: 0 }];
+    const removeVariationOption = (typeIndex, optIndex) => {
+        const newTypes = [...formData.variationTypes];
+        newTypes[typeIndex].options = newTypes[typeIndex].options.filter((_, i) => i !== optIndex);
+        if (newTypes[typeIndex].options.length === 0) {
+            newTypes[typeIndex].options = [""];
         }
-        setFormData({ ...formData, variations: newVariations });
+        setFormData({ ...formData, variationTypes: newTypes, variants: [] });
     };
 
-    const handleOptionChange = (varIndex, optIndex, field, value) => {
-        const newVariations = [...formData.variations];
-        newVariations[varIndex].options[optIndex][field] = field === "priceModifier" ? parseFloat(value) || 0 : value;
-        setFormData({ ...formData, variations: newVariations });
+    const handleVariationOption = (typeIndex, optIndex, value) => {
+        const newTypes = [...formData.variationTypes];
+        newTypes[typeIndex].options[optIndex] = value;
+        setFormData({ ...formData, variationTypes: newTypes });
+    };
+
+    // Generate all possible variant combinations
+    const generateCombinations = () => {
+        const validTypes = formData.variationTypes.filter(t =>
+            t.name.trim() && t.options.some(o => o.trim())
+        );
+
+        if (validTypes.length === 0) {
+            return [];
+        }
+
+        const generateHelper = (types, index, current) => {
+            if (index === types.length) {
+                return [{ ...current }];
+            }
+
+            const results = [];
+            const type = types[index];
+            const validOptions = type.options.filter(o => o.trim());
+
+            for (const option of validOptions) {
+                results.push(...generateHelper(types, index + 1, {
+                    ...current,
+                    [type.name]: option
+                }));
+            }
+
+            return results;
+        };
+
+        return generateHelper(validTypes, 0, {});
+    };
+
+    const possibleCombinations = useMemo(() => generateCombinations(), [formData.variationTypes]);
+
+    // Generate variants button handler
+    const generateVariants = () => {
+        const combinations = generateCombinations();
+        const newVariants = combinations.map(attrs => {
+            // Check if variant already exists
+            const existing = formData.variants.find(v => {
+                const vAttrs = v.attributes;
+                return Object.keys(attrs).every(k => vAttrs[k] === attrs[k]);
+            });
+
+            if (existing) return existing;
+
+            return {
+                attributes: attrs,
+                regularPrice: "",
+                salePrice: "",
+                stock: "",
+                sku: ""
+            };
+        });
+
+        setFormData({ ...formData, variants: newVariants });
+    };
+
+    // Variant handlers
+    const handleVariantChange = (index, field, value) => {
+        const newVariants = [...formData.variants];
+        newVariants[index][field] = value;
+        setFormData({ ...formData, variants: newVariants });
+    };
+
+    const removeVariant = (index) => {
+        const newVariants = formData.variants.filter((_, i) => i !== index);
+        setFormData({ ...formData, variants: newVariants });
+    };
+
+    // Get variant label from attributes
+    const getVariantLabel = (attributes) => {
+        return Object.entries(attributes).map(([key, val]) => `${key}: ${val}`).join(", ");
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+
+        // Validate variants
+        const validVariants = formData.variants.filter(v =>
+            v.regularPrice && parseFloat(v.regularPrice) >= 0
+        );
+
+        if (validVariants.length === 0) {
+            setError("Product must have at least one variant with a price");
+            return;
+        }
+
         setSaving(true);
 
         try {
             const submitData = {
                 ...formData,
                 images: formData.images.filter((img) => img.trim()),
-                regularPrice: parseFloat(formData.regularPrice),
-                salePrice: formData.salePrice ? parseFloat(formData.salePrice) : null,
-                variations: formData.variations.filter((v) => v.name.trim()),
+                variationTypes: formData.variationTypes
+                    .filter(t => t.name.trim() && t.options.some(o => o.trim()))
+                    .map(t => ({
+                        name: t.name.trim(),
+                        options: t.options.filter(o => o.trim())
+                    })),
+                variants: validVariants.map(v => ({
+                    attributes: v.attributes,
+                    regularPrice: parseFloat(v.regularPrice),
+                    salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
+                    stock: parseInt(v.stock) || 0,
+                    sku: v.sku || ""
+                })),
             };
 
             const res = await fetch(`/api/admin/products/${id}`, {
@@ -174,7 +276,7 @@ export default function EditProductPage({ params }) {
     }
 
     return (
-        <div className="max-w-3xl">
+        <div className="max-w-4xl">
             {/* Page Header */}
             <div className="mb-8">
                 <Link
@@ -199,91 +301,64 @@ export default function EditProductPage({ params }) {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Basic Info */}
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                            Product Name *
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="e.g., Premium Mango Pickle"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                            Category *
-                        </label>
-                        <select
-                            value={formData.category}
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                            <option value="">Select a category</option>
-                            {categories.map((cat) => (
-                                <option key={cat._id} value={cat._id}>
-                                    {cat.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                        <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
+                            Basic Information
+                        </h2>
                         <div>
                             <label className="block text-sm font-medium text-foreground mb-2">
-                                Regular Price (₹) *
+                                Product Name *
                             </label>
                             <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={formData.regularPrice}
-                                onChange={(e) => setFormData({ ...formData, regularPrice: e.target.value })}
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                                placeholder="299"
+                                placeholder="e.g., Premium Mango Pickle"
                             />
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium text-foreground mb-2">
-                                Sale Price (₹)
+                                Category *
                             </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={formData.salePrice}
-                                onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                                placeholder="199 (optional)"
+                            <select
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                required
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                            >
+                                <option value="">Select a category</option>
+                                {categories.map((cat) => (
+                                    <option key={cat._id} value={cat._id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">
+                                Description
+                            </label>
+                            <textarea
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                rows={4}
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                                placeholder="Describe your product..."
                             />
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                            Description
-                        </label>
-                        <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            rows={4}
-                            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                            placeholder="Describe your product..."
-                        />
                     </div>
 
                     {/* Images */}
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                            Image URLs
-                        </label>
+                    <div className="space-y-4">
+                        <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
+                            Images
+                        </h2>
                         <div className="space-y-2">
                             {formData.images.map((img, index) => (
                                 <div key={index} className="flex gap-2">
@@ -307,83 +382,194 @@ export default function EditProductPage({ params }) {
                         <button
                             type="button"
                             onClick={addImageField}
-                            className="mt-2 text-sm text-primary hover:underline"
+                            className="text-sm text-primary hover:underline"
                         >
                             + Add another image
                         </button>
                     </div>
 
-                    {/* Variations */}
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                            Variations
-                        </label>
-                        <div className="space-y-4">
-                            {formData.variations.map((variation, varIndex) => (
-                                <div key={varIndex} className="p-4 bg-muted rounded-xl">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <input
-                                            type="text"
-                                            value={variation.name}
-                                            onChange={(e) => handleVariationChange(varIndex, "name", e.target.value)}
-                                            className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                                            placeholder="e.g., Size, Weight"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeVariation(varIndex)}
-                                            className="px-3 py-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                    <div className="space-y-2 pl-4">
-                                        {variation.options.map((opt, optIndex) => (
-                                            <div key={optIndex} className="flex items-center gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={opt.value}
-                                                    onChange={(e) => handleOptionChange(varIndex, optIndex, "value", e.target.value)}
-                                                    className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                                                    placeholder="e.g., 250g"
-                                                />
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={opt.priceModifier}
-                                                    onChange={(e) => handleOptionChange(varIndex, optIndex, "priceModifier", e.target.value)}
-                                                    className="w-24 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                                                    placeholder="±₹"
-                                                />
+                    {/* Variation Types */}
+                    <div className="space-y-4">
+                        <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
+                            Variation Types
+                            <span className="font-normal text-sm text-muted-foreground ml-2">
+                                (e.g., Color, Size, Weight)
+                            </span>
+                        </h2>
+
+                        {formData.variationTypes.map((type, typeIndex) => (
+                            <div key={typeIndex} className="p-4 bg-muted rounded-xl">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <input
+                                        type="text"
+                                        value={type.name}
+                                        onChange={(e) => handleVariationTypeName(typeIndex, e.target.value)}
+                                        className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                        placeholder="Variation name (e.g., Color)"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeVariationType(typeIndex)}
+                                        className="px-3 py-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <div className="pl-4 border-l-2 border-border space-y-2">
+                                    <p className="text-xs text-muted-foreground">Options:</p>
+                                    {type.options.map((opt, optIndex) => (
+                                        <div key={optIndex} className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={opt}
+                                                onChange={(e) => handleVariationOption(typeIndex, optIndex, e.target.value)}
+                                                className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                                placeholder={`Option ${optIndex + 1} (e.g., Red, Blue)`}
+                                            />
+                                            {type.options.length > 1 && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => removeVariationOption(varIndex, optIndex)}
+                                                    onClick={() => removeVariationOption(typeIndex, optIndex)}
                                                     className="px-2 py-1 text-muted-foreground hover:text-destructive transition-colors"
                                                 >
                                                     ✕
                                                 </button>
-                                            </div>
-                                        ))}
-                                        <button
-                                            type="button"
-                                            onClick={() => addVariationOption(varIndex)}
-                                            className="text-sm text-primary hover:underline"
-                                        >
-                                            + Add option
-                                        </button>
-                                    </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => addVariationOption(typeIndex)}
+                                        className="text-sm text-primary hover:underline"
+                                    >
+                                        + Add option
+                                    </button>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        ))}
+
                         <button
                             type="button"
-                            onClick={addVariation}
-                            className="mt-2 text-sm text-primary hover:underline"
+                            onClick={addVariationType}
+                            className="text-sm text-primary hover:underline"
                         >
-                            + Add variation
+                            + Add variation type
                         </button>
+
+                        {formData.variationTypes.length > 0 && (
+                            <div className="pt-2">
+                                <Button
+                                    type="button"
+                                    onClick={generateVariants}
+                                    variant="outline"
+                                    className="border-primary text-primary hover:bg-primary/10"
+                                >
+                                    Generate {possibleCombinations.length} Variant Combinations
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
+                    {/* Variants */}
+                    <div className="space-y-4">
+                        <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
+                            Variants
+                            <span className="font-normal text-sm text-muted-foreground ml-2">
+                                (Price & Stock for each combination)
+                            </span>
+                        </h2>
+
+                        {formData.variants.length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                {formData.variationTypes.length === 0 ? (
+                                    <p>Add variation types above, or add a single variant below</p>
+                                ) : (
+                                    <p>Click &quot;Generate Variant Combinations&quot; to create variants</p>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({
+                                        ...formData,
+                                        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "" }]
+                                    })}
+                                    className="mt-3 text-sm text-primary hover:underline"
+                                >
+                                    + Add single variant (no variations)
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {formData.variants.map((variant, index) => (
+                                    <div key={index} className="p-4 bg-muted rounded-xl">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="font-medium text-foreground">
+                                                {Object.keys(variant.attributes).length > 0
+                                                    ? getVariantLabel(variant.attributes)
+                                                    : "Default Variant"
+                                                }
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeVariant(index)}
+                                                className="px-2 py-1 text-destructive hover:bg-destructive/10 rounded transition-colors text-sm"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Regular Price (₹) *</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={variant.regularPrice}
+                                                    onChange={(e) => handleVariantChange(index, "regularPrice", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                                    placeholder="299"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Sale Price (₹)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={variant.salePrice}
+                                                    onChange={(e) => handleVariantChange(index, "salePrice", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                                    placeholder="199"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Stock *</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={variant.stock}
+                                                    onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                                    placeholder="100"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">SKU</label>
+                                                <input
+                                                    type="text"
+                                                    value={variant.sku}
+                                                    onChange={(e) => handleVariantChange(index, "sku", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                                    placeholder="PRD-001"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Status */}
                     <div className="flex items-center gap-3">
                         <input
                             type="checkbox"

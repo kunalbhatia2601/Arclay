@@ -164,9 +164,9 @@ export default function ProductsPage() {
                                                     <p className="font-medium text-foreground line-clamp-1">
                                                         {product.name}
                                                     </p>
-                                                    {product.variations?.length > 0 && (
+                                                    {product.variants?.length > 0 && (
                                                         <p className="text-xs text-muted-foreground">
-                                                            {product.variations.length} variation(s)
+                                                            {product.variants.length} variant(s)
                                                         </p>
                                                     )}
                                                 </div>
@@ -179,28 +179,47 @@ export default function ProductsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div>
-                                                {product.salePrice ? (
-                                                    <>
-                                                        <span className="font-medium text-primary">
-                                                            ₹{product.salePrice}
-                                                        </span>
-                                                        <span className="text-muted-foreground text-sm line-through ml-2">
-                                                            ₹{product.regularPrice}
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <span className="font-medium text-foreground">
-                                                        ₹{product.regularPrice}
-                                                    </span>
-                                                )}
+                                                {(() => {
+                                                    const firstVariant = product.variants?.[0];
+                                                    if (!firstVariant) return <span className="text-muted-foreground">—</span>;
+
+                                                    const hasMultiple = product.variants?.length > 1;
+                                                    const totalStock = product.variants?.reduce((acc, v) => acc + (v.stock || 0), 0) || 0;
+
+                                                    return (
+                                                        <div>
+                                                            {firstVariant.salePrice ? (
+                                                                <>
+                                                                    <span className="font-medium text-primary">
+                                                                        ₹{firstVariant.salePrice}
+                                                                    </span>
+                                                                    <span className="text-muted-foreground text-sm line-through ml-2">
+                                                                        ₹{firstVariant.regularPrice}
+                                                                    </span>
+                                                                    {hasMultiple && <span className="text-muted-foreground text-xs ml-1">+</span>}
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <span className="font-medium text-foreground">
+                                                                        ₹{firstVariant.regularPrice}
+                                                                    </span>
+                                                                    {hasMultiple && <span className="text-muted-foreground text-xs ml-1">+</span>}
+                                                                </>
+                                                            )}
+                                                            <p className={`text-xs mt-1 ${totalStock > 0 ? 'text-muted-foreground' : 'text-destructive'}`}>
+                                                                Stock: {totalStock}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
                                                 onClick={() => toggleStatus(product._id, product.isActive)}
                                                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${product.isActive
-                                                        ? "bg-primary/10 text-primary hover:bg-primary/20"
-                                                        : "bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/20"
+                                                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                                    : "bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/20"
                                                     }`}
                                             >
                                                 {product.isActive ? "Active" : "Inactive"}

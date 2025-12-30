@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/app/components/Navbar";
@@ -11,7 +11,7 @@ export default function ProductDetailPage({ params }) {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(0);
-    const [selectedVariations, setSelectedVariations] = useState({});
+    const [selectedOptions, setSelectedOptions] = useState({}); // { Color: "Red", Size: "M" }
     const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
@@ -25,14 +25,14 @@ export default function ProductDetailPage({ params }) {
 
             if (data.success) {
                 setProduct(data.product);
-                // Initialize selected variations
-                const initialVariations = {};
-                data.product.variations?.forEach((v) => {
-                    if (v.options?.length > 0) {
-                        initialVariations[v.name] = v.options[0];
+                // Initialize selected options with first option of each type
+                const initialOptions = {};
+                data.product.variationTypes?.forEach((type) => {
+                    if (type.options?.length > 0) {
+                        initialOptions[type.name] = type.options[0];
                     }
                 });
-                setSelectedVariations(initialVariations);
+                setSelectedOptions(initialOptions);
             }
         } catch (error) {
             console.error("Failed to fetch product:", error);
@@ -41,24 +41,69 @@ export default function ProductDetailPage({ params }) {
         }
     };
 
-    const getCalculatedPrice = () => {
-        if (!product) return 0;
-        let basePrice = product.salePrice || product.regularPrice;
+    // Find the variant matching selected options
+    const selectedVariant = useMemo(() => {
+        if (!product?.variants?.length) return null;
 
-        // Add price modifiers from selected variations
-        Object.values(selectedVariations).forEach((option) => {
-            if (option?.priceModifier) {
-                basePrice += option.priceModifier;
-            }
+        // If no variation types, return first variant
+        if (!product.variationTypes?.length) {
+            return product.variants[0];
+        }
+
+        return product.variants.find(variant => {
+            const attrs = variant.attributes instanceof Map
+                ? Object.fromEntries(variant.attributes)
+                : variant.attributes;
+
+            return Object.entries(selectedOptions).every(([key, value]) => attrs[key] === value);
         });
+    }, [product, selectedOptions]);
 
-        return basePrice;
+    // Get price info from selected variant
+    const priceInfo = useMemo(() => {
+        if (!selectedVariant) return { price: 0, originalPrice: null, hasSale: false, stock: 0, inStock: false };
+
+        const hasSale = selectedVariant.salePrice && selectedVariant.salePrice < selectedVariant.regularPrice;
+        const discountPercent = hasSale
+            ? Math.round((1 - selectedVariant.salePrice / selectedVariant.regularPrice) * 100)
+            : 0;
+
+        return {
+            price: hasSale ? selectedVariant.salePrice : selectedVariant.regularPrice,
+            originalPrice: hasSale ? selectedVariant.regularPrice : null,
+            hasSale,
+            discountPercent,
+            stock: selectedVariant.stock || 0,
+            inStock: (selectedVariant.stock || 0) > 0
+        };
+    }, [selectedVariant]);
+
+    // Check if an option is available (has stock in at least one variant)
+    const isOptionAvailable = (typeName, optionValue) => {
+        if (!product?.variants) return false;
+
+        return product.variants.some(variant => {
+            const attrs = variant.attributes instanceof Map
+                ? Object.fromEntries(variant.attributes)
+                : variant.attributes;
+
+            // Check if this option is part of the variant
+            if (attrs[typeName] !== optionValue) return false;
+
+            // Check if other selected options match (for inter-dependent availability)
+            const otherOptionsMatch = Object.entries(selectedOptions).every(([key, value]) => {
+                if (key === typeName) return true; // Skip the current type
+                return attrs[key] === value;
+            });
+
+            return otherOptionsMatch && variant.stock > 0;
+        });
     };
 
-    const handleVariationSelect = (variationName, option) => {
-        setSelectedVariations((prev) => ({
+    const handleOptionSelect = (typeName, optionValue) => {
+        setSelectedOptions(prev => ({
             ...prev,
-            [variationName]: option,
+            [typeName]: optionValue
         }));
     };
 
@@ -128,7 +173,7 @@ export default function ProductDetailPage({ params }) {
                         {/* Product Images */}
                         <div className="space-y-4">
                             {/* Main Image */}
-                            <div className="aspect-square bg-muted rounded-2xl overflow-hidden">
+                            <div className="aspect-square bg-muted rounded-2xl overflow-hidden relative">
                                 {product.images?.[selectedImage] ? (
                                     <img
                                         src={product.images[selectedImage]}
@@ -138,6 +183,13 @@ export default function ProductDetailPage({ params }) {
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-8xl">
                                         📦
+                                    </div>
+                                )}
+                                {!priceInfo.inStock && (
+                                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                        <span className="bg-destructive text-destructive-foreground px-6 py-3 rounded-full font-bold text-lg">
+                                            Out of Stock
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -150,8 +202,8 @@ export default function ProductDetailPage({ params }) {
                                             key={index}
                                             onClick={() => setSelectedImage(index)}
                                             className={`shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${selectedImage === index
-                                                    ? "border-primary"
-                                                    : "border-transparent hover:border-border"
+                                                ? "border-primary"
+                                                : "border-transparent hover:border-border"
                                                 }`}
                                         >
                                             <img
@@ -183,17 +235,32 @@ export default function ProductDetailPage({ params }) {
                             {/* Price */}
                             <div className="flex items-center gap-3 mb-6">
                                 <span className="font-serif text-3xl font-bold text-foreground">
-                                    ₹{getCalculatedPrice()}
+                                    ₹{priceInfo.price}
                                 </span>
-                                {product.salePrice && (
+                                {priceInfo.hasSale && priceInfo.originalPrice && (
                                     <>
                                         <span className="text-xl text-muted-foreground line-through">
-                                            ₹{product.regularPrice}
+                                            ₹{priceInfo.originalPrice}
                                         </span>
                                         <span className="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-full">
-                                            {Math.round((1 - product.salePrice / product.regularPrice) * 100)}% OFF
+                                            {priceInfo.discountPercent}% OFF
                                         </span>
                                     </>
+                                )}
+                            </div>
+
+                            {/* Stock Status */}
+                            <div className="mb-6">
+                                {priceInfo.inStock ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                        In Stock ({priceInfo.stock} available)
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-destructive">
+                                        <span className="inline-block w-2 h-2 bg-destructive rounded-full mr-2"></span>
+                                        Out of Stock
+                                    </p>
                                 )}
                             </div>
 
@@ -207,32 +274,35 @@ export default function ProductDetailPage({ params }) {
                                 </div>
                             )}
 
-                            {/* Variations */}
-                            {product.variations?.length > 0 && (
+                            {/* Variation Types */}
+                            {product.variationTypes?.length > 0 && (
                                 <div className="space-y-4 mb-8">
-                                    {product.variations.map((variation) => (
-                                        <div key={variation.name}>
+                                    {product.variationTypes.map((variationType) => (
+                                        <div key={variationType.name}>
                                             <h3 className="font-medium text-foreground mb-3">
-                                                {variation.name}
+                                                {variationType.name}: <span className="text-primary">{selectedOptions[variationType.name]}</span>
                                             </h3>
                                             <div className="flex flex-wrap gap-2">
-                                                {variation.options?.map((option) => (
-                                                    <button
-                                                        key={option.value}
-                                                        onClick={() => handleVariationSelect(variation.name, option)}
-                                                        className={`px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${selectedVariations[variation.name]?.value === option.value
-                                                                ? "border-primary bg-primary/10 text-primary"
-                                                                : "border-border text-foreground hover:border-primary"
-                                                            }`}
-                                                    >
-                                                        {option.value}
-                                                        {option.priceModifier !== 0 && (
-                                                            <span className="ml-1 text-xs text-muted-foreground">
-                                                                ({option.priceModifier > 0 ? "+" : ""}₹{option.priceModifier})
-                                                            </span>
-                                                        )}
-                                                    </button>
-                                                ))}
+                                                {variationType.options?.map((option) => {
+                                                    const isSelected = selectedOptions[variationType.name] === option;
+                                                    const isAvailable = isOptionAvailable(variationType.name, option);
+
+                                                    return (
+                                                        <button
+                                                            key={option}
+                                                            onClick={() => handleOptionSelect(variationType.name, option)}
+                                                            disabled={!isAvailable && !isSelected}
+                                                            className={`px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${isSelected
+                                                                    ? "border-primary bg-primary/10 text-primary"
+                                                                    : isAvailable
+                                                                        ? "border-border text-foreground hover:border-primary"
+                                                                        : "border-border text-muted-foreground line-through opacity-50 cursor-not-allowed"
+                                                                }`}
+                                                        >
+                                                            {option}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     ))}
@@ -253,8 +323,9 @@ export default function ProductDetailPage({ params }) {
                                         {quantity}
                                     </span>
                                     <button
-                                        onClick={() => setQuantity(quantity + 1)}
-                                        className="w-10 h-10 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors"
+                                        onClick={() => setQuantity(Math.min(priceInfo.stock || 99, quantity + 1))}
+                                        disabled={quantity >= priceInfo.stock}
+                                        className="w-10 h-10 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         +
                                     </button>
@@ -263,8 +334,14 @@ export default function ProductDetailPage({ params }) {
 
                             {/* Add to Cart */}
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-6 text-base font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
-                                    Add to Cart — ₹{getCalculatedPrice() * quantity}
+                                <Button
+                                    disabled={!priceInfo.inStock}
+                                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-6 text-base font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {priceInfo.inStock
+                                        ? `Add to Cart — ₹${priceInfo.price * quantity}`
+                                        : "Out of Stock"
+                                    }
                                 </Button>
                                 <Button
                                     variant="outline"

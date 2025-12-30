@@ -1,5 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
+import Category from "@/models/Category"; // Required for populate to work
 import { withAdmin } from "@/lib/auth";
 
 // GET all products
@@ -67,11 +68,18 @@ async function getHandler(req) {
 // POST create product
 async function postHandler(req) {
     try {
-        const { name, images, regularPrice, salePrice, description, variations, category, isActive } = await req.json();
+        const { name, images, description, variationTypes, variants, category, isActive } = await req.json();
 
-        if (!name || !regularPrice || !category) {
+        if (!name || !category) {
             return Response.json(
-                { success: false, message: "Name, regular price, and category are required" },
+                { success: false, message: "Name and category are required" },
+                { status: 400 }
+            );
+        }
+
+        if (!variants || variants.length === 0) {
+            return Response.json(
+                { success: false, message: "At least one variant is required" },
                 { status: 400 }
             );
         }
@@ -81,10 +89,9 @@ async function postHandler(req) {
         const product = await Product.create({
             name,
             images: images || [],
-            regularPrice,
-            salePrice: salePrice || null,
             description: description || "",
-            variations: variations || [],
+            variationTypes: variationTypes || [],
+            variants: variants,
             category,
             isActive: isActive !== false,
         });
@@ -101,7 +108,7 @@ async function postHandler(req) {
     } catch (error) {
         console.error("Create product error:", error);
         return Response.json(
-            { success: false, message: "Server error" },
+            { success: false, message: error.message || "Server error" },
             { status: 500 }
         );
     }
