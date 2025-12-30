@@ -28,12 +28,12 @@ export default function Navbar() {
 
                     {/* Desktop Navigation */}
                     <div className="hidden lg:flex items-center gap-8">
-                        <a
-                            href="#products"
+                        <Link
+                            href="/products"
                             className="text-foreground/80 hover:text-primary transition-colors font-medium"
                         >
                             Products
-                        </a>
+                        </Link>
                         <a
                             href="#bundles"
                             className="text-foreground/80 hover:text-primary transition-colors font-medium"
@@ -156,12 +156,13 @@ export default function Navbar() {
                 {isMenuOpen && (
                     <div className="lg:hidden border-t border-border py-4 animate-fade-in-up">
                         <div className="flex flex-col gap-4">
-                            <a
-                                href="#products"
+                            <Link
+                                href="/products"
                                 className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
+                                onClick={() => setIsMenuOpen(false)}
                             >
                                 Products
-                            </a>
+                            </Link>
                             <a
                                 href="#bundles"
                                 className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
