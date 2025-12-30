@@ -75,7 +75,7 @@
 :root {
   --radius: 0.625rem;
 
-  /* ESSVORA Theme - Light Mode */
+  /* ESSVORA Theme - Light Mode (Default) */
   --background: #FAF8F5;
   /* Warm Ivory White */
   --foreground: #2D2D2D;
@@ -128,6 +128,70 @@
   --sidebar-accent-foreground: #2D2D2D;
   --sidebar-border: #E8E4DC;
   --sidebar-ring: #556B2F;
+}
+
+/* =============================================
+   VEDICBRO THEME
+   Primary: Dark Slate Gray #284D5B
+   Secondary: Middle Green #62A22E  
+   Accent: Vivid Yellow #D0FB1F
+   Background: Light Blue Tint #E8F4F8
+   Fonts: Kumbh Sans (body), Singlet (display)
+   ============================================= */
+[data-theme="vedicbro"] {
+  --background: #E8F4F8;
+  --foreground: #284D5B;
+
+  --card: #FFFFFF;
+  --card-foreground: #284D5B;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #284D5B;
+
+  --primary: #62A22E;
+  /* Middle Green */
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #284D5B;
+  /* Dark Slate Gray */
+  --secondary-foreground: #FFFFFF;
+
+  --muted: #D4EBE4;
+  --muted-foreground: #4A6B7A;
+
+  --accent: #D0FB1F;
+  /* Vivid Yellow */
+  --accent-foreground: #284D5B;
+
+  --destructive: #DC2626;
+
+  --border: #B8D4D8;
+  --input: #B8D4D8;
+  --ring: #62A22E;
+
+  --chart-1: #62A22E;
+  --chart-2: #284D5B;
+  --chart-3: #D0FB1F;
+  --chart-4: #4A8B6E;
+  --chart-5: #7BC96F;
+
+  --sidebar: #284D5B;
+  --sidebar-foreground: #FAFAFA;
+  --sidebar-primary: #62A22E;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #3A6070;
+  --sidebar-accent-foreground: #FAFAFA;
+  --sidebar-border: #3A6070;
+  --sidebar-ring: #62A22E;
+
+  /* VedicBro brand colors */
+  --color-olive: #62A22E;
+  --color-olive-light: #7BC96F;
+  --color-olive-dark: #4A8B1E;
+  --color-mustard: #D0FB1F;
+  --color-mustard-light: #E5FF6A;
+  --color-copper: #284D5B;
+  --color-copper-light: #3A6B7A;
 }
 
 .dark {
@@ -186,6 +250,7 @@
     scroll-behavior: smooth;
   }
 
+  /* ESSVORA Default Typography */
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
@@ -203,22 +268,53 @@
     font-weight: 600;
     line-height: 1.2;
   }
+
+  /* VedicBro Typography Override */
+  [data-theme="vedicbro"] body {
+    font-family: var(--font-kumbh), system-ui, -apple-system, sans-serif;
+  }
+
+  [data-theme="vedicbro"] h1,
+  [data-theme="vedicbro"] h2,
+  [data-theme="vedicbro"] h3,
+  [data-theme="vedicbro"] h4,
+  [data-theme="vedicbro"] h5,
+  [data-theme="vedicbro"] h6 {
+    font-family: var(--font-kumbh), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 }
 
 /* Custom Utility Classes */
 @layer utilities {
 
-  /* Background Patterns */
+  /* Background Patterns - ESSVORA */
   .bg-pattern {
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23556B2F' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* VedicBro Pattern Override */
+  [data-theme="vedicbro"] .bg-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2362A22E' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
   .bg-spice-pattern {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23D4A643' fill-opacity='0.08'%3E%3Cpath d='M20 20c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm40 0c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zM20 60c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z'/%3E%3C/g%3E%3C/svg%3E");
   }
 
+  /* VedicBro Spice Pattern Override */
+  [data-theme="vedicbro"] .bg-spice-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23D0FB1F' fill-opacity='0.08'%3E%3Cpath d='M20 20c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm40 0c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zM20 60c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
   .bg-leaf-pattern {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23556B2F' fill-opacity='0.06'%3E%3Cpath d='M50 25c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm-25 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm50 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* VedicBro Leaf Pattern Override */
+  [data-theme="vedicbro"] .bg-leaf-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%2362A22E' fill-opacity='0.06'%3E%3Cpath d='M50 25c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm-25 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm50 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25z'/%3E%3C/g%3E%3C/svg%3E");
   }
 
   /* Text Gradient */
