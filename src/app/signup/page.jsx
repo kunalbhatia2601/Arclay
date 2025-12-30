@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+
 export default function SignupPage() {
     const { register, isAuthenticated, loading } = useUser();
     const router = useRouter();
@@ -58,7 +60,7 @@ export default function SignupPage() {
                 <div className="text-center mb-8">
                     <Link href="/">
                         <h1 className="font-serif text-4xl font-bold text-foreground tracking-wide">
-                            ESSVORA
+                            {siteName}
                         </h1>
                     </Link>
                     <p className="text-muted-foreground mt-2">Create your account</p>

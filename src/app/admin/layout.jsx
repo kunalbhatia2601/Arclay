@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+
 const navItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/products", label: "Products", icon: "📦" },
@@ -63,7 +65,7 @@ export default function AdminLayout({ children }) {
                     <div className="p-6 border-b border-border">
                         <Link href="/admin" className="flex items-center gap-2">
                             <span className="font-serif text-2xl font-bold text-primary">
-                                ESSVORA
+                                {siteName}
                             </span>
                         </Link>
                         <p className="text-xs text-muted-foreground mt-1">Admin Panel</p>
@@ -79,8 +81,8 @@ export default function AdminLayout({ children }) {
                                     key={item.href}
                                     href={item.href}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                                            ? "bg-primary text-primary-foreground shadow-md"
-                                            : "text-foreground hover:bg-muted"
+                                        ? "bg-primary text-primary-foreground shadow-md"
+                                        : "text-foreground hover:bg-muted"
                                         }`}
                                     onClick={() => setSidebarOpen(false)}
                                 >

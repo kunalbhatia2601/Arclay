@@ -1,5 +1,7 @@
 "use client";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+
 const features = [
     {
         id: 1,
@@ -58,7 +60,7 @@ export default function WhyEssvora() {
                 {/* Section Header */}
                 <div className="text-center mb-16">
                     <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase mb-4">
-                        WHY ESSVORA
+                        WHY {siteName.toUpperCase()}
                     </p>
                     <div className="decorative-line mx-auto"></div>
                 </div>

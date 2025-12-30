@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -67,7 +69,7 @@ export default function AdminDashboard() {
                     Dashboard
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                    Welcome to ESSVORA Admin Panel
+                    Welcome to {siteName} Admin Panel
                 </p>
             </div>
 
@@ -135,8 +137,8 @@ export default function AdminDashboard() {
                                     </div>
                                     <span
                                         className={`px-2 py-1 rounded-full text-xs font-medium ${product.isActive
-                                                ? "bg-primary/10 text-primary"
-                                                : "bg-muted-foreground/10 text-muted-foreground"
+                                            ? "bg-primary/10 text-primary"
+                                            : "bg-muted-foreground/10 text-muted-foreground"
                                             }`}
                                     >
                                         {product.isActive ? "Active" : "Inactive"}
@@ -190,8 +192,8 @@ export default function AdminDashboard() {
                                     </div>
                                     <span
                                         className={`px-2 py-1 rounded-full text-xs font-medium ${category.isActive
-                                                ? "bg-primary/10 text-primary"
-                                                : "bg-muted-foreground/10 text-muted-foreground"
+                                            ? "bg-primary/10 text-primary"
+                                            : "bg-muted-foreground/10 text-muted-foreground"
                                             }`}
                                     >
                                         {category.isActive ? "Active" : "Inactive"}

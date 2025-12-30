@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+
 const footerLinks = {
     shop: [
         { label: "All Products", href: "#" },
@@ -34,7 +36,7 @@ export default function Footer() {
                     <div className="lg:col-span-2 space-y-6">
                         <a href="/" className="inline-block">
                             <span className="font-serif text-3xl font-bold text-background tracking-wide">
-                                ESSVORA
+                                {siteName}
                             </span>
                         </a>
                         <p className="text-background/70 max-w-sm leading-relaxed">
@@ -156,7 +158,7 @@ export default function Footer() {
                 <div className="container mx-auto px-4 lg:px-8 py-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-sm text-background/50">
-                            © {new Date().getFullYear()} ESSVORA. All rights reserved.
+                            © {new Date().getFullYear()} {siteName}. All rights reserved.
                         </p>
                         <div className="flex gap-6 text-sm text-background/50">
                             <a href="#" className="hover:text-background transition-colors">

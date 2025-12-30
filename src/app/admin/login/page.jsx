@@ -5,6 +5,8 @@ import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+
 export default function AdminLoginPage() {
     const { login, isAdmin, loading } = useUser();
     const router = useRouter();
@@ -47,7 +49,7 @@ export default function AdminLoginPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <h1 className="font-serif text-4xl font-bold text-foreground tracking-wide">
-                        ESSVORA
+                        {siteName}
                     </h1>
                     <p className="text-muted-foreground mt-2">Admin Panel</p>
                 </div>
@@ -75,7 +77,7 @@ export default function AdminLoginPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                placeholder="admin@essvora.com"
+                                placeholder="admin@example.com"
                             />
                         </div>
 

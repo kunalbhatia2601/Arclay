@@ -5,6 +5,8 @@ import { useUser } from "@/context/UserContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+
 export default function Navbar() {
     const { user, isAuthenticated, isAdmin, logout, loading } = useUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +24,7 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
                         <span className="font-serif text-2xl lg:text-3xl font-bold text-foreground tracking-wide">
-                            ESSVORA
+                            {siteName}
                         </span>
                     </Link>
 

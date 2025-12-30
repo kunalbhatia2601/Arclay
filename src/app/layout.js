@@ -19,8 +19,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+const siteDescription = process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "Gourmet Indian Food - Premium Pickles & Snacks";
+
 export const metadata = {
-  title: "ESSVORA | Gourmet Indian Food - Premium Pickles & Snacks",
+  title: `${siteName} | ${siteDescription}`,
   description: "Crafted Flavours. Timeless Taste. Premium pickles & snacks made with patience, purity, and passion. 100% natural ingredients, small batch crafted.",
   keywords: "pickles, Indian food, gourmet snacks, mango pickle, masala cashews, traditional recipes",
 };
