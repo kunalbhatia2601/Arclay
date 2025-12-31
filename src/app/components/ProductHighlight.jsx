@@ -1,31 +1,10 @@
 "use client";
 
-const categories = [
-    {
-        id: 1,
-        title: "SIGNATURE PICKLES",
-        subtitle: "Shop the range",
-        image: "🫙",
-        bgColor: "bg-amber-50",
-        products: ["Mango Pickle", "Lemon Pickle", "Mixed Pickle"],
-    },
-    {
-        id: 2,
-        title: "CRUNCHY SNACKS",
-        subtitle: "Discover Snacks",
-        image: "🥜",
-        bgColor: "bg-yellow-50",
-        products: ["Masala Cashews", "Banana Chips", "Quinoa Puffs"],
-    },
-    {
-        id: 3,
-        title: "BEST SELLERS",
-        subtitle: "View Top Rated",
-        image: "⭐",
-        bgColor: "bg-orange-50",
-        products: ["Spicy Mango", "Roasted Nuts", "Mixed Veg"],
-    },
-];
+import { getBrandContent, getSiteName } from "@/config/brandContent";
+
+const siteName = getSiteName();
+const content = getBrandContent(siteName);
+const categories = content.productHighlight.categories;
 
 export default function ProductHighlight() {
     return (
@@ -34,7 +13,7 @@ export default function ProductHighlight() {
                 {/* Section Header */}
                 <div className="text-center mb-16">
                     <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase mb-4">
-                        PRODUCT HIGHLIGHT
+                        {content.productHighlight.sectionTitle}
                     </p>
                     <div className="decorative-line mx-auto"></div>
                 </div>
@@ -55,13 +34,13 @@ export default function ProductHighlight() {
                                         <div
                                             key={product}
                                             className={`absolute w-16 h-20 bg-white rounded-lg shadow-md flex flex-col items-center justify-center p-1 border border-border/50 transition-all duration-300 group-hover:shadow-lg ${i === 0
-                                                    ? "top-2 left-1/2 -translate-x-1/2 -rotate-6 group-hover:-rotate-12 group-hover:-translate-y-2"
-                                                    : i === 1
-                                                        ? "bottom-4 left-4 rotate-6 group-hover:rotate-12 group-hover:-translate-x-2"
-                                                        : "bottom-4 right-4 -rotate-3 group-hover:-rotate-6 group-hover:translate-x-2"
+                                                ? "top-2 left-1/2 -translate-x-1/2 -rotate-6 group-hover:-rotate-12 group-hover:-translate-y-2"
+                                                : i === 1
+                                                    ? "bottom-4 left-4 rotate-6 group-hover:rotate-12 group-hover:-translate-x-2"
+                                                    : "bottom-4 right-4 -rotate-3 group-hover:-rotate-6 group-hover:translate-x-2"
                                                 }`}
                                         >
-                                            <div className="w-10 h-12 bg-gradient-to-b from-amber-200 to-amber-400 rounded mb-1"></div>
+                                            <div className="w-10 h-12 bg-gradient-to-b from-primary/30 to-primary/60 rounded mb-1"></div>
                                             <span className="text-[6px] font-medium text-foreground/70 text-center leading-tight">
                                                 {product}
                                             </span>

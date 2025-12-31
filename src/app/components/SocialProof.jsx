@@ -1,30 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { getBrandContent, getSiteName } from "@/config/brandContent";
 
-const reviews = [
-    {
-        id: 1,
-        rating: 5,
-        text: "The mango pickle is absolutely divine! Takes me back to my grandmother's kitchen.",
-        author: "Priya S.",
-        location: "Mumbai",
-    },
-    {
-        id: 2,
-        rating: 5,
-        text: "Best quality snacks I've ever had. The masala cashews are addictive!",
-        author: "Rahul M.",
-        location: "Delhi",
-    },
-    {
-        id: 3,
-        rating: 5,
-        text: "Finally found pickles that taste homemade. Will be ordering again!",
-        author: "Anita K.",
-        location: "Bangalore",
-    },
-];
+const siteName = getSiteName();
+const content = getBrandContent(siteName);
+const socialContent = content.socialProof;
 
 export default function SocialProof() {
     return (
@@ -34,15 +15,15 @@ export default function SocialProof() {
                     {/* Left - Stats */}
                     <div className="space-y-8 animate-fade-in-up">
                         <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-                            SOCIAL PROOF
+                            {socialContent.sectionLabel}
                         </p>
 
                         <div>
                             <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-                                Loved by 10,000+
+                                {socialContent.statsTitle}
                             </h2>
                             <p className="font-serif text-3xl md:text-4xl text-primary font-bold">
-                                food lovers
+                                {socialContent.statsSubtitle}
                             </p>
                         </div>
 
@@ -59,8 +40,8 @@ export default function SocialProof() {
                                     </svg>
                                 ))}
                             </div>
-                            <span className="text-lg font-semibold text-foreground">4.9/5</span>
-                            <span className="text-muted-foreground">(2,847 reviews)</span>
+                            <span className="text-lg font-semibold text-foreground">{socialContent.rating}</span>
+                            <span className="text-muted-foreground">({socialContent.reviewCount})</span>
                         </div>
 
                         {/* Review Avatars */}
@@ -76,7 +57,7 @@ export default function SocialProof() {
                                 ))}
                             </div>
                             <span className="text-sm text-muted-foreground">
-                                Join our happy community
+                                {socialContent.communityText}
                             </span>
                         </div>
 
@@ -90,7 +71,7 @@ export default function SocialProof() {
 
                     {/* Right - Reviews */}
                     <div className="space-y-4 animate-slide-in-right">
-                        {reviews.map((review, index) => (
+                        {socialContent.reviews.map((review, index) => (
                             <div
                                 key={review.id}
                                 className="bg-card p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow"

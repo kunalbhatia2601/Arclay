@@ -1,16 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { getBrandContent, getSiteName } from "@/config/brandContent";
 
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
+const siteName = getSiteName();
+const content = getBrandContent(siteName);
 
 const footerLinks = {
     shop: [
-        { label: "All Products", href: "#" },
-        { label: "Pickles", href: "#" },
-        { label: "Snacks", href: "#" },
-        { label: "Gift Boxes", href: "#" },
-        { label: "Bundles", href: "#" },
+        { label: "All Products", href: "/products" },
+        { label: "Categories", href: "/products" },
+        { label: "Best Sellers", href: "/products" },
+        { label: "Gift Boxes", href: "/products" },
+        { label: "Bundles", href: "/products" },
     ],
     about: [
         { label: "Our Story", href: "#" },
@@ -40,13 +42,12 @@ export default function Footer() {
                             </span>
                         </a>
                         <p className="text-background/70 max-w-sm leading-relaxed">
-                            Crafted Flavours. Timeless Taste. Premium pickles & snacks made
-                            with patience, purity, and passion.
+                            {content.footer.tagline}
                         </p>
 
                         {/* Newsletter */}
                         <div className="space-y-3">
-                            <p className="font-medium text-background">Have questions?</p>
+                            <p className="font-medium text-background">{content.footer.newsletterPrompt}</p>
                             <div className="flex gap-2">
                                 <input
                                     type="email"
