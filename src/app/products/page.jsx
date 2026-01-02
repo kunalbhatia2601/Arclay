@@ -83,7 +83,6 @@ export default function ProductsPage() {
 
     return (
         <>
-            <Navbar />
             <main className="min-h-screen bg-background pt-20">
                 {/* Hero Section */}
                 <section className="bg-linear-to-b from-primary/5 to-background py-12 lg:py-16">
@@ -359,7 +358,6 @@ export default function ProductsPage() {
                     </div>
                 </div>
             </main>
-            <Footer />
         </>
     );
 }

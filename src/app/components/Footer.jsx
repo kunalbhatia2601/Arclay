@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { getBrandContent, getSiteName } from "@/config/brandContent";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const siteName = getSiteName();
 const content = getBrandContent(siteName);
@@ -29,8 +31,16 @@ const footerLinks = {
 };
 
 export default function Footer() {
+
+    const pathname = usePathname();
+    const [showFooter, setShowFooter] = useState(true);
+
+    useEffect(() => {
+        pathname.includes("login") || pathname.includes("register") || pathname.includes("admin") ? setShowFooter(false) : setShowFooter(true);
+    }, [pathname]);
+
     return (
-        <footer className="bg-foreground text-background">
+        showFooter && <footer className="bg-foreground text-background">
             {/* Main Footer */}
             <div className="container mx-auto px-4 lg:px-8 py-16 lg:py-20">
                 <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">

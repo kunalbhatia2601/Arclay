@@ -2,14 +2,19 @@
 
 import { useState, useEffect, use, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
 export default function ProductDetailPage({ params }) {
     const { id } = use(params);
+    const router = useRouter();
+    const { isAuthenticated } = useUser();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [addingToCart, setAddingToCart] = useState(false);
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedOptions, setSelectedOptions] = useState({}); // { Color: "Red", Size: "M" }
     const [quantity, setQuantity] = useState(1);
@@ -107,10 +112,57 @@ export default function ProductDetailPage({ params }) {
         }));
     };
 
+    const handleAddToCart = async () => {
+        if (!isAuthenticated) {
+            router.push("/login");
+            return;
+        }
+
+        if (!selectedVariant) {
+            alert("Please select all options");
+            return;
+        }
+
+        try {
+            setAddingToCart(true);
+
+            // Convert variant attributes to plain object
+            const variantAttributes = selectedVariant.attributes instanceof Map
+                ? Object.fromEntries(selectedVariant.attributes)
+                : selectedVariant.attributes;
+
+            const res = await fetch("/api/cart", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    productId: product._id,
+                    variantAttributes,
+                    quantity
+                }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert("Added to cart!");
+                router.push("/cart");
+            } else {
+                alert(data.message || "Failed to add to cart");
+            }
+        } catch (error) {
+            console.error("Add to cart error:", error);
+            alert("Failed to add to cart");
+        } finally {
+            setAddingToCart(false);
+        }
+    };
+
     if (loading) {
         return (
             <>
-                <Navbar />
                 <main className="min-h-screen bg-background pt-20 flex items-center justify-center">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 </main>
@@ -121,7 +173,6 @@ export default function ProductDetailPage({ params }) {
     if (!product) {
         return (
             <>
-                <Navbar />
                 <main className="min-h-screen bg-background pt-20">
                     <div className="container mx-auto px-4 lg:px-8 py-16 text-center">
                         <div className="text-6xl mb-4">🔍</div>
@@ -138,14 +189,12 @@ export default function ProductDetailPage({ params }) {
                         </Link>
                     </div>
                 </main>
-                <Footer />
             </>
         );
     }
 
     return (
         <>
-            <Navbar />
             <main className="min-h-screen bg-background pt-20">
                 <div className="container mx-auto px-4 lg:px-8 py-8 lg:py-12">
                     {/* Breadcrumb */}
@@ -293,10 +342,10 @@ export default function ProductDetailPage({ params }) {
                                                             onClick={() => handleOptionSelect(variationType.name, option)}
                                                             disabled={!isAvailable && !isSelected}
                                                             className={`px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${isSelected
-                                                                    ? "border-primary bg-primary/10 text-primary"
-                                                                    : isAvailable
-                                                                        ? "border-border text-foreground hover:border-primary"
-                                                                        : "border-border text-muted-foreground line-through opacity-50 cursor-not-allowed"
+                                                                ? "border-primary bg-primary/10 text-primary"
+                                                                : isAvailable
+                                                                    ? "border-border text-foreground hover:border-primary"
+                                                                    : "border-border text-muted-foreground line-through opacity-50 cursor-not-allowed"
                                                                 }`}
                                                         >
                                                             {option}
@@ -335,12 +384,15 @@ export default function ProductDetailPage({ params }) {
                             {/* Add to Cart */}
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Button
-                                    disabled={!priceInfo.inStock}
+                                    onClick={handleAddToCart}
+                                    disabled={!priceInfo.inStock || addingToCart}
                                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-6 text-base font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {priceInfo.inStock
-                                        ? `Add to Cart — ₹${priceInfo.price * quantity}`
-                                        : "Out of Stock"
+                                    {addingToCart
+                                        ? "Adding..."
+                                        : priceInfo.inStock
+                                            ? `Add to Cart — ₹${priceInfo.price * quantity}`
+                                            : "Out of Stock"
                                     }
                                 </Button>
                                 <Button
@@ -384,7 +436,6 @@ export default function ProductDetailPage({ params }) {
                     </div>
                 </div>
             </main>
-            <Footer />
         </>
     );
 }

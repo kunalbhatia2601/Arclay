@@ -1,6 +1,8 @@
 import { Playfair_Display, Inter, Geist_Mono, Kumbh_Sans } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/context/UserContext";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 // ESSVORA fonts
 const playfair = Playfair_Display({
@@ -54,7 +56,9 @@ export default function RootLayout({ children }) {
         className={`${playfair.variable} ${inter.variable} ${geistMono.variable} ${kumbhSans.variable} antialiased`}
       >
         <UserProvider>
-          {children}
+          <Navbar />
+            {children}
+          <Footer />
         </UserProvider>
       </body>
     </html>

@@ -1,0 +1,129 @@
+import connectDB from "@/lib/mongodb";
+import Settings from "@/models/Settings";
+import { withAdminProtection } from "@/lib/auth";
+import { clearSettingsCache } from "@/lib/auth";
+
+// GET current settings
+async function getHandler(req) {
+    try {
+        await connectDB();
+        const settings = await Settings.getSettings();
+
+        // Don't expose sensitive keys in full - mask them
+        const safeSettings = {
+            isDemo: settings.isDemo,
+            isMaintenance: settings.isMaintenance,
+            payment: {
+                razorpay: {
+                    keyId: settings.payment.razorpay.keyId,
+                    keySecret: settings.payment.razorpay.keySecret
+                        ? '••••••••' + settings.payment.razorpay.keySecret.slice(-4)
+                        : '',
+                    isEnabled: settings.payment.razorpay.isEnabled,
+                    _hasSecret: !!settings.payment.razorpay.keySecret
+                },
+                stripe: {
+                    publishableKey: settings.payment.stripe.publishableKey,
+                    secretKey: settings.payment.stripe.secretKey
+                        ? '••••••••' + settings.payment.stripe.secretKey.slice(-4)
+                        : '',
+                    isEnabled: settings.payment.stripe.isEnabled,
+                    _hasSecret: !!settings.payment.stripe.secretKey
+                },
+                cod: {
+                    isEnabled: settings.payment.cod.isEnabled
+                }
+            }
+        };
+
+        return Response.json({
+            success: true,
+            settings: safeSettings,
+            _fullSettings: settings // Full settings for admin use
+        });
+    } catch (error) {
+        console.error("Get settings error:", error);
+        return Response.json(
+            { success: false, message: "Server error" },
+            { status: 500 }
+        );
+    }
+}
+
+// PUT update settings
+async function putHandler(req) {
+    try {
+        const updates = await req.json();
+
+        await connectDB();
+        let settings = await Settings.getSettings();
+
+        // Update fields if provided
+        if (typeof updates.isDemo === 'boolean') {
+            settings.isDemo = updates.isDemo;
+        }
+
+        if (typeof updates.isMaintenance === 'boolean') {
+            settings.isMaintenance = updates.isMaintenance;
+        }
+
+        // Update payment settings
+        if (updates.payment) {
+            // Razorpay
+            if (updates.payment.razorpay) {
+                if (updates.payment.razorpay.keyId !== undefined) {
+                    settings.payment.razorpay.keyId = updates.payment.razorpay.keyId;
+                }
+                if (updates.payment.razorpay.keySecret !== undefined &&
+                    !updates.payment.razorpay.keySecret.includes('••••')) {
+                    // Only update if not masked
+                    settings.payment.razorpay.keySecret = updates.payment.razorpay.keySecret;
+                }
+                if (typeof updates.payment.razorpay.isEnabled === 'boolean') {
+                    settings.payment.razorpay.isEnabled = updates.payment.razorpay.isEnabled;
+                }
+            }
+
+            // Stripe
+            if (updates.payment.stripe) {
+                if (updates.payment.stripe.publishableKey !== undefined) {
+                    settings.payment.stripe.publishableKey = updates.payment.stripe.publishableKey;
+                }
+                if (updates.payment.stripe.secretKey !== undefined &&
+                    !updates.payment.stripe.secretKey.includes('••••')) {
+                    settings.payment.stripe.secretKey = updates.payment.stripe.secretKey;
+                }
+                if (typeof updates.payment.stripe.isEnabled === 'boolean') {
+                    settings.payment.stripe.isEnabled = updates.payment.stripe.isEnabled;
+                }
+            }
+
+            // COD
+            if (updates.payment.cod) {
+                if (typeof updates.payment.cod.isEnabled === 'boolean') {
+                    settings.payment.cod.isEnabled = updates.payment.cod.isEnabled;
+                }
+            }
+        }
+
+        await settings.save();
+
+        // Clear the settings cache so next request gets fresh data
+        clearSettingsCache();
+
+        return Response.json({
+            success: true,
+            message: "Settings updated successfully",
+            settings
+        });
+    } catch (error) {
+        console.error("Update settings error:", error);
+        return Response.json(
+            { success: false, message: "Server error" },
+            { status: 500 }
+        );
+    }
+}
+
+export const GET = withAdminProtection(getHandler);
+export const PUT = withAdminProtection(putHandler);

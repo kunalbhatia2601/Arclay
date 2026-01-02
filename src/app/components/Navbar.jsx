@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@/context/UserContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
 
@@ -11,14 +12,21 @@ export default function Navbar() {
     const { user, isAuthenticated, isAdmin, logout, loading } = useUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [showNavbar, setShowNavbar] = useState(true);
+
+    const pathname = usePathname();
 
     const handleLogout = async () => {
         await logout();
         setIsUserMenuOpen(false);
     };
 
+    useEffect(() => {
+        pathname.includes("login") || pathname.includes("register") || pathname.includes("admin") ? setShowNavbar(false) : setShowNavbar(true);
+    }, [pathname]);
+
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        showNavbar && <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
             <nav className="container mx-auto px-4 lg:px-8">
                 <div className="flex items-center justify-between h-16 lg:h-20">
                     {/* Logo */}
@@ -37,18 +45,6 @@ export default function Navbar() {
                             Products
                         </Link>
                         <a
-                            href="#bundles"
-                            className="text-foreground/80 hover:text-primary transition-colors font-medium"
-                        >
-                            Bundles
-                        </a>
-                        <a
-                            href="#pricing"
-                            className="text-foreground/80 hover:text-primary transition-colors font-medium"
-                        >
-                            Pricing
-                        </a>
-                        <a
                             href="#contact"
                             className="text-foreground/80 hover:text-primary transition-colors font-medium"
                         >
@@ -61,52 +57,76 @@ export default function Navbar() {
                         {loading ? (
                             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                         ) : isAuthenticated ? (
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                    className="flex items-center gap-3 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                                        {user?.name?.[0]?.toUpperCase() || "U"}
-                                    </div>
-                                    <span className="font-medium text-foreground max-w-[120px] truncate">
-                                        {user?.name}
-                                    </span>
-                                    <svg
-                                        className={`w-4 h-4 text-muted-foreground transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            <>
+                                {/* Cart Icon */}
+                                <Link href="/cart" className="relative p-2 text-foreground hover:text-primary transition-colors">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                     </svg>
-                                </button>
+                                </Link>
 
-                                {/* Dropdown Menu */}
-                                {isUserMenuOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-card rounded-xl shadow-lg border border-border py-2 animate-fade-in-up">
-                                        <div className="px-4 py-2 border-b border-border">
-                                            <p className="font-medium text-foreground truncate">{user?.name}</p>
-                                            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                                {/* User Menu */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                        className="flex items-center gap-3 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                                            {user?.name?.[0]?.toUpperCase() || "U"}
                                         </div>
-                                        {isAdmin && (
+                                        <span className="font-medium text-foreground max-w-[120px] truncate">
+                                            {user?.name}
+                                        </span>
+                                        <svg
+                                            className={`w-4 h-4 text-muted-foreground transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {isUserMenuOpen && (
+                                        <div className="absolute right-0 top-full mt-2 w-48 bg-card rounded-xl shadow-lg border border-border py-2 animate-fade-in-up">
+                                            <div className="px-4 py-2 border-b border-border">
+                                                <p className="font-medium text-foreground truncate">{user?.name}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                                            </div>
                                             <Link
-                                                href="/admin"
+                                                href="/account"
                                                 className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                                                 onClick={() => setIsUserMenuOpen(false)}
                                             >
-                                                Admin Panel
+                                                My Account
                                             </Link>
-                                        )}
-                                        <button
-                                            onClick={handleLogout}
-                                            className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                                        >
-                                            Logout
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                                            <Link
+                                                href="/orders"
+                                                className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                My Orders
+                                            </Link>
+                                            {isAdmin && (
+                                                <Link
+                                                    href="/admin"
+                                                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                                                    onClick={() => setIsUserMenuOpen(false)}
+                                                >
+                                                    Admin Panel
+                                                </Link>
+                                            )}
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         ) : (
                             <>
                                 <Link href="/login">
@@ -166,18 +186,6 @@ export default function Navbar() {
                                 Products
                             </Link>
                             <a
-                                href="#bundles"
-                                className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
-                            >
-                                Bundles
-                            </a>
-                            <a
-                                href="#pricing"
-                                className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
-                            >
-                                Pricing
-                            </a>
-                            <a
                                 href="#contact"
                                 className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
                             >
@@ -195,6 +203,27 @@ export default function Navbar() {
                                                 <p className="text-xs text-muted-foreground">{user?.email}</p>
                                             </div>
                                         </div>
+                                        <Link
+                                            href="/cart"
+                                            className="px-2 py-2 text-foreground hover:text-primary transition-colors font-medium"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            🛒 Cart
+                                        </Link>
+                                        <Link
+                                            href="/account"
+                                            className="px-2 py-2 text-foreground hover:text-primary transition-colors font-medium"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            My Account
+                                        </Link>
+                                        <Link
+                                            href="/orders"
+                                            className="px-2 py-2 text-foreground hover:text-primary transition-colors font-medium"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            My Orders
+                                        </Link>
                                         {isAdmin && (
                                             <Link
                                                 href="/admin"
