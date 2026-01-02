@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:badges/badges.dart' as badges;
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import 'home_tab.dart';
+import 'products_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-@override
+  @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
@@ -16,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = const [
     HomeTab(),
+    ProductsTab(),
     CartTab(),
     OrdersTab(),
     ProfileTab(),
@@ -24,6 +28,43 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          AppConstants.appName,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: AppTheme.primaryColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // Navigate to search screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Search coming soon!')),
+              );
+            },
+          ),
+          IconButton(
+            icon: badges.Badge(
+              badgeContent: const Text(
+                '0',
+                style: TextStyle(color: Colors.white, fontSize: 10),
+              ),
+              badgeStyle: const badges.BadgeStyle(
+                badgeColor: AppTheme.accentColor,
+              ),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            onPressed: () {
+              // Switch to cart tab
+              setState(() => _currentIndex = 2);
+            },
+          ),
+          const SizedBox(width: AppTheme.spacing8),
+        ],
+      ),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -34,6 +75,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
             label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.grid_view_outlined),
+            activeIcon: Icon(Icons.grid_view),
+            label: 'Products',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart_outlined),
@@ -56,110 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Home Tab
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppConstants.appName),
-      ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(AppTheme.spacing16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome to ${AppConstants.appName}',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: AppTheme.spacing8),
-                  Text(
-                    AppConstants.appDescription,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.spacing24),
-                  Text(
-                    'Featured Products',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(AppTheme.spacing16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: AppTheme.spacing12,
-                mainAxisSpacing: AppTheme.spacing12,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceColor,
-                            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.image_outlined,
-                              size: 48,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(AppTheme.spacing8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Product ${index + 1}',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontSize: 14,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: AppTheme.spacing4),
-                            Text(
-                              '₹${(index + 1) * 100}',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                childCount: 6,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // Cart Tab (Placeholder)
 class CartTab extends StatelessWidget {
   const CartTab({super.key});
@@ -167,12 +109,8 @@ class CartTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cart'),
-      ),
-      body: const Center(
-        child: Text('Cart Screen - Coming Soon'),
-      ),
+      appBar: AppBar(title: const Text('Cart')),
+      body: const Center(child: Text('Cart Screen - Coming Soon')),
     );
   }
 }
@@ -184,12 +122,8 @@ class OrdersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Orders'),
-      ),
-      body: const Center(
-        child: Text('Orders Screen - Coming Soon'),
-      ),
+      appBar: AppBar(title: const Text('Orders')),
+      body: const Center(child: Text('Orders Screen - Coming Soon')),
     );
   }
 }
@@ -201,9 +135,9 @@ class ProfileTab extends StatelessWidget {
   Future<void> _logout(BuildContext context) async {
     final authService = AuthService();
     await authService.logout();
-    
+
     if (!context.mounted) return;
-    
+
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
@@ -216,9 +150,7 @@ class ProfileTab extends StatelessWidget {
     final user = authService.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-      ),
+      appBar: AppBar(title: const Text('Profile')),
       body: ListView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
         children: [
@@ -264,7 +196,7 @@ class ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: AppTheme.spacing24),
           ],
-          
+
           ListTile(
             leading: const Icon(Icons.location_on_outlined),
             title: const Text('Addresses'),
