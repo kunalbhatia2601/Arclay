@@ -7,7 +7,9 @@ import '../../services/products_service.dart';
 import '../product_detail/product_detail_screen.dart';
 
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  final Function(int)? onTabChange;
+
+  const HomeTab({super.key, this.onTabChange});
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -175,8 +177,8 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Switch to Products tab
-                      DefaultTabController.of(context).animateTo(1);
+                      // Switch to Products tab (index 1)
+                      widget.onTabChange?.call(1);
                     },
                     child: const Text('View All'),
                   ),

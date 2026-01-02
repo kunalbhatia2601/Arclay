@@ -77,14 +77,9 @@ class CartService {
       requiresAuth: true,
     );
 
-    if (response.success && response.data != null) {
-      final cart = Cart.fromJson(response.data!['cart'] ?? {});
-      return ApiResponse(
-        success: true,
-        data: cart,
-        message: response.message ?? 'Item removed',
-        statusCode: response.statusCode,
-      );
+    if (response.success) {
+      // API doesn't return cart data, so reload it
+      return await getCart();
     }
 
     return ApiResponse(
@@ -106,14 +101,9 @@ class CartService {
       requiresAuth: true,
     );
 
-    if (response.success && response.data != null) {
-      final cart = Cart.fromJson(response.data!['cart'] ?? {});
-      return ApiResponse(
-        success: true,
-        data: cart,
-        message: response.message ?? 'Quantity updated',
-        statusCode: response.statusCode,
-      );
+    if (response.success) {
+      // API doesn't return cart data, so reload it
+      return await getCart();
     }
 
     return ApiResponse(

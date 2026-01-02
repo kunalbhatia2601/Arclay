@@ -74,12 +74,12 @@ class _ProductsTabState extends State<ProductsTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Featured Products',
+                      'Our Products',
                       style: Theme.of(context).textTheme.displaySmall,
                     ),
                     const SizedBox(height: AppTheme.spacing8),
                     Text(
-                      'Discover our handcrafted collection',
+                      'Discover our exclusive collection.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppTheme.textSecondary,
                       ),

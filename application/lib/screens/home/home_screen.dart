@@ -9,32 +9,44 @@ import 'home_tab.dart';
 import 'products_tab.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialTabIndex;
+
+  const HomeScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+  late final List<Widget> _screens;
 
-  final List<Widget> _screens = const [
-    HomeTab(),
-    ProductsTab(),
-    CartScreen(),
-    OrdersTab(),
-    ProfileTab(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialTabIndex;
+
+    // Initialize screens with callbacks
+    _screens = [
+      HomeTab(onTabChange: (index) => setState(() => _currentIndex = index)),
+      const ProductsTab(),
+      const CartScreen(),
+      const OrdersTab(),
+      const ProfileTab(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: Text(
           AppConstants.appName,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
         actions: [
@@ -48,16 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: badges.Badge(
-              badgeContent: const Text(
-                '0',
-                style: TextStyle(color: Colors.white, fontSize: 10),
-              ),
-              badgeStyle: const badges.BadgeStyle(
-                badgeColor: AppTheme.accentColor,
-              ),
-              child: const Icon(Icons.shopping_cart_outlined),
-            ),
+            icon: const Icon(Icons.shopping_cart_outlined),
             onPressed: () {
               // Switch to cart tab
               setState(() => _currentIndex = 2);
