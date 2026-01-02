@@ -4,6 +4,9 @@ import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../models/product.dart';
 import '../../services/products_service.dart';
+import '../../services/cart_service.dart';
+import '../../services/auth_service.dart';
+import '../cart/cart_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -22,6 +25,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String? _error;
 
   int _selectedVariantIndex = 0;
+  int _quantity = 1;
+  bool _isAddingToCart = false;
+
+  final _cartService = CartService();
+  final _authService = AuthService();
 
   @override
   void initState() {
@@ -49,6 +57,64 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _error = response.message ?? 'Failed to load product';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _handleAddToCart() async {
+    // Check authentication
+    if (!_authService.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to add items to cart'),
+          backgroundColor: AppTheme.accentColor,
+        ),
+      );
+      // Navigate to login screen
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
+
+    if (_product == null) return;
+
+    final selectedVariant = _product!.variants[_selectedVariantIndex];
+
+    // Get variant attributes
+    final variantAttributes = <String, String>{};
+    selectedVariant.attributes.forEach((key, value) {
+      variantAttributes[key] = value;
+    });
+
+    setState(() => _isAddingToCart = true);
+
+    final response = await _cartService.addToCart(
+      productId: _product!.id,
+      variantAttributes: variantAttributes,
+      quantity: _quantity,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isAddingToCart = false);
+
+    if (response.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Added to cart!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate to cart screen
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.message ?? 'Failed to add to cart'),
+          backgroundColor: AppTheme.accentColor,
+        ),
+      );
     }
   }
 
@@ -301,6 +367,50 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ),
 
+                const SizedBox(height: AppTheme.spacing24),
+
+                // Quantity Selector
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Quantity',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppTheme.spacing8),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.borderColor),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove),
+                            onPressed: _quantity > 1
+                                ? () => setState(() => _quantity--)
+                                : null,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              '$_quantity',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: _quantity < selectedVariant.stock
+                                ? () => setState(() => _quantity++)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: AppTheme.spacing32),
 
                 // Add to Cart Button
@@ -308,19 +418,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton.icon(
-                    onPressed: selectedVariant.stock > 0
-                        ? () {
-                            // Add to cart logic
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Added to cart!'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
+                    onPressed: selectedVariant.stock > 0 && !_isAddingToCart
+                        ? _handleAddToCart
                         : null,
-                    icon: const Icon(Icons.shopping_cart),
-                    label: const Text('Add to Cart'),
+                    icon: _isAddingToCart
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Icon(Icons.shopping_cart),
+                    label: Text(
+                      _isAddingToCart
+                          ? 'Adding...'
+                          : 'Add to Cart - ₹${(price * _quantity).toStringAsFixed(0)}',
+                    ),
                   ),
                 ),
               ],

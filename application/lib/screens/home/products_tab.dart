@@ -140,6 +140,62 @@ class _ProductsTabState extends State<ProductsTab> {
                   }, childCount: _products.length),
                 ),
               ),
+
+            // Pagination Controls
+            if (!_isLoading && _products.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spacing16),
+                  child: Column(
+                    children: [
+                      // Page Info
+                      Text(
+                        'Page $_currentPage of $_totalPages',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AppTheme.spacing12),
+                      // Navigation Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Previous Button
+                          ElevatedButton.icon(
+                            onPressed: _currentPage > 1
+                                ? () => _loadProducts(page: _currentPage - 1)
+                                : null,
+                            icon: const Icon(Icons.chevron_left),
+                            label: const Text('Previous'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.cardColor,
+                              foregroundColor: AppTheme.textPrimary,
+                              disabledBackgroundColor: AppTheme.surfaceColor,
+                              disabledForegroundColor: AppTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: AppTheme.spacing16),
+                          // Next Button
+                          ElevatedButton.icon(
+                            onPressed: _currentPage < _totalPages
+                                ? () => _loadProducts(page: _currentPage + 1)
+                                : null,
+                            icon: const Icon(Icons.chevron_right),
+                            label: const Text('Next'),
+                            iconAlignment: IconAlignment.end,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.cardColor,
+                              foregroundColor: AppTheme.textPrimary,
+                              disabledBackgroundColor: AppTheme.surfaceColor,
+                              disabledForegroundColor: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),

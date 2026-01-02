@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../cart/cart_screen.dart';
 import 'home_tab.dart';
 import 'products_tab.dart';
 
@@ -20,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = const [
     HomeTab(),
     ProductsTab(),
-    CartTab(),
+    CartScreen(),
     OrdersTab(),
     ProfileTab(),
   ];
@@ -98,19 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-// Cart Tab (Placeholder)
-class CartTab extends StatelessWidget {
-  const CartTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Cart')),
-      body: const Center(child: Text('Cart Screen - Coming Soon')),
     );
   }
 }
