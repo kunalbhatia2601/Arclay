@@ -3,6 +3,23 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+// Debounce hook
+function useDebounce(value, delay) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+}
+
 const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
     confirmed: "bg-blue-100 text-blue-800",
@@ -31,17 +48,22 @@ export default function AdminOrders() {
         search: ''
     });
 
+    // Debounce search value
+    const debouncedSearch = useDebounce(filters.search, 400);
+
     useEffect(() => {
         fetchOrders();
-    }, [filters]);
+    }, [filters.page, filters.orderStatus, filters.paymentStatus, debouncedSearch]);
 
     const fetchOrders = async () => {
         try {
             setLoading(true);
             const params = new URLSearchParams();
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value) params.append(key, value);
-            });
+            params.append('page', filters.page);
+            params.append('limit', filters.limit);
+            if (filters.orderStatus) params.append('orderStatus', filters.orderStatus);
+            if (filters.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
+            if (debouncedSearch) params.append('search', debouncedSearch);
 
             const res = await fetch(`/api/admin/orders?${params}`, {
                 credentials: "include",

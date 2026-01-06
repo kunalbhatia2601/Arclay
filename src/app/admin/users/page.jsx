@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -21,77 +20,54 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-export default function CategoriesPage() {
-    const [categories, setCategories] = useState([]);
+export default function UsersPage() {
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [roleFilter, setRoleFilter] = useState("");
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
     // Debounce search value
     const debouncedSearch = useDebounce(search, 400);
 
     useEffect(() => {
-        fetchCategories();
-    }, [pagination.page, debouncedSearch]);
+        fetchUsers();
+    }, [pagination.page, debouncedSearch, roleFilter]);
 
-    const fetchCategories = async () => {
+    const fetchUsers = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
                 page: pagination.page,
                 limit: 10,
                 search: debouncedSearch,
+                role: roleFilter,
             });
-            const res = await fetch(`/api/admin/categories?${params}`, {
+            const res = await fetch(`/api/admin/users?${params}`, {
                 credentials: "include",
             });
             const data = await res.json();
             if (data.success) {
-                setCategories(data.categories);
-                setPagination(data.pagination);
+                setUsers(data.users);
+                setPagination((prev) => ({
+                    ...prev,
+                    pages: data.pagination.pages,
+                    total: data.pagination.total,
+                }));
             }
         } catch (error) {
-            console.error("Failed to fetch categories:", error);
+            console.error("Failed to fetch users:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm("Are you sure you want to delete this category?")) return;
-
-        try {
-            const res = await fetch(`/api/admin/categories/${id}`, {
-                method: "DELETE",
-                credentials: "include",
-            });
-            const data = await res.json();
-            if (data.success) {
-                fetchCategories();
-            } else {
-                alert(data.message);
-            }
-        } catch (error) {
-            console.error("Delete failed:", error);
-            alert("Failed to delete category");
-        }
-    };
-
-    const toggleStatus = async (id, currentStatus) => {
-        try {
-            const res = await fetch(`/api/admin/categories/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ isActive: !currentStatus }),
-            });
-            const data = await res.json();
-            if (data.success) {
-                fetchCategories();
-            }
-        } catch (error) {
-            console.error("Toggle status failed:", error);
-        }
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString("en-IN", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
     };
 
     return (
@@ -100,47 +76,49 @@ export default function CategoriesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="font-serif text-3xl font-bold text-foreground">
-                        Categories
+                        Users
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Manage your product categories
+                        Manage your user accounts
                     </p>
                 </div>
-                <Link href="/admin/categories/new">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
-                        + Add Category
-                    </Button>
-                </Link>
             </div>
 
-            {/* Search */}
-            <div className="bg-card rounded-2xl p-4 border border-border">
+            {/* Search & Filters */}
+            <div className="bg-card rounded-2xl p-4 border border-border flex flex-col sm:flex-row gap-4">
                 <input
                     type="text"
-                    placeholder="Search categories..."
+                    placeholder="Search by name or email..."
                     value={search}
                     onChange={(e) => {
                         setSearch(e.target.value);
                         setPagination({ ...pagination, page: 1 });
                     }}
-                    className="w-full sm:w-80 px-4 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="flex-1 px-4 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
+                <select
+                    value={roleFilter}
+                    onChange={(e) => {
+                        setRoleFilter(e.target.value);
+                        setPagination({ ...pagination, page: 1 });
+                    }}
+                    className="px-4 py-2 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                    <option value="">All Roles</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
             </div>
 
-            {/* Categories Table */}
+            {/* Users Table */}
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 {loading ? (
                     <div className="flex items-center justify-center h-48">
                         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                ) : categories.length === 0 ? (
+                ) : users.length === 0 ? (
                     <div className="text-center py-12">
-                        <p className="text-muted-foreground mb-4">No categories found</p>
-                        <Link href="/admin/categories/new">
-                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full">
-                                Create your first category
-                            </Button>
-                        </Link>
+                        <p className="text-muted-foreground">No users found</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -148,63 +126,69 @@ export default function CategoriesPage() {
                             <thead className="bg-muted">
                                 <tr>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
-                                        Category
+                                        User
                                     </th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground hidden md:table-cell">
-                                        Description
+                                        Phone
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
+                                        Role
                                     </th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
                                         Status
                                     </th>
-                                    <th className="text-right px-6 py-4 text-sm font-semibold text-foreground">
-                                        Actions
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-foreground hidden lg:table-cell">
+                                        Joined
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {categories.map((category) => (
-                                    <tr key={category._id} className="hover:bg-muted/50 transition-colors">
+                                {users.map((user) => (
+                                    <tr key={user._id} className="hover:bg-muted/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center text-lg">
-                                                    {category.image ? "🖼️" : "🏷️"}
+                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                                                    {user.name?.[0]?.toUpperCase() || "U"}
                                                 </div>
-                                                <span className="font-medium text-foreground">
-                                                    {category.name}
-                                                </span>
+                                                <div>
+                                                    <p className="font-medium text-foreground line-clamp-1">
+                                                        {user.name}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {user.email}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 hidden md:table-cell">
-                                            <span className="text-muted-foreground text-sm line-clamp-1">
-                                                {category.description || "—"}
+                                            <span className="text-muted-foreground text-sm">
+                                                {user.phone || "—"}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => toggleStatus(category._id, category.isActive)}
-                                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${category.isActive
-                                                    ? "bg-primary/10 text-primary hover:bg-primary/20"
-                                                    : "bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/20"
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === "admin"
+                                                        ? "bg-accent/10 text-accent"
+                                                        : "bg-secondary/20 text-secondary-foreground"
                                                     }`}
                                             >
-                                                {category.isActive ? "Active" : "Inactive"}
-                                            </button>
+                                                {user.role}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Link
-                                                    href={`/admin/categories/${category._id}/edit`}
-                                                    className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                                >
-                                                    Edit
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(category._id)}
-                                                    className="px-3 py-1 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-xs font-medium ${user.isActive
+                                                        ? "bg-green-500/10 text-green-600"
+                                                        : "bg-muted-foreground/10 text-muted-foreground"
+                                                    }`}
+                                            >
+                                                {user.isActive ? "Active" : "Inactive"}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 hidden lg:table-cell">
+                                            <span className="text-muted-foreground text-sm">
+                                                {formatDate(user.createdAt)}
+                                            </span>
                                         </td>
                                     </tr>
                                 ))}

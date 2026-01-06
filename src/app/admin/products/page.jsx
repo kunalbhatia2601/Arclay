@@ -21,8 +21,8 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-export default function CategoriesPage() {
-    const [categories, setCategories] = useState([]);
+export default function ProductsPage() {
+    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
@@ -31,10 +31,10 @@ export default function CategoriesPage() {
     const debouncedSearch = useDebounce(search, 400);
 
     useEffect(() => {
-        fetchCategories();
+        fetchProducts();
     }, [pagination.page, debouncedSearch]);
 
-    const fetchCategories = async () => {
+    const fetchProducts = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
@@ -42,44 +42,44 @@ export default function CategoriesPage() {
                 limit: 10,
                 search: debouncedSearch,
             });
-            const res = await fetch(`/api/admin/categories?${params}`, {
+            const res = await fetch(`/api/admin/products?${params}`, {
                 credentials: "include",
             });
             const data = await res.json();
             if (data.success) {
-                setCategories(data.categories);
+                setProducts(data.products);
                 setPagination(data.pagination);
             }
         } catch (error) {
-            console.error("Failed to fetch categories:", error);
+            console.error("Failed to fetch products:", error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Are you sure you want to delete this category?")) return;
+        if (!confirm("Are you sure you want to delete this product?")) return;
 
         try {
-            const res = await fetch(`/api/admin/categories/${id}`, {
+            const res = await fetch(`/api/admin/products/${id}`, {
                 method: "DELETE",
                 credentials: "include",
             });
             const data = await res.json();
             if (data.success) {
-                fetchCategories();
+                fetchProducts();
             } else {
                 alert(data.message);
             }
         } catch (error) {
             console.error("Delete failed:", error);
-            alert("Failed to delete category");
+            alert("Failed to delete product");
         }
     };
 
     const toggleStatus = async (id, currentStatus) => {
         try {
-            const res = await fetch(`/api/admin/categories/${id}`, {
+            const res = await fetch(`/api/admin/products/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -87,7 +87,7 @@ export default function CategoriesPage() {
             });
             const data = await res.json();
             if (data.success) {
-                fetchCategories();
+                fetchProducts();
             }
         } catch (error) {
             console.error("Toggle status failed:", error);
@@ -100,15 +100,15 @@ export default function CategoriesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="font-serif text-3xl font-bold text-foreground">
-                        Categories
+                        Products
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Manage your product categories
+                        Manage your product catalog
                     </p>
                 </div>
-                <Link href="/admin/categories/new">
+                <Link href="/admin/products/new">
                     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
-                        + Add Category
+                        + Add Product
                     </Button>
                 </Link>
             </div>
@@ -117,7 +117,7 @@ export default function CategoriesPage() {
             <div className="bg-card rounded-2xl p-4 border border-border">
                 <input
                     type="text"
-                    placeholder="Search categories..."
+                    placeholder="Search products..."
                     value={search}
                     onChange={(e) => {
                         setSearch(e.target.value);
@@ -127,18 +127,18 @@ export default function CategoriesPage() {
                 />
             </div>
 
-            {/* Categories Table */}
+            {/* Products Table */}
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 {loading ? (
                     <div className="flex items-center justify-center h-48">
                         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                ) : categories.length === 0 ? (
+                ) : products.length === 0 ? (
                     <div className="text-center py-12">
-                        <p className="text-muted-foreground mb-4">No categories found</p>
-                        <Link href="/admin/categories/new">
+                        <p className="text-muted-foreground mb-4">No products found</p>
+                        <Link href="/admin/products/new">
                             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full">
-                                Create your first category
+                                Create your first product
                             </Button>
                         </Link>
                     </div>
@@ -148,10 +148,13 @@ export default function CategoriesPage() {
                             <thead className="bg-muted">
                                 <tr>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
-                                        Category
+                                        Product
                                     </th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground hidden md:table-cell">
-                                        Description
+                                        Category
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
+                                        Price
                                     </th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
                                         Status
@@ -162,44 +165,88 @@ export default function CategoriesPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {categories.map((category) => (
-                                    <tr key={category._id} className="hover:bg-muted/50 transition-colors">
+                                {products.map((product) => (
+                                    <tr key={product._id} className="hover:bg-muted/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center text-lg">
-                                                    {category.image ? "🖼️" : "🏷️"}
+                                                <div className="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center overflow-hidden">
+                                                    {product.images?.[0] ? (
+                                                        <img
+                                                            src={product.images[0]}
+                                                            alt={product.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-xl">📦</span>
+                                                    )}
                                                 </div>
-                                                <span className="font-medium text-foreground">
-                                                    {category.name}
-                                                </span>
+                                                <div>
+                                                    <p className="font-medium text-foreground line-clamp-1">
+                                                        {product.name}
+                                                    </p>
+                                                    {product.variants?.length > 0 && (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {product.variants.length} variant(s)
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 hidden md:table-cell">
-                                            <span className="text-muted-foreground text-sm line-clamp-1">
-                                                {category.description || "—"}
+                                            <span className="text-muted-foreground text-sm">
+                                                {product.category?.name || "—"}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
+                                            <div>
+                                                {(() => {
+                                                    const variants = product.variants || [];
+                                                    if (variants.length === 0) return <span className="text-muted-foreground">—</span>;
+
+                                                    const prices = variants.map(v => v.salePrice || v.regularPrice).filter(p => p != null);
+                                                    if (prices.length === 0) return <span className="text-muted-foreground">—</span>;
+
+                                                    const minPrice = Math.min(...prices);
+                                                    const maxPrice = Math.max(...prices);
+                                                    const totalStock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
+
+                                                    return (
+                                                        <div>
+                                                            <span className="font-medium text-foreground">
+                                                                {minPrice === maxPrice
+                                                                    ? `₹${minPrice.toLocaleString()}`
+                                                                    : `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}`
+                                                                }
+                                                            </span>
+                                                            <p className={`text-xs mt-1 ${totalStock > 0 ? 'text-muted-foreground' : 'text-destructive'}`}>
+                                                                Stock: {totalStock}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
                                             <button
-                                                onClick={() => toggleStatus(category._id, category.isActive)}
-                                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${category.isActive
+                                                onClick={() => toggleStatus(product._id, product.isActive)}
+                                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${product.isActive
                                                     ? "bg-primary/10 text-primary hover:bg-primary/20"
                                                     : "bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/20"
                                                     }`}
                                             >
-                                                {category.isActive ? "Active" : "Inactive"}
+                                                {product.isActive ? "Active" : "Inactive"}
                                             </button>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link
-                                                    href={`/admin/categories/${category._id}/edit`}
+                                                    href={`/admin/products/${product._id}/edit`}
                                                     className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                                 >
                                                     Edit
                                                 </Link>
                                                 <button
-                                                    onClick={() => handleDelete(category._id)}
+                                                    onClick={() => handleDelete(product._id)}
                                                     className="px-3 py-1 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                                                 >
                                                     Delete
