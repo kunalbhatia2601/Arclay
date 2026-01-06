@@ -22,7 +22,7 @@ export default function Navbar() {
     };
 
     useEffect(() => {
-        pathname.includes("login") || pathname.includes("register") || pathname.includes("admin") ? setShowNavbar(false) : setShowNavbar(true);
+        pathname.includes("login") || pathname.includes("signup") || pathname.includes("admin") ? setShowNavbar(false) : setShowNavbar(true);
     }, [pathname]);
 
     return (

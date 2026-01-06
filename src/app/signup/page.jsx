@@ -45,7 +45,12 @@ export default function SignupPage() {
         const result = await register(name, email, password, phone);
 
         if (result.success) {
-            router.push("/");
+            if (result.requiresVerification) {
+                // Redirect to email verification page
+                router.push(`/verify-email?email=${encodeURIComponent(result.email)}`);
+            } else {
+                router.push("/");
+            }
         } else {
             setError(result.message || "Registration failed");
         }

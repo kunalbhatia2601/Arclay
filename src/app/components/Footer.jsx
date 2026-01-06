@@ -36,7 +36,7 @@ export default function Footer() {
     const [showFooter, setShowFooter] = useState(true);
 
     useEffect(() => {
-        pathname.includes("login") || pathname.includes("register") || pathname.includes("admin") ? setShowFooter(false) : setShowFooter(true);
+        pathname.includes("login") || pathname.includes("signup") || pathname.includes("admin") ? setShowFooter(false) : setShowFooter(true);
     }, [pathname]);
 
     return (

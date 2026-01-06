@@ -41,7 +41,7 @@ export default function CheckoutPage() {
         try {
             const [cartRes, settingsRes, addressesRes] = await Promise.all([
                 fetch("/api/cart", { credentials: "include" }),
-                fetch("/api/admin/settings", { credentials: "include" }),
+                fetch("/api/settings", { credentials: "include" }),
                 fetch("/api/addresses", { credentials: "include" })
             ]);
 

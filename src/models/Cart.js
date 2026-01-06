@@ -30,6 +30,14 @@ const CartSchema = new mongoose.Schema({
     items: {
         type: [CartItemSchema],
         default: []
+    },
+    emails_sent_count: {
+        type: Number,
+        default: 0
+    },
+    last_email_sent_at: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

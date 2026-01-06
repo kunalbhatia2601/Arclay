@@ -12,6 +12,7 @@ const navItems = [
     { href: "/admin/products", label: "Products", icon: "📦" },
     { href: "/admin/categories", label: "Categories", icon: "🏷️" },
     { href: "/admin/orders", label: "Orders", icon: "🛍️" },
+    { href: "/admin/carts", label: "User Carts", icon: "🛒" },
     { href: "/admin/users", label: "Users", icon: "👥" },
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
 ];
@@ -75,7 +76,7 @@ export default function AdminLayout({ children }) {
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 p-4 space-y-2">
+                    <nav className="flex-1 p-4 space-y-2 max-h-[70vh] overflow-y-auto">
                         {navItems.map((item) => {
                             const isActive = pathname === item.href ||
                                 (item.href !== "/admin" && pathname.startsWith(item.href));

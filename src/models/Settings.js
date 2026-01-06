@@ -44,6 +44,32 @@ const SettingsSchema = new mongoose.Schema({
                 default: true
             }
         }
+    },
+    mail: {
+        email: {
+            type: String,
+            default: ''   
+        },
+        password: {
+            type: String,
+            default: ''   
+        },
+        host: {
+            type: String,
+            default: ''   
+        },
+        port: {
+            type: Number,
+            default: 587   
+        },
+        isSSL: {
+            type: Boolean,
+            default: false   
+        },
+        isEnabled: {
+            type: Boolean,
+            default: false   
+        }
     }
 }, {
     timestamps: true

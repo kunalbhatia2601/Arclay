@@ -44,9 +44,6 @@ export default function OrderDetailPage() {
             const data = await res.json();
             if (data.success) {
                 setOrder(data.order);
-            } else {
-                alert(data.message);
-                router.push("/orders");
             }
         } catch (error) {
             console.error("Failed to fetch order:", error);

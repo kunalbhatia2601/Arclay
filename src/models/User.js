@@ -35,6 +35,20 @@ const UserSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    otp: {
+        code: {
+            type: String,
+            select: false
+        },
+        expiresAt: {
+            type: Date,
+            select: false
+        }
     }
 }, {
     timestamps: true

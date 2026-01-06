@@ -1,6 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import Product from "@/models/Product"; // Import to register schema
+import User from "@/models/User"; // Import to register schema
 import { withAdminProtection } from "@/lib/auth";
 
 // GET all orders (admin)
@@ -25,47 +26,109 @@ async function getHandler(req) {
             createdAt: { $lt: sevenDaysAgo }
         });
 
-        const query = {};
-
-        // Exclude orders with Razorpay/Stripe that have pending payment status
-        // These are incomplete payment attempts
-        query.$or = [
-            { paymentMethod: 'cod' }, // Show all COD orders
-            {
-                paymentMethod: { $in: ['razorpay', 'stripe'] },
-                paymentStatus: { $ne: 'pending' } // Only show paid Razorpay/Stripe orders
-            }
-        ];
+        // Build match stage
+        const matchStage = {
+            $or: [
+                { paymentMethod: 'cod' },
+                {
+                    paymentMethod: { $in: ['razorpay', 'stripe'] },
+                    paymentStatus: { $ne: 'pending' }
+                }
+            ]
+        };
 
         if (orderStatus) {
-            query.orderStatus = orderStatus;
+            matchStage.orderStatus = orderStatus;
         }
 
         if (paymentStatus) {
-            query.paymentStatus = paymentStatus;
+            matchStage.paymentStatus = paymentStatus;
         }
 
-        // Search by order ID or user email (requires additional user lookup)
-        if (search) {
-            // Try to match order ID only if it's a valid ObjectId (24 char hex string)
-            if (/^[0-9a-fA-F]{24}$/.test(search)) {
-                query._id = search;
+        // Build aggregation pipeline
+        const pipeline = [
+            { $match: matchStage },
+            // Lookup user data
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'userInfo'
+                }
+            },
+            { $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
+            // Add string version of _id for search
+            {
+                $addFields: {
+                    orderIdStr: { $toString: '$_id' }
+                }
             }
-            // If not a valid ObjectId, skip the search (could extend to search by user email later)
+        ];
+
+        // Add search conditions if search term exists
+        if (search) {
+            const searchLower = search.toLowerCase();
+            pipeline.push({
+                $match: {
+                    $or: [
+                        // Match partial order ID (last 8 characters shown in UI)
+                        { orderIdStr: { $regex: search, $options: 'i' } },
+                        // Match user email
+                        { 'userInfo.email': { $regex: search, $options: 'i' } },
+                        // Match user name
+                        { 'userInfo.name': { $regex: search, $options: 'i' } },
+                        // Match user phone
+                        { 'userInfo.phone': { $regex: search, $options: 'i' } }
+                    ]
+                }
+            });
         }
 
-        const skip = (page - 1) * limit;
+        // Get total count
+        const countPipeline = [...pipeline, { $count: 'total' }];
+        const countResult = await Order.aggregate(countPipeline);
+        const total = countResult[0]?.total || 0;
 
-        const [orders, total] = await Promise.all([
-            Order.find(query)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .populate('user', 'name email phone')
-                .populate('items.product', 'name images')
-                .lean(),
-            Order.countDocuments(query),
-        ]);
+        // Add sorting and pagination
+        pipeline.push(
+            { $sort: { createdAt: -1 } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit },
+            // Lookup product data for items
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'items.product',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            // Reshape to match expected format
+            {
+                $project: {
+                    _id: 1,
+                    user: {
+                        _id: '$userInfo._id',
+                        name: '$userInfo.name',
+                        email: '$userInfo.email',
+                        phone: '$userInfo.phone'
+                    },
+                    items: 1,
+                    shippingAddress: 1,
+                    paymentMethod: 1,
+                    paymentStatus: 1,
+                    paymentId: 1,
+                    orderStatus: 1,
+                    totalAmount: 1,
+                    notes: 1,
+                    createdAt: 1,
+                    updatedAt: 1
+                }
+            }
+        );
+
+        const orders = await Order.aggregate(pipeline);
 
         return Response.json({
             success: true,

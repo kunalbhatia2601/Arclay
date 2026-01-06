@@ -7,6 +7,7 @@ const UserContext = createContext(null);
 export function UserProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [pendingVerificationEmail, setPendingVerificationEmail] = useState(null);
 
     const fetchUser = useCallback(async () => {
         try {
@@ -51,7 +52,16 @@ export function UserProvider({ children }) {
 
             if (data.success) {
                 setUser(data.user);
+                setPendingVerificationEmail(null);
                 return { success: true, user: data.user };
+            } else if (data.requiresVerification) {
+                setPendingVerificationEmail(data.email);
+                return {
+                    success: false,
+                    requiresVerification: true,
+                    email: data.email,
+                    message: data.message
+                };
             } else {
                 return { success: false, message: data.message };
             }
@@ -75,14 +85,74 @@ export function UserProvider({ children }) {
             const data = await res.json();
 
             if (data.success) {
-                setUser(data.user);
-                return { success: true, user: data.user };
+                if (data.requiresVerification) {
+                    setPendingVerificationEmail(data.email);
+                    return {
+                        success: true,
+                        requiresVerification: true,
+                        email: data.email,
+                        message: data.message
+                    };
+                } else {
+                    setUser(data.user);
+                    return { success: true, user: data.user };
+                }
             } else {
                 return { success: false, message: data.message };
             }
         } catch (error) {
             console.error("Register error:", error);
             return { success: false, message: "Registration failed" };
+        }
+    };
+
+    const verifyOtp = async (email, otp) => {
+        try {
+            const res = await fetch("/api/auth/verify-otp", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ email, otp }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setUser(data.user);
+                setPendingVerificationEmail(null);
+                return { success: true, user: data.user };
+            } else {
+                return { success: false, message: data.message };
+            }
+        } catch (error) {
+            console.error("Verify OTP error:", error);
+            return { success: false, message: "Verification failed" };
+        }
+    };
+
+    const resendOtp = async (email) => {
+        try {
+            const res = await fetch("/api/auth/resend-otp", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ email }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                return { success: true, message: data.message };
+            } else {
+                return { success: false, message: data.message };
+            }
+        } catch (error) {
+            console.error("Resend OTP error:", error);
+            return { success: false, message: "Failed to resend OTP" };
         }
     };
 
@@ -93,6 +163,7 @@ export function UserProvider({ children }) {
                 credentials: "include",
             });
             setUser(null);
+            setPendingVerificationEmail(null);
         } catch (error) {
             console.error("Logout error:", error);
         }
@@ -109,6 +180,9 @@ export function UserProvider({ children }) {
         register,
         logout,
         refreshUser,
+        verifyOtp,
+        resendOtp,
+        pendingVerificationEmail,
         isAuthenticated: !!user,
         isAdmin: user?.role === "admin",
     };
@@ -129,3 +203,4 @@ export function useUser() {
 }
 
 export default UserContext;
+

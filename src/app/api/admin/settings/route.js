@@ -33,6 +33,17 @@ async function getHandler(req) {
                 cod: {
                     isEnabled: settings.payment.cod.isEnabled
                 }
+            },
+            mail: {
+                email: settings.mail?.email || '',
+                password: settings.mail?.password
+                    ? '••••••••' + settings.mail.password.slice(-4)
+                    : '',
+                host: settings.mail?.host || '',
+                port: settings.mail?.port || 587,
+                isSSL: settings.mail?.isSSL || false,
+                isEnabled: settings.mail?.isEnabled || false,
+                _hasPassword: !!settings.mail?.password
             }
         };
 
@@ -103,6 +114,30 @@ async function putHandler(req) {
                 if (typeof updates.payment.cod.isEnabled === 'boolean') {
                     settings.payment.cod.isEnabled = updates.payment.cod.isEnabled;
                 }
+            }
+        }
+
+        // Update mail settings
+        if (updates.mail) {
+            if (updates.mail.email !== undefined) {
+                settings.mail.email = updates.mail.email;
+            }
+            if (updates.mail.password !== undefined &&
+                !updates.mail.password.includes('••••')) {
+                // Only update if not masked
+                settings.mail.password = updates.mail.password;
+            }
+            if (updates.mail.host !== undefined) {
+                settings.mail.host = updates.mail.host;
+            }
+            if (updates.mail.port !== undefined) {
+                settings.mail.port = updates.mail.port;
+            }
+            if (typeof updates.mail.isSSL === 'boolean') {
+                settings.mail.isSSL = updates.mail.isSSL;
+            }
+            if (typeof updates.mail.isEnabled === 'boolean') {
+                settings.mail.isEnabled = updates.mail.isEnabled;
             }
         }
 

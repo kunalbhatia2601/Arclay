@@ -9,7 +9,8 @@ export default function AdminSettings() {
     const [settings, setSettings] = useState(null);
     const [showSecrets, setShowSecrets] = useState({
         razorpaySecret: false,
-        stripeSecret: false
+        stripeSecret: false,
+        mailPassword: false
     });
     const router = useRouter();
 
@@ -187,7 +188,7 @@ export default function AdminSettings() {
             </div>
 
             {/* Stripe Settings */}
-            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+            {/* <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-serif text-xl font-bold">Stripe</h2>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -232,7 +233,7 @@ export default function AdminSettings() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             {/* COD Settings */}
             <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
@@ -252,6 +253,104 @@ export default function AdminSettings() {
                         />
                         <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </label>
+                </div>
+            </div>
+
+            {/* Mail Settings */}
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="font-serif text-xl font-bold">Email Settings</h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Configure SMTP for email verification & notifications
+                        </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={settings?.mail?.isEnabled || false}
+                            onChange={(e) => updateSetting('mail.isEnabled', e.target.checked)}
+                            className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">SMTP Host</label>
+                            <input
+                                type="text"
+                                value={settings?.mail?.host || ''}
+                                onChange={(e) => updateSetting('mail.host', e.target.value)}
+                                className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                placeholder="smtp.gmail.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">SMTP Port</label>
+                            <input
+                                type="number"
+                                value={settings?.mail?.port || 587}
+                                onChange={(e) => updateSetting('mail.port', parseInt(e.target.value) || 587)}
+                                className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                placeholder="587"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Email Address</label>
+                        <input
+                            type="email"
+                            value={settings?.mail?.email || ''}
+                            onChange={(e) => updateSetting('mail.email', e.target.value)}
+                            className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            placeholder="noreply@yourstore.com"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Email Password / App Password</label>
+                        <div className="relative">
+                            <input
+                                type={showSecrets.mailPassword ? "text" : "password"}
+                                value={settings?.mail?.password || ''}
+                                onChange={(e) => updateSetting('mail.password', e.target.value)}
+                                className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                placeholder="App password for Gmail or SMTP password"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowSecrets(prev => ({ ...prev, mailPassword: !prev.mailPassword }))}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-primary hover:underline"
+                            >
+                                {showSecrets.mailPassword ? 'Hide' : 'Show'}
+                            </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            For Gmail, use an App Password (not your regular password)
+                        </p>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
+                        <div>
+                            <h3 className="font-medium">Use SSL/TLS</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Enable for secure connection (port 465). Disable for STARTTLS (port 587)
+                            </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={settings?.mail?.isSSL || false}
+                                onChange={(e) => updateSetting('mail.isSSL', e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
                 </div>
             </div>
 

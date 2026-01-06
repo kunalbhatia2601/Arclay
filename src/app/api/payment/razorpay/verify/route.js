@@ -3,8 +3,10 @@ import Order from "@/models/Order";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
 import Settings from "@/models/Settings";
+import User from "@/models/User";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
 import { withProtection } from "@/lib/auth";
+import { sendOrderConfirmationEmail } from "@/lib/mailer";
 
 async function postHandler(req) {
     try {
@@ -82,7 +84,7 @@ async function postHandler(req) {
         // Clear user's cart
         await Cart.findOneAndUpdate(
             { user: order.user },
-            { $set: { items: [] } }
+            { $set: { items: [], emails_sent_count: 0, last_email_sent_at: null } }
         );
 
         // Update order
@@ -90,6 +92,20 @@ async function postHandler(req) {
         order.paymentId = razorpayPaymentId;
         order.orderStatus = 'confirmed';
         await order.save();
+
+        // Send order confirmation email
+        try {
+            if (settings.mail?.isEnabled && settings.mail?.email && settings.mail?.password && settings.mail?.host) {
+                const populatedOrder = await Order.findById(order._id)
+                    .populate('items.product', 'name images')
+                    .lean();
+                const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'ESSVORA';
+                await sendOrderConfirmationEmail(populatedOrder, req.user.email, settings.mail, siteName);
+            }
+        } catch (emailError) {
+            console.error('Failed to send order confirmation email:', emailError);
+            // Don't fail the order if email fails
+        }
 
         return Response.json({
             success: true,

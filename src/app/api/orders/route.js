@@ -2,7 +2,10 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
+import Settings from "@/models/Settings";
+import User from "@/models/User";
 import { withProtection } from "@/lib/auth";
+import { sendOrderConfirmationEmail } from "@/lib/mailer";
 
 // GET user's orders
 async function getHandler(req) {
@@ -184,6 +187,8 @@ async function postHandler(req) {
         // Only clear cart for COD, defer for online payments
         if (paymentMethod === 'cod') {
             cart.items = [];
+            cart.emails_sent_count = 0;
+            cart.last_email_sent_at = null;
             await cart.save();
         }
 
@@ -191,6 +196,20 @@ async function postHandler(req) {
         const populatedOrder = await Order.findById(order._id)
             .populate('items.product', 'name images')
             .lean();
+
+        // Send order confirmation email for COD orders
+        if (paymentMethod === 'cod') {
+            try {
+                const settings = await Settings.getSettings();
+                if (settings.mail?.isEnabled && settings.mail?.email && settings.mail?.password && settings.mail?.host) {
+                    const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'ESSVORA';
+                    await sendOrderConfirmationEmail(populatedOrder, req.user.email, settings.mail, siteName);
+                }
+            } catch (emailError) {
+                console.error('Failed to send order confirmation email:', emailError);
+                // Don't fail the order if email fails
+            }
+        }
 
         return Response.json({
             success: true,
