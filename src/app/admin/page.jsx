@@ -5,6 +5,24 @@ import Link from "next/link";
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
 
+// Helper function to get price display from variants
+const getProductPriceDisplay = (product) => {
+    const variants = product.variants || [];
+    if (variants.length === 0) return "—";
+
+    // Get all effective prices (sale price if exists, else regular price)
+    const prices = variants.map(v => v.salePrice || v.regularPrice).filter(p => p != null);
+    if (prices.length === 0) return "—";
+
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice) {
+        return `₹${minPrice.toLocaleString()}`;
+    }
+    return `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}`;
+};
+
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -132,7 +150,7 @@ export default function AdminDashboard() {
                                             {product.name}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            ₹{product.regularPrice}
+                                            {getProductPriceDisplay(product)}
                                         </p>
                                     </div>
                                     <span
@@ -179,8 +197,16 @@ export default function AdminDashboard() {
                                     key={category._id}
                                     className="flex items-center gap-3 p-3 bg-muted rounded-xl"
                                 >
-                                    <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center text-lg">
-                                        🏷️
+                                    <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center text-lg overflow-hidden">
+                                        {category.image ? (
+                                            <img
+                                                src={category.image}
+                                                alt={category.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <span>🏷️</span>
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-medium text-foreground truncate">
@@ -213,6 +239,60 @@ export default function AdminDashboard() {
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Recent Users */}
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-serif text-xl font-bold text-foreground">
+                        Recent Users
+                    </h2>
+                    <Link
+                        href="/admin/users"
+                        className="text-sm text-primary hover:underline"
+                    >
+                        View All →
+                    </Link>
+                </div>
+                {stats?.recentUsers?.length > 0 ? (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        {stats.recentUsers.map((user) => (
+                            <div
+                                key={user._id}
+                                className="flex flex-col items-center text-center p-4 bg-muted rounded-xl"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-lg mb-2">
+                                    {user.name?.[0]?.toUpperCase() || "U"}
+                                </div>
+                                <p className="font-medium text-foreground text-sm truncate w-full">
+                                    {user.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate w-full">
+                                    {user.email}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span
+                                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === "admin"
+                                                ? "bg-accent/10 text-accent"
+                                                : "bg-secondary/20 text-secondary-foreground"
+                                            }`}
+                                    >
+                                        {user.role}
+                                    </span>
+                                    <span
+                                        className={`w-2 h-2 rounded-full ${user.isActive ? "bg-green-500" : "bg-muted-foreground"
+                                            }`}
+                                        title={user.isActive ? "Active" : "Inactive"}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>No users yet</p>
+                    </div>
+                )}
             </div>
 
             {/* Quick Links */}

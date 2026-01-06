@@ -83,13 +83,14 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // ESSVORA Logo/Text
+              // ESSVORA Logo
+              // Image.asset('assets/icons/essvora_light.jpg', height: 150),
               Text(
                 AppConstants.appName,
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: AppTheme.spacing16),
               Text(

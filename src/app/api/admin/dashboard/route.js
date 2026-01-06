@@ -37,6 +37,13 @@ async function handler(req) {
             .limit(5)
             .lean();
 
+        // Get recent users
+        const recentUsers = await User.find()
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select("name email role isActive createdAt")
+            .lean();
+
         return Response.json({
             success: true,
             stats: {
@@ -55,6 +62,7 @@ async function handler(req) {
             },
             recentProducts,
             recentCategories,
+            recentUsers,
         });
     } catch (error) {
         console.error("Dashboard error:", error);
