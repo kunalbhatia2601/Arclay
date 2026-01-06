@@ -50,7 +50,7 @@ async function getHandler(req) {
         return Response.json({
             success: true,
             settings: safeSettings,
-            _fullSettings: settings // Full settings for admin use
+            _fullSettings: safeSettings // Full settings for admin use
         });
     } catch (error) {
         console.error("Get settings error:", error);
