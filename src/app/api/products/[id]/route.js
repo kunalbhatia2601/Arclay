@@ -1,6 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
+import Review from "@/models/Review";
 
 export async function GET(req, { params }) {
     try {
@@ -19,9 +20,31 @@ export async function GET(req, { params }) {
             );
         }
 
+        // Get active reviews for this product
+        const reviews = await Review.find({
+            product: id,
+            isActive: true
+        })
+            .sort({ createdAt: -1 })
+            .populate('user', 'name')
+            .lean();
+
+        // Get related products (same category, excluding current product)
+        const relatedProducts = await Product.find({
+            category: product.category._id,
+            _id: { $ne: id },
+            isActive: true
+        })
+            .limit(4)
+            .select('name images variants category')
+            .populate('category', 'name')
+            .lean();
+
         return Response.json({
             success: true,
             product,
+            reviews,
+            relatedProducts
         });
     } catch (error) {
         console.error("Get product error:", error);

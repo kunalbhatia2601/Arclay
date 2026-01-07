@@ -13,15 +13,30 @@ export default function ProductDetailPage({ params }) {
     const router = useRouter();
     const { isAuthenticated } = useUser();
     const [product, setProduct] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [relatedProducts, setRelatedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [addingToCart, setAddingToCart] = useState(false);
     const [selectedImage, setSelectedImage] = useState(0);
-    const [selectedOptions, setSelectedOptions] = useState({}); // { Color: "Red", Size: "M" }
+    const [selectedOptions, setSelectedOptions] = useState({});
     const [quantity, setQuantity] = useState(1);
+
+    // Review form state
+    const [canReview, setCanReview] = useState(false);
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [reviewStars, setReviewStars] = useState(5);
+    const [reviewComment, setReviewComment] = useState("");
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     useEffect(() => {
         fetchProduct();
     }, [id]);
+
+    useEffect(() => {
+        if (isAuthenticated && id) {
+            checkReviewEligibility();
+        }
+    }, [isAuthenticated, id]);
 
     const fetchProduct = async () => {
         try {
@@ -30,6 +45,8 @@ export default function ProductDetailPage({ params }) {
 
             if (data.success) {
                 setProduct(data.product);
+                setReviews(data.reviews || []);
+                setRelatedProducts(data.relatedProducts || []);
                 // Initialize selected options with first option of each type
                 const initialOptions = {};
                 data.product.variationTypes?.forEach((type) => {
@@ -43,6 +60,53 @@ export default function ProductDetailPage({ params }) {
             console.error("Failed to fetch product:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const checkReviewEligibility = async () => {
+        try {
+            const res = await fetch(`/api/reviews?productId=${id}`, {
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setCanReview(data.canReview);
+            }
+        } catch (error) {
+            console.error("Failed to check review eligibility:", error);
+        }
+    };
+
+    const handleSubmitReview = async (e) => {
+        e.preventDefault();
+        if (!reviewComment.trim()) return;
+
+        setSubmittingReview(true);
+        try {
+            const res = await fetch("/api/reviews", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    productId: id,
+                    stars: reviewStars,
+                    comment: reviewComment.trim()
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Review submitted! It will be visible after admin approval.");
+                setShowReviewForm(false);
+                setReviewComment("");
+                setCanReview(false);
+            } else {
+                alert(data.message || "Failed to submit review");
+            }
+        } catch (error) {
+            console.error("Submit review error:", error);
+            alert("Failed to submit review");
+        } finally {
+            setSubmittingReview(false);
         }
     };
 
@@ -158,6 +222,20 @@ export default function ProductDetailPage({ params }) {
         } finally {
             setAddingToCart(false);
         }
+    };
+
+    const getRelatedProductPrice = (p) => {
+        const firstVariant = p.variants?.[0];
+        if (!firstVariant) return 0;
+        return firstVariant.salePrice && firstVariant.salePrice < firstVariant.regularPrice
+            ? firstVariant.salePrice
+            : firstVariant.regularPrice;
+    };
+
+    const renderStars = (count) => {
+        return Array.from({ length: 5 }, (_, i) => (
+            <span key={i} className={i < count ? "text-amber-500" : "text-border"}>★</span>
+        ));
     };
 
     if (loading) {
@@ -434,8 +512,148 @@ export default function ProductDetailPage({ params }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Reviews Section */}
+                    <section className="mt-16 pt-12 border-t border-border">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="font-serif text-2xl font-bold text-foreground">
+                                {/* Show average of stars of all reviews/total reviews */}
+                                Customer Reviews ({reviews.length > 0 ? (reviews.reduce((total, review) => total + review.stars, 0) / reviews.length).toFixed(2) : 0}⭐ • {reviews.length} reviews)
+                            </h2>
+                            {canReview && !showReviewForm && (
+                                <Button
+                                    onClick={() => setShowReviewForm(true)}
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+                                >
+                                    Write a Review
+                                </Button>
+                            )}
+                        </div>
+
+                        {/* Review Form */}
+                        {showReviewForm && (
+                            <form onSubmit={handleSubmitReview} className="bg-muted/50 rounded-2xl p-6 mb-8">
+                                <h3 className="font-semibold text-foreground mb-4">Write Your Review</h3>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-foreground mb-2">Rating</label>
+                                    <div className="flex gap-1">
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                onClick={() => setReviewStars(star)}
+                                                className={`text-2xl transition-colors ${star <= reviewStars ? 'text-amber-500' : 'text-border'}`}
+                                            >
+                                                ★
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-foreground mb-2">Comment</label>
+                                    <textarea
+                                        value={reviewComment}
+                                        onChange={(e) => setReviewComment(e.target.value)}
+                                        placeholder="Share your experience with this product..."
+                                        rows={4}
+                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button
+                                        type="submit"
+                                        disabled={submittingReview || !reviewComment.trim()}
+                                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+                                    >
+                                        {submittingReview ? "Submitting..." : "Submit Review"}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setShowReviewForm(false)}
+                                        className="rounded-full"
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* Reviews List */}
+                        {reviews.length > 0 ? (
+                            <div className="space-y-6">
+                                {reviews.slice(0, 5).map(review => (
+                                    <div key={review._id} className="bg-card rounded-xl p-6 border border-border">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                                                    {review.user?.name?.[0] || 'U'}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-foreground">{review.user?.name || 'Anonymous'}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {new Date(review.createdAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex text-lg">{renderStars(review.stars)}</div>
+                                        </div>
+                                        <p className="text-muted-foreground">{review.comment}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 bg-muted/30 rounded-2xl">
+                                <p className="text-4xl mb-3">⭐</p>
+                                <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Related Products Section */}
+                    {relatedProducts.length > 0 && (
+                        <section className="mt-16 pt-12 border-t border-border">
+                            <h2 className="font-serif text-2xl font-bold text-foreground mb-8">
+                                Related Products
+                            </h2>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+                                {relatedProducts.map(p => (
+                                    <Link
+                                        key={p._id}
+                                        href={`/products/${p._id}`}
+                                        className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                    >
+                                        <div className="aspect-square bg-muted overflow-hidden">
+                                            {p.images?.[0] ? (
+                                                <img
+                                                    src={p.images[0]}
+                                                    alt={p.name}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
+                                            )}
+                                        </div>
+                                        <div className="p-4">
+                                            {p.category && (
+                                                <p className="text-xs text-primary font-medium uppercase tracking-wide mb-1 hidden sm:block">
+                                                    {p.category.name}
+                                                </p>
+                                            )}
+                                            <h3 className="font-serif text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                                                {p.name}
+                                            </h3>
+                                            <p className="font-bold text-foreground mt-2">₹{getRelatedProductPrice(p)}</p>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </div>
             </main>
         </>
     );
 }
+
