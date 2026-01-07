@@ -57,6 +57,27 @@ export default function AdminDashboard() {
 
     const statCards = [
         {
+            title: "Total Orders",
+            value: stats?.stats?.orders?.total || 0,
+            subtext: `${stats?.stats?.orders?.delivered || 0} delivered`,
+            icon: "🛍️",
+            color: "bg-green-500/10 text-green-600",
+        },
+        {
+            title: "Total Revenue",
+            value: `₹${(stats?.stats?.orders?.totalRevenue || 0).toLocaleString()}`,
+            subtext: "All orders",
+            icon: "💰",
+            color: "bg-yellow-500/10 text-yellow-600",
+        },
+        {
+            title: "Confirmed Revenue",
+            value: `₹${(stats?.stats?.orders?.deliveredRevenue || 0).toLocaleString()}`,
+            subtext: "Delivered orders only",
+            icon: "✅",
+            color: "bg-emerald-500/10 text-emerald-600",
+        },
+        {
             title: "Total Products",
             value: stats?.stats?.products?.total || 0,
             subtext: `${stats?.stats?.products?.active || 0} active`,
@@ -78,6 +99,15 @@ export default function AdminDashboard() {
             color: "bg-accent/10 text-accent",
         },
     ];
+
+    const orderStatusColors = {
+        pending: "bg-yellow-100 text-yellow-800",
+        confirmed: "bg-blue-100 text-blue-800",
+        processing: "bg-purple-100 text-purple-800",
+        shipped: "bg-indigo-100 text-indigo-800",
+        delivered: "bg-green-100 text-green-800",
+        cancelled: "bg-red-100 text-red-800"
+    };
 
     return (
         <div className="space-y-8">
@@ -118,6 +148,75 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Recent Orders */}
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-serif text-xl font-bold text-foreground">
+                        Recent Orders
+                    </h2>
+                    <Link
+                        href="/admin/orders"
+                        className="text-sm text-primary hover:underline"
+                    >
+                        View All →
+                    </Link>
+                </div>
+                {stats?.recentOrders?.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-border">
+                                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Order ID</th>
+                                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Customer</th>
+                                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Amount</th>
+                                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Status</th>
+                                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Payment</th>
+                                    <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {stats.recentOrders.map((order) => (
+                                    <tr key={order._id} className="hover:bg-muted/50 transition-colors">
+                                        <td className="py-3 px-2">
+                                            <Link href={`/admin/orders/${order._id}`} className="font-mono text-sm text-primary hover:underline">
+                                                #{order._id.slice(-8)}
+                                            </Link>
+                                        </td>
+                                        <td className="py-3 px-2">
+                                            <div>
+                                                <p className="font-medium text-sm">{order.user?.name || 'N/A'}</p>
+                                                <p className="text-xs text-muted-foreground">{order.user?.email || ''}</p>
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-2">
+                                            <p className="font-semibold">₹{order.totalAmount?.toLocaleString()}</p>
+                                            {order.couponCode && (
+                                                <p className="text-xs text-primary">-₹{order.discountAmount} ({order.couponCode})</p>
+                                            )}
+                                        </td>
+                                        <td className="py-3 px-2">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${orderStatusColors[order.orderStatus] || 'bg-gray-100 text-gray-800'}`}>
+                                                {order.orderStatus}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-2">
+                                            <span className="text-sm capitalize">{order.paymentMethod}</span>
+                                        </td>
+                                        <td className="py-3 px-2 text-sm text-muted-foreground">
+                                            {new Date(order.createdAt).toLocaleDateString('en-IN')}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>No orders yet</p>
+                    </div>
+                )}
             </div>
 
             {/* Quick Actions */}
@@ -273,8 +372,8 @@ export default function AdminDashboard() {
                                 <div className="flex items-center gap-2 mt-2">
                                     <span
                                         className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === "admin"
-                                                ? "bg-accent/10 text-accent"
-                                                : "bg-secondary/20 text-secondary-foreground"
+                                            ? "bg-accent/10 text-accent"
+                                            : "bg-secondary/20 text-secondary-foreground"
                                             }`}
                                     >
                                         {user.role}

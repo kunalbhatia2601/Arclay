@@ -9,12 +9,12 @@ const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
 
 const navItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
+    { href: "/admin/orders", label: "Orders", icon: "🛍️" },
     { href: "/admin/products", label: "Products", icon: "📦" },
     { href: "/admin/categories", label: "Categories", icon: "🏷️" },
     { href: "/admin/bundles", label: "Bundles", icon: "🎁" },
-    { href: "/admin/reviews", label: "Reviews", icon: "⭐" },
     { href: "/admin/coupons", label: "Coupons", icon: "🎟️" },
-    { href: "/admin/orders", label: "Orders", icon: "🛍️" },
+    { href: "/admin/reviews", label: "Reviews", icon: "⭐" },
     { href: "/admin/carts", label: "User Carts", icon: "🛒" },
     { href: "/admin/users", label: "Users", icon: "👥" },
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
