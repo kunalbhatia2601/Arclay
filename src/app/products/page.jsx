@@ -135,7 +135,7 @@ export default function ProductsPage() {
                                     <label className="block text-sm font-medium text-foreground mb-3">
                                         Category
                                     </label>
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                                         <button
                                             onClick={() => setSelectedCategory("")}
                                             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === ""

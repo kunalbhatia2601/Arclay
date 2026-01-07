@@ -59,7 +59,7 @@ export default function MyAccountPage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
                         <div className="text-3xl mb-2">📦</div>
                         <h3 className="font-bold text-2xl text-foreground">{stats.totalOrders}</h3>
@@ -69,11 +69,6 @@ export default function MyAccountPage() {
                         <div className="text-3xl mb-2">⏳</div>
                         <h3 className="font-bold text-2xl text-foreground">{stats.pendingOrders}</h3>
                         <p className="text-muted-foreground text-sm">Pending Orders</p>
-                    </div>
-                    <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-                        <div className="text-3xl mb-2">📍</div>
-                        <h3 className="font-bold text-2xl text-foreground">-</h3>
-                        <p className="text-muted-foreground text-sm">Saved Addresses</p>
                     </div>
                 </div>
 
