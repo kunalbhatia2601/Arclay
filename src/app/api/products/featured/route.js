@@ -1,5 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
+import Category from "@/models/Category";
 import { withPublicProtection } from "@/lib/auth";
 
 // GET featured products

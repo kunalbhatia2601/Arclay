@@ -13,6 +13,7 @@ const navItems = [
     { href: "/admin/categories", label: "Categories", icon: "🏷️" },
     { href: "/admin/bundles", label: "Bundles", icon: "🎁" },
     { href: "/admin/reviews", label: "Reviews", icon: "⭐" },
+    { href: "/admin/coupons", label: "Coupons", icon: "🎟️" },
     { href: "/admin/orders", label: "Orders", icon: "🛍️" },
     { href: "/admin/carts", label: "User Carts", icon: "🛒" },
     { href: "/admin/users", label: "Users", icon: "👥" },

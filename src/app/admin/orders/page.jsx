@@ -183,6 +183,9 @@ export default function AdminOrders() {
                                             Total
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                            Coupon
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                             Order Status
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -210,6 +213,16 @@ export default function AdminOrders() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap font-medium">
                                                 ₹{order.totalAmount.toFixed(2)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {order.couponCode ? (
+                                                    <div>
+                                                        <span className="font-mono text-xs text-primary">{order.couponCode}</span>
+                                                        <span className="block text-xs text-muted-foreground">-₹{order.discountAmount || 0}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">—</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.orderStatus]}`}>

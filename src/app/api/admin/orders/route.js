@@ -121,6 +121,8 @@ async function getHandler(req) {
                     paymentId: 1,
                     orderStatus: 1,
                     totalAmount: 1,
+                    couponCode: 1,
+                    discountAmount: 1,
                     notes: 1,
                     createdAt: 1,
                     updatedAt: 1

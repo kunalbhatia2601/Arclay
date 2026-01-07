@@ -4,6 +4,7 @@ import Cart from "@/models/Cart";
 import Product from "@/models/Product";
 import Settings from "@/models/Settings";
 import User from "@/models/User";
+import Coupon from "@/models/Coupon";
 import { withProtection } from "@/lib/auth";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
 
@@ -77,7 +78,7 @@ async function getHandler(req) {
 // POST create new order
 async function postHandler(req) {
     try {
-        const { shippingAddress, paymentMethod, notes } = await req.json();
+        const { shippingAddress, paymentMethod, notes, couponCode } = await req.json();
 
         if (!shippingAddress || !paymentMethod) {
             return Response.json(
@@ -119,7 +120,7 @@ async function postHandler(req) {
 
         // Validate cart items and calculate total
         const orderItems = [];
-        let totalAmount = 0;
+        let subtotal = 0;
 
         for (const cartItem of cart.items) {
             if (!cartItem.product || !cartItem.product.isActive) {
@@ -152,7 +153,7 @@ async function postHandler(req) {
 
             const price = variant.salePrice || variant.regularPrice;
             const itemTotal = price * cartItem.quantity;
-            totalAmount += itemTotal;
+            subtotal += itemTotal;
 
             orderItems.push({
                 product: cartItem.product._id,
@@ -172,6 +173,35 @@ async function postHandler(req) {
             }
         }
 
+        // Process coupon if provided
+        let discountAmount = 0;
+        let coupon = null;
+        let appliedCouponCode = '';
+
+        if (couponCode) {
+            coupon = await Coupon.findOne({
+                code: couponCode.toUpperCase(),
+                isActive: true
+            });
+
+            if (coupon) {
+                // Basic validations (full validation done client-side, but double-check)
+                const now = new Date();
+                const isValid =
+                    (!coupon.validFrom || now >= coupon.validFrom) &&
+                    (!coupon.validUntil || now <= coupon.validUntil) &&
+                    (coupon.maxUsage === null || coupon.usageCount < coupon.maxUsage);
+
+                if (isValid && subtotal >= coupon.minPurchase) {
+                    // Calculate discount
+                    discountAmount = coupon.calculateDiscount(orderItems, subtotal);
+                    appliedCouponCode = coupon.code;
+                }
+            }
+        }
+
+        const totalAmount = Math.max(0, subtotal - discountAmount);
+
         // Create order
         const order = await Order.create({
             user: req.user._id,
@@ -180,9 +210,20 @@ async function postHandler(req) {
             paymentMethod,
             paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
             orderStatus: paymentMethod === 'cod' ? 'confirmed' : 'pending',
+            subtotal,
+            discountAmount,
+            coupon: coupon?._id || null,
+            couponCode: appliedCouponCode,
             totalAmount,
             notes: notes || ''
         });
+
+        // Increment coupon usage count if coupon was applied
+        if (coupon && discountAmount > 0) {
+            await Coupon.findByIdAndUpdate(coupon._id, {
+                $inc: { usageCount: 1 }
+            });
+        }
 
         // Only clear cart for COD, defer for online payments
         if (paymentMethod === 'cod') {

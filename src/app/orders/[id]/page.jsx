@@ -190,8 +190,18 @@ export default function OrderDetailPage() {
                                 )}
                             </div>
 
-                            <div className="border-t border-border pt-4">
-                                <div className="flex justify-between text-2xl font-bold">
+                            <div className="border-t border-border pt-4 space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Subtotal</span>
+                                    <span>₹{order.subtotal || order.totalAmount}</span>
+                                </div>
+                                {order.couponCode && (
+                                    <div className="flex justify-between text-primary">
+                                        <span>Discount ({order.couponCode})</span>
+                                        <span>-₹{order.discountAmount || 0}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between text-2xl font-bold pt-2 border-t border-border">
                                     <span>Total</span>
                                     <span>₹{order.totalAmount}</span>
                                 </div>

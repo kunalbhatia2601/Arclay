@@ -113,6 +113,24 @@ const OrderSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    // Coupon tracking
+    subtotal: {
+        type: Number,
+        default: 0
+    },
+    coupon: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Coupon',
+        default: null
+    },
+    couponCode: {
+        type: String,
+        default: ''
+    },
+    discountAmount: {
+        type: Number,
+        default: 0
+    },
     notes: {
         type: String,
         default: '',

@@ -16,6 +16,15 @@ export default function CheckoutPage() {
     const [selectedAddressId, setSelectedAddressId] = useState(null);
     const [useNewAddress, setUseNewAddress] = useState(false);
     const [saveAddress, setSaveAddress] = useState(false);
+
+    // Coupon state
+    const [availableCoupons, setAvailableCoupons] = useState([]);
+    const [couponCode, setCouponCode] = useState("");
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [couponError, setCouponError] = useState("");
+    const [applyingCoupon, setApplyingCoupon] = useState(false);
+
     const [formData, setFormData] = useState({
         fullName: "",
         phone: "",
@@ -39,16 +48,18 @@ export default function CheckoutPage() {
 
     const fetchData = async () => {
         try {
-            const [cartRes, settingsRes, addressesRes] = await Promise.all([
+            const [cartRes, settingsRes, addressesRes, couponsRes] = await Promise.all([
                 fetch("/api/cart", { credentials: "include" }),
                 fetch("/api/settings", { credentials: "include" }),
-                fetch("/api/addresses", { credentials: "include" })
+                fetch("/api/addresses", { credentials: "include" }),
+                fetch("/api/coupons", { credentials: "include" })
             ]);
 
-            const [cartData, settingsData, addressesData] = await Promise.all([
+            const [cartData, settingsData, addressesData, couponsData] = await Promise.all([
                 cartRes.json(),
                 settingsRes.json(),
-                addressesRes.json()
+                addressesRes.json(),
+                couponsRes.json()
             ]);
 
             if (cartData.success) {
@@ -98,6 +109,10 @@ export default function CheckoutPage() {
                     }));
                 }
             }
+
+            if (couponsData.success) {
+                setAvailableCoupons(couponsData.coupons || []);
+            }
         } catch (error) {
             console.error("Failed to fetch data:", error);
         } finally {
@@ -122,6 +137,59 @@ export default function CheckoutPage() {
                 country: address.country
             }));
         }
+    };
+
+    const handleApplyCoupon = async (code = couponCode) => {
+        if (!code.trim()) return;
+
+        setApplyingCoupon(true);
+        setCouponError("");
+
+        try {
+            // Prepare cart items for validation
+            const cartItems = cart.items.map(item => ({
+                productId: item.product._id,
+                product: item.product,
+                quantity: item.quantity,
+                priceAtOrder: item.price
+            }));
+
+            const res = await fetch("/api/coupons/validate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    code: code.trim(),
+                    cartItems,
+                    cartTotal: cart.total
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setAppliedCoupon(data.coupon);
+                setDiscountAmount(data.discountAmount);
+                setCouponCode(data.coupon.code);
+                setCouponError("");
+            } else {
+                setCouponError(data.message || "Invalid coupon");
+                setAppliedCoupon(null);
+                setDiscountAmount(0);
+            }
+        } catch (error) {
+            console.error("Apply coupon error:", error);
+            setCouponError("Failed to apply coupon");
+        } finally {
+            setApplyingCoupon(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setDiscountAmount(0);
+        setCouponCode("");
+        setCouponError("");
     };
 
     const handleSubmit = async (e) => {
@@ -168,7 +236,8 @@ export default function CheckoutPage() {
                         country: formData.country
                     },
                     paymentMethod: formData.paymentMethod,
-                    notes: formData.notes
+                    notes: formData.notes,
+                    couponCode: appliedCoupon?.code || ""
                 }),
             });
 
@@ -320,6 +389,8 @@ export default function CheckoutPage() {
     if (settings?.payment.cod.isEnabled) availablePayments.push({ value: "cod", label: "Cash on Delivery" });
     if (settings?.payment.razorpay.isEnabled) availablePayments.push({ value: "razorpay", label: "Razorpay" });
     if (settings?.payment.stripe.isEnabled) availablePayments.push({ value: "stripe", label: "Stripe" });
+
+    const finalTotal = cart?.total - discountAmount;
 
     return (
         <div className="min-h-screen bg-background py-12 pt-24">
@@ -516,6 +587,90 @@ export default function CheckoutPage() {
                                 )}
                             </div>
 
+                            {/* Coupon Code */}
+                            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                                <h2 className="font-serif text-2xl font-bold mb-4">Discount Code</h2>
+
+                                {appliedCoupon ? (
+                                    <div className="flex items-center justify-between bg-primary/10 rounded-lg p-4">
+                                        <div>
+                                            <p className="font-mono font-bold text-primary">{appliedCoupon.code}</p>
+                                            <p className="text-sm text-muted-foreground">{appliedCoupon.description}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-primary">-₹{discountAmount}</p>
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveCoupon}
+                                                className="text-xs text-destructive hover:underline"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={couponCode}
+                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                placeholder="Enter coupon code"
+                                                className="flex-1 px-4 py-2 bg-muted border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleApplyCoupon()}
+                                                disabled={applyingCoupon || !couponCode.trim()}
+                                                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {applyingCoupon ? "..." : "Apply"}
+                                            </button>
+                                        </div>
+                                        {couponError && (
+                                            <p className="text-sm text-destructive mt-2">{couponError}</p>
+                                        )}
+                                    </>
+                                )}
+
+                                {/* Available Coupons */}
+                                {availableCoupons.length > 0 && !appliedCoupon && (
+                                    <div className="mt-4 pt-4 border-t border-border">
+                                        <p className="text-sm font-medium text-muted-foreground mb-3">Available Coupons</p>
+                                        <div className="space-y-2">
+                                            {availableCoupons.map(coupon => (
+                                                <button
+                                                    key={coupon._id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCouponCode(coupon.code);
+                                                        handleApplyCoupon(coupon.code);
+                                                    }}
+                                                    className="w-full text-left p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="font-mono font-bold text-primary text-sm">{coupon.code}</p>
+                                                            <p className="text-xs text-muted-foreground">{coupon.description}</p>
+                                                        </div>
+                                                        <span className="text-sm font-medium">
+                                                            {coupon.discountType === 'percentage'
+                                                                ? `${coupon.discountValue}% OFF`
+                                                                : `₹${coupon.discountValue} OFF`}
+                                                        </span>
+                                                    </div>
+                                                    {coupon.minPurchase > 0 && (
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            Min. order: ₹{coupon.minPurchase}
+                                                        </p>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Payment Method */}
                             <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
                                 <h2 className="font-serif text-2xl font-bold mb-6">Payment Method</h2>
@@ -574,19 +729,29 @@ export default function CheckoutPage() {
                                     ))}
                                 </div>
 
-                                <div className="border-t border-border pt-4 mb-6">
-                                    <div className="flex justify-between text-xl font-bold">
-                                        <span>Total</span>
+                                <div className="border-t border-border pt-4 space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">Subtotal</span>
                                         <span>₹{cart?.total}</span>
+                                    </div>
+                                    {discountAmount > 0 && (
+                                        <div className="flex justify-between text-sm text-primary">
+                                            <span>Discount ({appliedCoupon?.code})</span>
+                                            <span>-₹{discountAmount}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between text-xl font-bold pt-2 border-t border-border">
+                                        <span>Total</span>
+                                        <span>₹{finalTotal}</span>
                                     </div>
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={submitting || availablePayments.length === 0}
-                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                                 >
-                                    {submitting ? "Placing Order..." : "Place Order"}
+                                    {submitting ? "Placing Order..." : `Place Order — ₹${finalTotal}`}
                                 </button>
                             </div>
                         </div>

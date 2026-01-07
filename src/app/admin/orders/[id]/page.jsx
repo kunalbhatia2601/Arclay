@@ -168,8 +168,18 @@ export default function AdminOrderDetail() {
                         </div>
                     ))}
                 </div>
-                <div className="mt-6 pt-6 border-t border-border">
-                    <div className="flex justify-between text-xl font-bold">
+                <div className="mt-6 pt-6 border-t border-border space-y-2">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>₹{order.subtotal || order.totalAmount}</span>
+                    </div>
+                    {order.couponCode && (
+                        <div className="flex justify-between text-primary">
+                            <span>Discount ({order.couponCode})</span>
+                            <span>-₹{order.discountAmount || 0}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between text-xl font-bold pt-2 border-t border-border">
                         <span>Total Amount</span>
                         <span>₹{order.totalAmount}</span>
                     </div>
