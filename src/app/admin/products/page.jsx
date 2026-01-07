@@ -94,6 +94,25 @@ export default function ProductsPage() {
         }
     };
 
+    const toggleFeatured = async (id, currentFeatured) => {
+        try {
+            const res = await fetch(`/api/admin/products/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ isFeatured: !currentFeatured }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setProducts(prev => prev.map(p =>
+                    p._id === id ? { ...p, isFeatured: !currentFeatured } : p
+                ));
+            }
+        } catch (error) {
+            console.error("Toggle featured failed:", error);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -155,6 +174,9 @@ export default function ProductsPage() {
                                     </th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
                                         Price
+                                    </th>
+                                    <th className="text-center px-6 py-4 text-sm font-semibold text-foreground">
+                                        Featured
                                     </th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
                                         Status
@@ -225,6 +247,15 @@ export default function ProductsPage() {
                                                     );
                                                 })()}
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button
+                                                onClick={() => toggleFeatured(product._id, product.isFeatured)}
+                                                className="text-2xl transition-transform hover:scale-110"
+                                                title={product.isFeatured ? "Remove from featured" : "Add to featured"}
+                                            >
+                                                {product.isFeatured ? "⭐" : "☆"}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4">
                                             <button

@@ -38,7 +38,7 @@ async function getHandler(req, { params }) {
 async function putHandler(req, { params }) {
     try {
         const { id } = await params;
-        const { name, images, description, variationTypes, variants, category, isActive } = await req.json();
+        const { name, images, description, variationTypes, variants, category, isActive, isFeatured } = await req.json();
 
         await connectDB();
 
@@ -58,6 +58,7 @@ async function putHandler(req, { params }) {
         if (variants !== undefined) product.variants = variants;
         if (category !== undefined) product.category = category;
         if (isActive !== undefined) product.isActive = isActive;
+        if (isFeatured !== undefined) product.isFeatured = isFeatured;
 
         await product.save();
 

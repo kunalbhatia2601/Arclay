@@ -58,13 +58,13 @@ export default function Footer() {
                         {/* Newsletter */}
                         <div className="space-y-3">
                             <p className="font-medium text-background">{content.footer.newsletterPrompt}</p>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <input
                                     type="email"
                                     placeholder="Enter your email"
                                     className="flex-1 px-4 py-3 rounded-full bg-background/10 border border-background/20 text-background placeholder:text-background/50 focus:outline-none focus:border-background/50"
                                 />
-                                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
+                                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 w-full lg:w-auto">
                                     Subscribe
                                 </Button>
                             </div>
