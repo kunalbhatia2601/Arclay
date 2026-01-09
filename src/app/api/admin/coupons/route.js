@@ -51,9 +51,20 @@ async function postHandler(req) {
     try {
         const data = await req.json();
 
-        if (!data.code || !data.discountType || data.discountValue === undefined) {
+        // Bundle types don't require discountValue
+        const isBundleType = ['buyXForY', 'buyXGetYFree', 'tierPricing'].includes(data.discountType);
+
+        if (!data.code || !data.discountType) {
             return Response.json(
-                { success: false, message: "Code, discount type, and value are required" },
+                { success: false, message: "Code and discount type are required" },
+                { status: 400 }
+            );
+        }
+
+        // Standard types require discountValue
+        if (!isBundleType && (data.discountValue === undefined || data.discountValue === null)) {
+            return Response.json(
+                { success: false, message: "Discount value is required for percentage/fixed types" },
                 { status: 400 }
             );
         }
@@ -85,7 +96,10 @@ async function postHandler(req) {
             applicableUsers: data.applicableUsers || [],
             firstPurchaseOnly: data.firstPurchaseOnly || false,
             isActive: data.isActive !== false,
-            showToUser: data.showToUser || false
+            showToUser: data.showToUser || false,
+            buyXForY: data.buyXForY || null,
+            buyXGetYFree: data.buyXGetYFree || null,
+            quantityTiers: data.quantityTiers || []
         });
 
         return Response.json({

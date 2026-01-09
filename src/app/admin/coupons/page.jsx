@@ -51,6 +51,11 @@ export default function AdminCouponsPage() {
         description: '',
         discountType: 'percentage',
         discountValue: 10,
+        // Bundle type fields
+        buyXForY: { requiredQty: 3, flatPrice: 999 },
+        buyXGetYFree: { buyQty: 2, freeQty: 1 },
+        quantityTiers: [],
+        // Standard fields
         minPurchase: 0,
         maxDiscount: '',
         maxUsage: '',
@@ -160,7 +165,10 @@ export default function AdminCouponsPage() {
                 code: coupon.code,
                 description: coupon.description || '',
                 discountType: coupon.discountType,
-                discountValue: coupon.discountValue,
+                discountValue: coupon.discountValue || 0,
+                buyXForY: coupon.buyXForY || { requiredQty: 3, flatPrice: 999 },
+                buyXGetYFree: coupon.buyXGetYFree || { buyQty: 2, freeQty: 1 },
+                quantityTiers: coupon.quantityTiers || [],
                 minPurchase: coupon.minPurchase || 0,
                 maxDiscount: coupon.maxDiscount || '',
                 maxUsage: coupon.maxUsage || '',
@@ -182,6 +190,9 @@ export default function AdminCouponsPage() {
                 description: '',
                 discountType: 'percentage',
                 discountValue: 10,
+                buyXForY: { requiredQty: 3, flatPrice: 999 },
+                buyXGetYFree: { buyQty: 2, freeQty: 1 },
+                quantityTiers: [],
                 minPurchase: 0,
                 maxDiscount: '',
                 maxUsage: '',
@@ -377,11 +388,13 @@ export default function AdminCouponsPage() {
                                         </td>
                                         <td className="py-4 px-6">
                                             <span className="font-semibold">
-                                                {coupon.discountType === 'percentage'
-                                                    ? `${coupon.discountValue}%`
-                                                    : `₹${coupon.discountValue}`}
+                                                {coupon.discountType === 'percentage' && `${coupon.discountValue}%`}
+                                                {coupon.discountType === 'fixed' && `₹${coupon.discountValue}`}
+                                                {coupon.discountType === 'buyXForY' && `${coupon.buyXForY?.requiredQty || 0} for ₹${coupon.buyXForY?.flatPrice || 0}`}
+                                                {coupon.discountType === 'buyXGetYFree' && `Buy ${coupon.buyXGetYFree?.buyQty || 0} Get ${coupon.buyXGetYFree?.freeQty || 0} Free`}
+                                                {coupon.discountType === 'tierPricing' && `${coupon.quantityTiers?.length || 0} Tiers`}
                                             </span>
-                                            {coupon.maxDiscount && (
+                                            {coupon.maxDiscount && coupon.discountType === 'percentage' && (
                                                 <span className="text-xs text-muted-foreground ml-1">(max ₹{coupon.maxDiscount})</span>
                                             )}
                                         </td>
@@ -462,6 +475,9 @@ export default function AdminCouponsPage() {
                                     >
                                         <option value="percentage">Percentage (%)</option>
                                         <option value="fixed">Fixed Amount (₹)</option>
+                                        <option value="buyXForY">Buy X for ₹Y</option>
+                                        <option value="buyXGetYFree">Buy X Get Y Free</option>
+                                        <option value="tierPricing">Quantity Tier Pricing</option>
                                     </select>
                                 </div>
                             </div>
@@ -477,40 +493,218 @@ export default function AdminCouponsPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1">Value *</label>
-                                    <input
-                                        type="number"
-                                        value={formData.discountValue}
-                                        onChange={(e) => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
-                                        className="w-full px-4 py-2 bg-muted border border-border rounded-lg"
-                                        min="0"
-                                        required
-                                    />
+                            {/* Conditional Fields Based on Discount Type */}
+                            {(formData.discountType === 'percentage' || formData.discountType === 'fixed') && (
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-foreground mb-1">
+                                            {formData.discountType === 'percentage' ? 'Percentage *' : 'Amount (₹) *'}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={formData.discountValue}
+                                            onChange={(e) => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
+                                            className="w-full px-4 py-2 bg-muted border border-border rounded-lg"
+                                            min="0"
+                                            max={formData.discountType === 'percentage' ? 100 : undefined}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-foreground mb-1">Min Purchase (₹)</label>
+                                        <input
+                                            type="number"
+                                            value={formData.minPurchase}
+                                            onChange={(e) => setFormData({ ...formData, minPurchase: parseFloat(e.target.value) || 0 })}
+                                            className="w-full px-4 py-2 bg-muted border border-border rounded-lg"
+                                            min="0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-foreground mb-1">Max Discount (₹)</label>
+                                        <input
+                                            type="number"
+                                            value={formData.maxDiscount}
+                                            onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
+                                            className="w-full px-4 py-2 bg-muted border border-border rounded-lg"
+                                            placeholder="No limit"
+                                            min="0"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1">Min Purchase (₹)</label>
-                                    <input
-                                        type="number"
-                                        value={formData.minPurchase}
-                                        onChange={(e) => setFormData({ ...formData, minPurchase: parseFloat(e.target.value) || 0 })}
-                                        className="w-full px-4 py-2 bg-muted border border-border rounded-lg"
-                                        min="0"
-                                    />
+                            )}
+
+                            {formData.discountType === 'buyXForY' && (
+                                <div className="p-4 bg-muted rounded-xl space-y-3">
+                                    <p className="text-sm font-medium text-foreground">Buy X items for a flat price</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm text-muted-foreground mb-1">Number of Items (X) *</label>
+                                            <input
+                                                type="number"
+                                                value={formData.buyXForY.requiredQty}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    buyXForY: { ...formData.buyXForY, requiredQty: parseInt(e.target.value) || 0 }
+                                                })}
+                                                className="w-full px-4 py-2 bg-background border border-border rounded-lg"
+                                                min="1"
+                                                placeholder="3"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-muted-foreground mb-1">Flat Price ₹ (Y) *</label>
+                                            <input
+                                                type="number"
+                                                value={formData.buyXForY.flatPrice}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    buyXForY: { ...formData.buyXForY, flatPrice: parseFloat(e.target.value) || 0 }
+                                                })}
+                                                className="w-full px-4 py-2 bg-background border border-border rounded-lg"
+                                                min="0"
+                                                placeholder="999"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Example: Buy 3 items for ₹999</p>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1">Max Discount (₹)</label>
-                                    <input
-                                        type="number"
-                                        value={formData.maxDiscount}
-                                        onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
-                                        className="w-full px-4 py-2 bg-muted border border-border rounded-lg"
-                                        placeholder="No limit"
-                                        min="0"
-                                    />
+                            )}
+
+                            {formData.discountType === 'buyXGetYFree' && (
+                                <div className="p-4 bg-muted rounded-xl space-y-3">
+                                    <p className="text-sm font-medium text-foreground">Buy X, Get Y Free (cheapest items)</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm text-muted-foreground mb-1">Buy Quantity (X) *</label>
+                                            <input
+                                                type="number"
+                                                value={formData.buyXGetYFree.buyQty}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    buyXGetYFree: { ...formData.buyXGetYFree, buyQty: parseInt(e.target.value) || 0 }
+                                                })}
+                                                className="w-full px-4 py-2 bg-background border border-border rounded-lg"
+                                                min="1"
+                                                placeholder="2"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-muted-foreground mb-1">Free Quantity (Y) *</label>
+                                            <input
+                                                type="number"
+                                                value={formData.buyXGetYFree.freeQty}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    buyXGetYFree: { ...formData.buyXGetYFree, freeQty: parseInt(e.target.value) || 0 }
+                                                })}
+                                                className="w-full px-4 py-2 bg-background border border-border rounded-lg"
+                                                min="1"
+                                                placeholder="1"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Example: Buy 2 Get 1 Free (cheapest item is free)</p>
                                 </div>
-                            </div>
+                            )}
+
+                            {formData.discountType === 'tierPricing' && (
+                                <div className="p-4 bg-muted rounded-xl space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm font-medium text-foreground">Quantity Tiers</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({
+                                                ...formData,
+                                                quantityTiers: [...formData.quantityTiers, { minQty: 2, maxQty: null, discountType: 'percentage', discountValue: 10 }]
+                                            })}
+                                            className="text-sm text-primary hover:underline"
+                                        >
+                                            + Add Tier
+                                        </button>
+                                    </div>
+                                    {formData.quantityTiers.length === 0 && (
+                                        <p className="text-sm text-muted-foreground text-center py-4">No tiers yet. Add a tier to get started.</p>
+                                    )}
+                                    {formData.quantityTiers.map((tier, idx) => (
+                                        <div key={idx} className="grid grid-cols-5 gap-2 items-end bg-background p-3 rounded-lg">
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Min Qty</label>
+                                                <input
+                                                    type="number"
+                                                    value={tier.minQty}
+                                                    onChange={(e) => {
+                                                        const newTiers = [...formData.quantityTiers];
+                                                        newTiers[idx].minQty = parseInt(e.target.value) || 0;
+                                                        setFormData({ ...formData, quantityTiers: newTiers });
+                                                    }}
+                                                    className="w-full px-2 py-1 bg-muted border border-border rounded text-sm"
+                                                    min="1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Max Qty</label>
+                                                <input
+                                                    type="number"
+                                                    value={tier.maxQty || ''}
+                                                    onChange={(e) => {
+                                                        const newTiers = [...formData.quantityTiers];
+                                                        newTiers[idx].maxQty = e.target.value ? parseInt(e.target.value) : null;
+                                                        setFormData({ ...formData, quantityTiers: newTiers });
+                                                    }}
+                                                    className="w-full px-2 py-1 bg-muted border border-border rounded text-sm"
+                                                    placeholder="∞"
+                                                    min="1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Type</label>
+                                                <select
+                                                    value={tier.discountType}
+                                                    onChange={(e) => {
+                                                        const newTiers = [...formData.quantityTiers];
+                                                        newTiers[idx].discountType = e.target.value;
+                                                        setFormData({ ...formData, quantityTiers: newTiers });
+                                                    }}
+                                                    className="w-full px-2 py-1 bg-muted border border-border rounded text-sm"
+                                                >
+                                                    <option value="percentage">%</option>
+                                                    <option value="fixed">₹</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Value</label>
+                                                <input
+                                                    type="number"
+                                                    value={tier.discountValue}
+                                                    onChange={(e) => {
+                                                        const newTiers = [...formData.quantityTiers];
+                                                        newTiers[idx].discountValue = parseFloat(e.target.value) || 0;
+                                                        setFormData({ ...formData, quantityTiers: newTiers });
+                                                    }}
+                                                    className="w-full px-2 py-1 bg-muted border border-border rounded text-sm"
+                                                    min="0"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newTiers = formData.quantityTiers.filter((_, i) => i !== idx);
+                                                    setFormData({ ...formData, quantityTiers: newTiers });
+                                                }}
+                                                className="px-2 py-1 text-destructive hover:bg-destructive/10 rounded text-sm"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <p className="text-xs text-muted-foreground">Example: 2-3 items: 10%, 4-5 items: 15%, 6+: 20%</p>
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

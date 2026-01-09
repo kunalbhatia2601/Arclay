@@ -30,6 +30,8 @@ async function postHandler(req) {
             );
         }
 
+        console.log(coupon);
+
         // Check validity dates
         const now = new Date();
         if (coupon.validFrom && now < coupon.validFrom) {
@@ -81,6 +83,45 @@ async function postHandler(req) {
                     { success: false, message: "This coupon is only for first-time customers" },
                     { status: 400 }
                 );
+            }
+        }
+
+        // Calculate total quantity in cart
+        const totalQty = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+        // Bundle-specific quantity validations
+        if (coupon.discountType === 'buyXForY') {
+            const requiredQty = coupon.buyXForY?.requiredQty || 0;
+            if (requiredQty > 0 && totalQty < requiredQty) {
+                return Response.json(
+                    { success: false, message: `Add ${requiredQty - totalQty} more item(s) to get this deal (need ${requiredQty} items)` },
+                    { status: 400 }
+                );
+            }
+        }
+
+        if (coupon.discountType === 'buyXGetYFree') {
+            const buyQty = coupon.buyXGetYFree?.buyQty || 0;
+            const freeQty = coupon.buyXGetYFree?.freeQty || 0;
+            const minRequired = buyQty + freeQty;
+            if (minRequired > 0 && totalQty < minRequired) {
+                return Response.json(
+                    { success: false, message: `Add ${minRequired - totalQty} more item(s) for Buy ${buyQty} Get ${freeQty} Free` },
+                    { status: 400 }
+                );
+            }
+        }
+
+        if (coupon.discountType === 'tierPricing') {
+            const tiers = coupon.quantityTiers || [];
+            if (tiers.length > 0) {
+                const lowestTier = tiers.reduce((min, t) => t.minQty < min ? t.minQty : min, Infinity);
+                if (totalQty < lowestTier) {
+                    return Response.json(
+                        { success: false, message: `Add ${lowestTier - totalQty} more item(s) to qualify for tier pricing` },
+                        { status: 400 }
+                    );
+                }
             }
         }
 

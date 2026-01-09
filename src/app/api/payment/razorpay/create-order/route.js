@@ -50,7 +50,7 @@ async function postHandler(req) {
             Math.round(order.totalAmount * 100), // Convert to paise
             order._id.toString(),
             settings.payment.razorpay.keyId,
-            settings.payment.razorpay.keySecret
+            settings.payment.razorpay.keySecret,
         );
 
         return Response.json({

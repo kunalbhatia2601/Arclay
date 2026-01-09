@@ -72,7 +72,7 @@ async function putHandler(req, { params }) {
             'description', 'discountType', 'discountValue', 'minPurchase',
             'maxDiscount', 'maxUsage', 'perUserLimit', 'validFrom', 'validUntil',
             'applicableCategories', 'applicableProducts', 'applicableUsers',
-            'firstPurchaseOnly', 'isActive', 'showToUser'
+            'firstPurchaseOnly', 'isActive', 'showToUser', 'buyXForY', 'buyXGetYFree', 'quantityTiers'
         ];
 
         fields.forEach(field => {

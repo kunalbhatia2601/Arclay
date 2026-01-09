@@ -147,11 +147,12 @@ export default function CheckoutPage() {
 
         try {
             // Prepare cart items for validation
+            // Use variant.price as the item price
             const cartItems = cart.items.map(item => ({
                 productId: item.product._id,
                 product: item.product,
                 quantity: item.quantity,
-                priceAtOrder: item.price
+                priceAtOrder: item.variant?.price || (item.subtotal / item.quantity) || 0
             }));
 
             const res = await fetch("/api/coupons/validate", {
@@ -339,7 +340,7 @@ export default function CheckoutPage() {
                 },
                 prefill: {
                     name: formData.fullName,
-                    contact: formData.phone
+                    contact: formData.phone,
                 }
             };
 
@@ -653,11 +654,11 @@ export default function CheckoutPage() {
                                                             <p className="font-mono font-bold text-primary text-sm">{coupon.code}</p>
                                                             <p className="text-xs text-muted-foreground">{coupon.description}</p>
                                                         </div>
-                                                        <span className="text-sm font-medium">
+                                                        {/* <span className="text-sm font-medium">
                                                             {coupon.discountType === 'percentage'
                                                                 ? `${coupon.discountValue}% OFF`
                                                                 : `₹${coupon.discountValue} OFF`}
-                                                        </span>
+                                                        </span> */}
                                                     </div>
                                                     {coupon.minPurchase > 0 && (
                                                         <p className="text-xs text-muted-foreground mt-1">
