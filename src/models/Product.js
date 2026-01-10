@@ -60,6 +60,12 @@ const ProductSchema = new mongoose.Schema({
         maxlength: [2000, 'Description cannot be more than 2000 characters'],
         default: ''
     },
+    long_description: {
+        type: String,
+        trim: true,
+        maxlength: [10000, 'Description cannot be more than 10000 characters'],
+        default: ''
+    },
     // Defines what variations exist (e.g., Color with Red/Blue/Green, Size with S/M/L)
     variationTypes: {
         type: [VariationTypeSchema],

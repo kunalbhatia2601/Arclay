@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ImagePicker from "@/app/components/ImagePicker";
+import ImageGeneratorModal from "@/app/components/ImageGeneratorModal";
+import RichTextEditor from "@/app/components/RichTextEditor";
 
 export default function EditProductPage({ params }) {
     const { id } = use(params);
@@ -13,11 +15,13 @@ export default function EditProductPage({ params }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [categories, setCategories] = useState([]);
+    const [showAIGenerator, setShowAIGenerator] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
         images: [],
         description: "",
+        long_description: "",
         variationTypes: [],
         variants: [],
         category: "",
@@ -56,6 +60,7 @@ export default function EditProductPage({ params }) {
                     name: p.name || "",
                     images: p.images || [],
                     description: p.description || "",
+                    long_description: p.long_description || "",
                     variationTypes: p.variationTypes || [],
                     variants: (p.variants || []).map(v => ({
                         attributes: v.attributes instanceof Map
@@ -343,14 +348,45 @@ export default function EditProductPage({ params }) {
 
                     {/* Images */}
                     <div className="space-y-4">
-                        <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
-                            Images
-                        </h2>
+                        <div className="flex items-center justify-between border-b border-border pb-2">
+                            <h2 className="font-serif text-xl font-bold text-foreground">
+                                Images
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => setShowAIGenerator(true)}
+                                className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-pink-700 transition-all"
+                            >
+                                ✨ Generate with AI
+                            </button>
+                        </div>
                         <ImagePicker
                             value={formData.images}
                             onChange={(images) => setFormData({ ...formData, images })}
                             multiple={true}
                             label="Product Images"
+                        />
+                    </div>
+
+                    {/* AI Generator Modal */}
+                    <ImageGeneratorModal
+                        isOpen={showAIGenerator}
+                        onClose={() => setShowAIGenerator(false)}
+                        onImagesGenerated={(newUrls) => {
+                            setFormData(prev => ({ ...prev, images: [...prev.images, ...newUrls] }));
+                        }}
+                    />
+
+                    {/* Long Description */}
+                    <div className="space-y-4">
+                        <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
+                            Long Description
+                        </h2>
+                        <RichTextEditor
+                            value={formData.long_description}
+                            onChange={(value) => setFormData({ ...formData, long_description: value })}
+                            label="Detailed Product Description"
+                            placeholder="Add a detailed description with headings, lists, and formatting..."
                         />
                     </div>
 

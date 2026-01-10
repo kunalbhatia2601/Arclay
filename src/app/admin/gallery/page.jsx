@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import ImageGeneratorModal from "@/app/components/ImageGeneratorModal";
 
 export default function GalleryPage() {
     const [images, setImages] = useState([]);
@@ -10,6 +11,7 @@ export default function GalleryPage() {
     const [selectedImages, setSelectedImages] = useState([]);
     const [viewMode, setViewMode] = useState('grid'); // grid or list
     const [copiedId, setCopiedId] = useState(null);
+    const [showAIGenerator, setShowAIGenerator] = useState(false);
 
     const fetchImages = useCallback(async (cursor = null) => {
         try {
@@ -173,6 +175,12 @@ export default function GalleryPage() {
                             ☰
                         </button>
                     </div>
+                    <button
+                        onClick={() => setShowAIGenerator(true)}
+                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-medium hover:from-purple-700 hover:to-pink-700 transition-all"
+                    >
+                        ✨ Create with AI
+                    </button>
                     <label className="px-6 py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-colors cursor-pointer">
                         {uploading ? 'Uploading...' : '+ Upload Images'}
                         <input
@@ -186,6 +194,22 @@ export default function GalleryPage() {
                     </label>
                 </div>
             </div>
+
+            {/* AI Generator Modal */}
+            <ImageGeneratorModal
+                isOpen={showAIGenerator}
+                onClose={() => setShowAIGenerator(false)}
+                onImagesGenerated={(newUrls) => {
+                    // Add generated images to the gallery
+                    const newImages = newUrls.map(url => ({
+                        publicId: url.split('/').pop().split('.')[0],
+                        url,
+                        format: 'png',
+                        createdAt: new Date().toISOString()
+                    }));
+                    setImages(prev => [...newImages, ...prev]);
+                }}
+            />
 
             {/* Gallery Grid/List */}
             {images.length === 0 ? (

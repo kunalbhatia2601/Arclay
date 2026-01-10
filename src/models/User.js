@@ -49,6 +49,20 @@ const UserSchema = new mongoose.Schema({
             type: Date,
             select: false
         }
+    },
+    image: {
+        type: String,
+        default: ''
+    },
+    gemini_ai: {
+        isEnabled: {
+            type: Boolean,
+            default: true
+        },
+        usedCounts: {
+            type: Number,
+            default: 0
+        }
     }
 }, {
     timestamps: true

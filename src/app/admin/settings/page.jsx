@@ -10,7 +10,8 @@ export default function AdminSettings() {
     const [showSecrets, setShowSecrets] = useState({
         razorpaySecret: false,
         stripeSecret: false,
-        mailPassword: false
+        mailPassword: false,
+        geminiApiKey: false
     });
     const router = useRouter();
 
@@ -68,6 +69,12 @@ export default function AdminSettings() {
             let current = newSettings;
 
             for (let i = 0; i < parts.length - 1; i++) {
+                // Create the nested object if it doesn't exist
+                if (!current[parts[i]]) {
+                    current[parts[i]] = {};
+                }
+                // Spread the existing object to maintain immutability
+                current[parts[i]] = { ...current[parts[i]] };
                 current = current[parts[i]];
             }
 
@@ -350,6 +357,55 @@ export default function AdminSettings() {
                             />
                             <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                         </label>
+                    </div>
+                </div>
+            </div>
+
+            {/* Gemini AI Settings */}
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                <h2 className="font-serif text-xl font-semibold text-foreground mb-6">
+                    ✨ Gemini AI (Image Generation)
+                </h2>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
+                        <div>
+                            <h3 className="font-medium">Enable AI Image Generation</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Allow generating images using Google Gemini AI
+                            </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={settings?.gemini_ai?.isEnabled || false}
+                                onChange={(e) => updateSetting('gemini_ai.isEnabled', e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Gemini API Key</label>
+                        <div className="flex gap-2">
+                            <input
+                                type={showSecrets.geminiApiKey ? "text" : "password"}
+                                value={settings?.gemini_ai?.apiKey || ''}
+                                onChange={(e) => updateSetting('gemini_ai.apiKey', e.target.value)}
+                                className="flex-1 px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                placeholder="AIzaSy..."
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowSecrets(prev => ({ ...prev, geminiApiKey: !prev.geminiApiKey }))}
+                                className="px-4 py-2 text-sm bg-muted rounded-xl hover:bg-muted/70"
+                            >
+                                {showSecrets.geminiApiKey ? 'Hide' : 'Show'}
+                            </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Get your API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a>
+                        </p>
                     </div>
                 </div>
             </div>

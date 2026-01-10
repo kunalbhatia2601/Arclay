@@ -44,7 +44,14 @@ async function getHandler(req) {
                 isSSL: settings.mail?.isSSL || false,
                 isEnabled: settings.mail?.isEnabled || false,
                 _hasPassword: !!settings.mail?.password
-            }
+            },
+            gemini_ai: {
+                apiKey: settings.gemini_ai?.apiKey
+                    ? '••••••••' + settings.gemini_ai.apiKey.slice(-4)
+                    : '',
+                isEnabled: settings.gemini_ai?.isEnabled || false,
+                _hasApiKey: !!settings.gemini_ai?.apiKey
+            },
         };
 
         return Response.json({
@@ -138,6 +145,21 @@ async function putHandler(req) {
             }
             if (typeof updates.mail.isEnabled === 'boolean') {
                 settings.mail.isEnabled = updates.mail.isEnabled;
+            }
+        }
+
+        // Update Gemini AI settings
+        if (updates.gemini_ai) {
+            if (!settings.gemini_ai) {
+                settings.gemini_ai = {};
+            }
+            if (updates.gemini_ai.apiKey !== undefined &&
+                !updates.gemini_ai.apiKey.includes('••••')) {
+                // Only update if not masked
+                settings.gemini_ai.apiKey = updates.gemini_ai.apiKey;
+            }
+            if (typeof updates.gemini_ai.isEnabled === 'boolean') {
+                settings.gemini_ai.isEnabled = updates.gemini_ai.isEnabled;
             }
         }
 

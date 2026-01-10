@@ -70,6 +70,16 @@ const SettingsSchema = new mongoose.Schema({
             type: Boolean,
             default: false   
         }
+    },
+    gemini_ai: {
+        apiKey: {
+            type: String,
+            default: ''
+        },
+        isEnabled: {
+            type: Boolean,
+            default: false
+        }
     }
 }, {
     timestamps: true

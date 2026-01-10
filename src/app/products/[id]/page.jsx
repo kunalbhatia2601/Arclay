@@ -27,6 +27,7 @@ export default function ProductDetailPage({ params }) {
     const [reviewStars, setReviewStars] = useState(5);
     const [reviewComment, setReviewComment] = useState("");
     const [submittingReview, setSubmittingReview] = useState(false);
+    const [activeTab, setActiveTab] = useState("description");
 
     useEffect(() => {
         fetchProduct();
@@ -513,100 +514,151 @@ export default function ProductDetailPage({ params }) {
                         </div>
                     </div>
 
-                    {/* Reviews Section */}
+                    {/* Description & Reviews Tabs */}
                     <section className="mt-16 pt-12 border-t border-border">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="font-serif text-2xl font-bold text-foreground">
-                                {/* Show average of stars of all reviews/total reviews */}
-                                Customer Reviews ({reviews.length > 0 ? (reviews.reduce((total, review) => total + review.stars, 0) / reviews.length).toFixed(2) : 0}⭐ • {reviews.length} reviews)
-                            </h2>
-                            {canReview && !showReviewForm && (
-                                <Button
-                                    onClick={() => setShowReviewForm(true)}
-                                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
-                                >
-                                    Write a Review
-                                </Button>
-                            )}
+                        {/* Tab Navigation */}
+                        <div className="flex border-b border-border mb-8">
+                            <button
+                                onClick={() => setActiveTab("description")}
+                                className={`px-6 py-3 font-medium text-sm transition-colors relative ${
+                                    activeTab === "description"
+                                        ? "text-primary"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                Description
+                                {activeTab === "description" && (
+                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("reviews")}
+                                className={`px-6 py-3 font-medium text-sm transition-colors relative ${
+                                    activeTab === "reviews"
+                                        ? "text-primary"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                Reviews ({reviews.length})
+                                {activeTab === "reviews" && (
+                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                                )}
+                            </button>
                         </div>
 
-                        {/* Review Form */}
-                        {showReviewForm && (
-                            <form onSubmit={handleSubmitReview} className="bg-muted/50 rounded-2xl p-6 mb-8">
-                                <h3 className="font-semibold text-foreground mb-4">Write Your Review</h3>
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-foreground mb-2">Rating</label>
-                                    <div className="flex gap-1">
-                                        {[1, 2, 3, 4, 5].map(star => (
-                                            <button
-                                                key={star}
-                                                type="button"
-                                                onClick={() => setReviewStars(star)}
-                                                className={`text-2xl transition-colors ${star <= reviewStars ? 'text-amber-500' : 'text-border'}`}
-                                            >
-                                                ★
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-foreground mb-2">Comment</label>
-                                    <textarea
-                                        value={reviewComment}
-                                        onChange={(e) => setReviewComment(e.target.value)}
-                                        placeholder="Share your experience with this product..."
-                                        rows={4}
-                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                                        required
+                        {/* Description Tab Content */}
+                        {activeTab === "description" && (
+                            <div className="prose prose-neutral dark:prose-invert max-w-none overflow-hidden">
+                                {product.long_description ? (
+                                    <div
+                                        dangerouslySetInnerHTML={{ __html: product.long_description }}
+                                        className="text-muted-foreground leading-relaxed break-words overflow-x-auto whitespace-pre-line [&_img]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre [&_table]:overflow-x-auto [&_p]:mb-4 [&_br]:block [&_br]:content-[''] [&_br]:mb-2"
                                     />
-                                </div>
-                                <div className="flex gap-3">
-                                    <Button
-                                        type="submit"
-                                        disabled={submittingReview || !reviewComment.trim()}
-                                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
-                                    >
-                                        {submittingReview ? "Submitting..." : "Submit Review"}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setShowReviewForm(false)}
-                                        className="rounded-full"
-                                    >
-                                        Cancel
-                                    </Button>
-                                </div>
-                            </form>
+                                ) : (
+                                    <div className="text-center py-12 bg-muted/30 rounded-2xl">
+                                        <p className="text-4xl mb-3">📝</p>
+                                        <p className="text-muted-foreground">No detailed description available.</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
-                        {/* Reviews List */}
-                        {reviews.length > 0 ? (
-                            <div className="space-y-6">
-                                {reviews.slice(0, 5).map(review => (
-                                    <div key={review._id} className="bg-card rounded-xl p-6 border border-border">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                                                    {review.user?.name?.[0] || 'U'}
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-foreground">{review.user?.name || 'Anonymous'}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {new Date(review.createdAt).toLocaleDateString()}
-                                                    </p>
-                                                </div>
+                        {/* Reviews Tab Content */}
+                        {activeTab === "reviews" && (
+                            <div>
+                                <div className="flex items-center justify-between mb-8">
+                                    <h2 className="font-serif text-2xl font-bold text-foreground">
+                                        Customer Reviews ({reviews.length > 0 ? (reviews.reduce((total, review) => total + review.stars, 0) / reviews.length).toFixed(1) : 0}⭐)
+                                    </h2>
+                                    {canReview && !showReviewForm && (
+                                        <Button
+                                            onClick={() => setShowReviewForm(true)}
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+                                        >
+                                            Write a Review
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {/* Review Form */}
+                                {showReviewForm && (
+                                    <form onSubmit={handleSubmitReview} className="bg-muted/50 rounded-2xl p-6 mb-8">
+                                        <h3 className="font-semibold text-foreground mb-4">Write Your Review</h3>
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-medium text-foreground mb-2">Rating</label>
+                                            <div className="flex gap-1">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        onClick={() => setReviewStars(star)}
+                                                        className={`text-2xl transition-colors ${star <= reviewStars ? 'text-amber-500' : 'text-border'}`}
+                                                    >
+                                                        ★
+                                                    </button>
+                                                ))}
                                             </div>
-                                            <div className="flex text-lg">{renderStars(review.stars)}</div>
                                         </div>
-                                        <p className="text-muted-foreground">{review.comment}</p>
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-medium text-foreground mb-2">Comment</label>
+                                            <textarea
+                                                value={reviewComment}
+                                                onChange={(e) => setReviewComment(e.target.value)}
+                                                placeholder="Share your experience with this product..."
+                                                rows={4}
+                                                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <Button
+                                                type="submit"
+                                                disabled={submittingReview || !reviewComment.trim()}
+                                                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+                                            >
+                                                {submittingReview ? "Submitting..." : "Submit Review"}
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => setShowReviewForm(false)}
+                                                className="rounded-full"
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {/* Reviews List */}
+                                {reviews.length > 0 ? (
+                                    <div className="space-y-6">
+                                        {reviews.slice(0, 5).map(review => (
+                                            <div key={review._id} className="bg-card rounded-xl p-6 border border-border">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                                                            {review.user?.name?.[0] || 'U'}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-foreground">{review.user?.name || 'Anonymous'}</p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {new Date(review.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex text-lg">{renderStars(review.stars)}</div>
+                                                </div>
+                                                <p className="text-muted-foreground">{review.comment}</p>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 bg-muted/30 rounded-2xl">
-                                <p className="text-4xl mb-3">⭐</p>
-                                <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+                                ) : (
+                                    <div className="text-center py-12 bg-muted/30 rounded-2xl">
+                                        <p className="text-4xl mb-3">⭐</p>
+                                        <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </section>

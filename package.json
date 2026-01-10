@@ -10,6 +10,7 @@
     "seed": "node scripts/seedProducts.js"
   },
   "dependencies": {
+    "@google/genai": "^1.35.0",
     "@radix-ui/react-slot": "^1.2.4",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -23,6 +24,7 @@
     "nodemailer": "^7.0.12",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-quill-new": "^3.7.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
