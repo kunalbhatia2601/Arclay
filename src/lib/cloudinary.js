@@ -20,10 +20,16 @@ export async function uploadImage(file, options = {}) {
     const uploadOptions = {
         folder: UPLOAD_FOLDER,
         resource_type: 'image',
+        // Image optimization - convert to WebP format
+        format: 'webp',
+        transformation: [
+            {
+                quality: 'auto:good',  // Auto quality optimization
+                fetch_format: 'webp',  // Convert to WebP
+            }
+        ],
         ...options,
     };
-
-    console.log(uploadOptions);
 
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(

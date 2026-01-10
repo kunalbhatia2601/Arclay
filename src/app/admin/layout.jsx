@@ -30,7 +30,7 @@ export default function AdminLayout({ children }) {
 
     useEffect(() => {
         if (!loading && !isAdmin) {
-            router.push("/admin/login");
+            router.push("/login");
         }
     }, [loading, isAdmin, router]);
 
@@ -45,13 +45,13 @@ export default function AdminLayout({ children }) {
         );
     }
 
-    if (!isAdmin && pathname !== "/admin/login") {
+    if (!isAdmin) {
         return null;
     }
 
     const handleLogout = async () => {
         await logout();
-        router.push("/admin/login");
+        router.push("/login");
     };
 
     return (

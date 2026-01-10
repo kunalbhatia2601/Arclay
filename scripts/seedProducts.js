@@ -27,7 +27,7 @@ const CONFIG = {
     productsCount: 50,
 
     // Number of categories to create (products will be distributed among these)
-    categoriesCount: 8,
+    categoriesCount: 10,
 
     // Min and max images per product
     minImagesPerProduct: 2,
@@ -319,7 +319,7 @@ function generateVariants(variationTypes, productName) {
 // MAIN SEEDING FUNCTION
 // ============================================
 async function seedDatabase() {
-    const MONGODB_URI = process.env.MONGODB_URI;
+    const MONGODB_URI = process.env.MONGODB_URI + '/' + process.env.NEXT_PUBLIC_SITE_NAME.toLowerCase();
 
     if (!MONGODB_URI) {
         console.error('❌ Error: MONGODB_URI environment variable is not set.');

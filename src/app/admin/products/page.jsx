@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import BulkUploadModal from "./BulkUploadModal";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -26,13 +27,28 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+    const [showBulkUpload, setShowBulkUpload] = useState(false);
+    const [categories, setCategories] = useState([]);
 
     // Debounce search value
     const debouncedSearch = useDebounce(search, 400);
 
     useEffect(() => {
         fetchProducts();
+        fetchCategories();
     }, [pagination.page, debouncedSearch]);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("/api/categories");
+            const data = await res.json();
+            if (data.success) {
+                setCategories(data.categories);
+            }
+        } catch (error) {
+            console.error("Failed to fetch categories:", error);
+        }
+    };
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -125,12 +141,30 @@ export default function ProductsPage() {
                         Manage your product catalog
                     </p>
                 </div>
-                <Link href="/admin/products/new">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
-                        + Add Product
-                    </Button>
-                </Link>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setShowBulkUpload(true)}
+                        className="px-4 py-2 border border-primary text-primary rounded-full hover:bg-primary/10 transition"
+                    >
+                        📥 Bulk Upload
+                    </button>
+                    <Link href="/admin/products/new">
+                        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
+                            + Add Product
+                        </Button>
+                    </Link>
+                </div>
             </div>
+
+            {/* Bulk Upload Modal */}
+            <BulkUploadModal
+                isOpen={showBulkUpload}
+                onClose={() => setShowBulkUpload(false)}
+                onSuccess={() => {
+                    fetchProducts();
+                    setShowBulkUpload(false);
+                }}
+            />
 
             {/* Search */}
             <div className="bg-card rounded-2xl p-4 border border-border">
@@ -270,6 +304,14 @@ export default function ProductsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
+                                                <Link
+                                                    rel="noopener noreferrer"
+                                                    target="_blank"
+                                                    href={`/products/${product._id}`}
+                                                    className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                >
+                                                    View
+                                                </Link>
                                                 <Link
                                                     href={`/admin/products/${product._id}/edit`}
                                                     className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors"
