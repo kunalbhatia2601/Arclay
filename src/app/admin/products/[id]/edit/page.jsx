@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import ImagePicker from "@/app/components/ImagePicker";
 
 export default function EditProductPage({ params }) {
     const { id } = use(params);
@@ -15,7 +16,7 @@ export default function EditProductPage({ params }) {
 
     const [formData, setFormData] = useState({
         name: "",
-        images: [""],
+        images: [],
         description: "",
         variationTypes: [],
         variants: [],
@@ -53,7 +54,7 @@ export default function EditProductPage({ params }) {
                 const p = data.product;
                 setFormData({
                     name: p.name || "",
-                    images: p.images?.length ? p.images : [""],
+                    images: p.images || [],
                     description: p.description || "",
                     variationTypes: p.variationTypes || [],
                     variants: (p.variants || []).map(v => ({
@@ -79,21 +80,7 @@ export default function EditProductPage({ params }) {
         }
     };
 
-    // Image handlers
-    const handleImageChange = (index, value) => {
-        const newImages = [...formData.images];
-        newImages[index] = value;
-        setFormData({ ...formData, images: newImages });
-    };
 
-    const addImageField = () => {
-        setFormData({ ...formData, images: [...formData.images, ""] });
-    };
-
-    const removeImageField = (index) => {
-        const newImages = formData.images.filter((_, i) => i !== index);
-        setFormData({ ...formData, images: newImages.length ? newImages : [""] });
-    };
 
     // Variation Type handlers
     const addVariationType = () => {
@@ -276,7 +263,7 @@ export default function EditProductPage({ params }) {
     }
 
     return (
-        <div className="max-w-4xl">
+        <div className="w-full">
             {/* Page Header */}
             <div className="mb-8">
                 <Link
@@ -359,33 +346,12 @@ export default function EditProductPage({ params }) {
                         <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
                             Images
                         </h2>
-                        <div className="space-y-2">
-                            {formData.images.map((img, index) => (
-                                <div key={index} className="flex gap-2">
-                                    <input
-                                        type="url"
-                                        value={img}
-                                        onChange={(e) => handleImageChange(index, e.target.value)}
-                                        className="flex-1 px-4 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                                        placeholder="https://example.com/image.jpg"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => removeImageField(index)}
-                                        className="px-3 py-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                        <button
-                            type="button"
-                            onClick={addImageField}
-                            className="text-sm text-primary hover:underline"
-                        >
-                            + Add another image
-                        </button>
+                        <ImagePicker
+                            value={formData.images}
+                            onChange={(images) => setFormData({ ...formData, images })}
+                            multiple={true}
+                            label="Product Images"
+                        />
                     </div>
 
                     {/* Variation Types */}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import ImagePicker from "@/app/components/ImagePicker";
 
 export default function NewCategoryPage() {
     const router = useRouter();
@@ -87,15 +88,11 @@ export default function NewCategoryPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                            Image URL
-                        </label>
-                        <input
-                            type="url"
+                        <ImagePicker
                             value={formData.image}
-                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="https://example.com/image.jpg"
+                            onChange={(image) => setFormData({ ...formData, image })}
+                            multiple={false}
+                            label="Category Image"
                         />
                     </div>
 

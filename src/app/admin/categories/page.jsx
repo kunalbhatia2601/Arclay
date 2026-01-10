@@ -167,7 +167,15 @@ export default function CategoriesPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center text-lg">
-                                                    {category.image ? "🖼️" : "🏷️"}
+                                                    {category.image ? (
+                                                        <img
+                                                            src={category.image}
+                                                            alt={category.name}
+                                                            className="w-full h-full object-cover rounded-lg"
+                                                        />
+                                                    ) : (
+                                                        "🏷️"
+                                                    )}
                                                 </div>
                                                 <span className="font-medium text-foreground">
                                                     {category.name}
