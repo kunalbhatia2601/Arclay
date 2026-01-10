@@ -39,6 +39,12 @@ export default function Navbar() {
                     {/* Desktop Navigation */}
                     <div className="hidden lg:flex items-center gap-8">
                         <Link
+                            href="/"
+                            className="text-foreground/80 hover:text-primary transition-colors font-medium"
+                        >
+                            Home
+                        </Link>
+                        <Link
                             href="/products"
                             className="text-foreground/80 hover:text-primary transition-colors font-medium"
                         >

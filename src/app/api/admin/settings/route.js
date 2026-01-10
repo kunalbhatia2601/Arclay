@@ -52,6 +52,31 @@ async function getHandler(req) {
                 isEnabled: settings.gemini_ai?.isEnabled || false,
                 _hasApiKey: !!settings.gemini_ai?.apiKey
             },
+            shipping: {
+                shiprocket: {
+                    isEnabled: settings.shipping?.shiprocket?.isEnabled || false,
+                    email: settings.shipping?.shiprocket?.email || '',
+                    password: settings.shipping?.shiprocket?.password
+                        ? '••••••••' + settings.shipping.shiprocket.password.slice(-4)
+                        : '',
+                    mode: settings.shipping?.shiprocket?.mode || 'manual',
+                    channelId: settings.shipping?.shiprocket?.channelId || '',
+                    _hasPassword: !!settings.shipping?.shiprocket?.password
+                },
+                warehouse: settings.shipping?.warehouse || {
+                    name: '',
+                    phone: '',
+                    address: '',
+                    city: '',
+                    state: '',
+                    pincode: '',
+                    country: 'India'
+                },
+                rateCalculation: settings.shipping?.rateCalculation || 'free_threshold',
+                flatRate: settings.shipping?.flatRate || 50,
+                freeShippingThreshold: settings.shipping?.freeShippingThreshold || 499,
+                defaultWeight: settings.shipping?.defaultWeight || 0.5
+            },
         };
 
         return Response.json({
@@ -155,11 +180,69 @@ async function putHandler(req) {
             }
             if (updates.gemini_ai.apiKey !== undefined &&
                 !updates.gemini_ai.apiKey.includes('••••')) {
-                // Only update if not masked
                 settings.gemini_ai.apiKey = updates.gemini_ai.apiKey;
             }
             if (typeof updates.gemini_ai.isEnabled === 'boolean') {
                 settings.gemini_ai.isEnabled = updates.gemini_ai.isEnabled;
+            }
+        }
+
+        // Update Shipping settings
+        if (updates.shipping) {
+            if (!settings.shipping) {
+                settings.shipping = {};
+            }
+            
+            // Shiprocket settings
+            if (updates.shipping.shiprocket) {
+                if (!settings.shipping.shiprocket) {
+                    settings.shipping.shiprocket = {};
+                }
+                if (typeof updates.shipping.shiprocket.isEnabled === 'boolean') {
+                    settings.shipping.shiprocket.isEnabled = updates.shipping.shiprocket.isEnabled;
+                }
+                if (updates.shipping.shiprocket.email !== undefined) {
+                    settings.shipping.shiprocket.email = updates.shipping.shiprocket.email;
+                }
+                if (updates.shipping.shiprocket.password !== undefined &&
+                    !updates.shipping.shiprocket.password.includes('••••')) {
+                    settings.shipping.shiprocket.password = updates.shipping.shiprocket.password;
+                }
+                if (updates.shipping.shiprocket.mode !== undefined) {
+                    settings.shipping.shiprocket.mode = updates.shipping.shiprocket.mode;
+                }
+                if (updates.shipping.shiprocket.channelId !== undefined) {
+                    settings.shipping.shiprocket.channelId = updates.shipping.shiprocket.channelId;
+                }
+            }
+
+            // Warehouse settings
+            if (updates.shipping.warehouse) {
+                if (!settings.shipping.warehouse) {
+                    settings.shipping.warehouse = {};
+                }
+                const wh = updates.shipping.warehouse;
+                if (wh.name !== undefined) settings.shipping.warehouse.name = wh.name;
+                if (wh.phone !== undefined) settings.shipping.warehouse.phone = wh.phone;
+                if (wh.address !== undefined) settings.shipping.warehouse.address = wh.address;
+                if (wh.city !== undefined) settings.shipping.warehouse.city = wh.city;
+                if (wh.state !== undefined) settings.shipping.warehouse.state = wh.state;
+                if (wh.pincode !== undefined) settings.shipping.warehouse.pincode = wh.pincode;
+                if (wh.country !== undefined) settings.shipping.warehouse.country = wh.country;
+            }
+
+            // Rate settings
+            if (updates.shipping.rateCalculation !== undefined) {
+                settings.shipping.rateCalculation = updates.shipping.rateCalculation;
+            }
+            if (updates.shipping.flatRate !== undefined) {
+                settings.shipping.flatRate = updates.shipping.flatRate;
+            }
+            if (updates.shipping.freeShippingThreshold !== undefined) {
+                settings.shipping.freeShippingThreshold = updates.shipping.freeShippingThreshold;
+            }
+            if (updates.shipping.defaultWeight !== undefined) {
+                settings.shipping.defaultWeight = updates.shipping.defaultWeight;
             }
         }
 

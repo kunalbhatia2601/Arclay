@@ -80,6 +80,78 @@ const SettingsSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         }
+    },
+    shipping: {
+        shiprocket: {
+            isEnabled: {
+                type: Boolean,
+                default: false
+            },
+            email: {
+                type: String,
+                default: ''
+            },
+            password: {
+                type: String,
+                default: ''
+            },
+            mode: {
+                type: String,
+                enum: ['manual', 'automatic'],
+                default: 'manual'
+            },
+            channelId: {
+                type: String,
+                default: ''
+            }
+        },
+        warehouse: {
+            name: {
+                type: String,
+                default: ''
+            },
+            phone: {
+                type: String,
+                default: ''
+            },
+            address: {
+                type: String,
+                default: ''
+            },
+            city: {
+                type: String,
+                default: ''
+            },
+            state: {
+                type: String,
+                default: ''
+            },
+            pincode: {
+                type: String,
+                default: ''
+            },
+            country: {
+                type: String,
+                default: 'India'
+            }
+        },
+        rateCalculation: {
+            type: String,
+            enum: ['realtime', 'flat', 'free_threshold'],
+            default: 'free_threshold'
+        },
+        flatRate: {
+            type: Number,
+            default: 50
+        },
+        freeShippingThreshold: {
+            type: Number,
+            default: 499
+        },
+        defaultWeight: {
+            type: Number,
+            default: 0.5  // in kg
+        }
     }
 }, {
     timestamps: true

@@ -25,6 +25,11 @@ export default function CheckoutPage() {
     const [couponError, setCouponError] = useState("");
     const [applyingCoupon, setApplyingCoupon] = useState(false);
 
+    // Shipping fee state
+    const [shippingFee, setShippingFee] = useState(0);
+    const [shippingMessage, setShippingMessage] = useState("");
+    const [isFreeShipping, setIsFreeShipping] = useState(false);
+
     const [formData, setFormData] = useState({
         fullName: "",
         phone: "",
@@ -119,6 +124,39 @@ export default function CheckoutPage() {
             setLoading(false);
         }
     };
+
+    // Fetch shipping rates when pincode or cart changes
+    const fetchShippingRates = async (pincode, cartTotal) => {
+        if (!pincode || pincode.length !== 6) {
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/shipping/rates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pincode, cartTotal })
+            });
+            
+            const data = await res.json();
+            
+            if (data.success) {
+                setShippingFee(data.fee || 0);
+                setIsFreeShipping(data.isFree || false);
+                setShippingMessage(data.message || "");
+            }
+        } catch (error) {
+            console.error("Failed to fetch shipping rates:", error);
+        }
+    };
+
+    // Fetch shipping rates when pincode or cart total changes
+    useEffect(() => {
+        if (formData.pincode && cart?.total) {
+            const cartTotal = cart.total - discountAmount;
+            fetchShippingRates(formData.pincode, cartTotal);
+        }
+    }, [formData.pincode, cart?.total, discountAmount]);
 
     const handleAddressSelect = (addressId) => {
         setSelectedAddressId(addressId);
@@ -238,7 +276,8 @@ export default function CheckoutPage() {
                     },
                     paymentMethod: formData.paymentMethod,
                     notes: formData.notes,
-                    couponCode: appliedCoupon?.code || ""
+                    couponCode: appliedCoupon?.code || "",
+                    shippingFee: shippingFee
                 }),
             });
 
@@ -741,9 +780,20 @@ export default function CheckoutPage() {
                                             <span>-₹{discountAmount}</span>
                                         </div>
                                     )}
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">Shipping</span>
+                                        {isFreeShipping ? (
+                                            <span className="text-primary">Free 🎉</span>
+                                        ) : (
+                                            <span>₹{shippingFee}</span>
+                                        )}
+                                    </div>
+                                    {shippingMessage && (
+                                        <p className="text-xs text-primary">{shippingMessage}</p>
+                                    )}
                                     <div className="flex justify-between text-xl font-bold pt-2 border-t border-border">
                                         <span>Total</span>
-                                        <span>₹{finalTotal}</span>
+                                        <span>₹{finalTotal + shippingFee}</span>
                                     </div>
                                 </div>
 
@@ -752,7 +802,7 @@ export default function CheckoutPage() {
                                     disabled={submitting || availablePayments.length === 0}
                                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                                 >
-                                    {submitting ? "Placing Order..." : `Place Order — ₹${finalTotal}`}
+                                    {submitting ? "Placing Order..." : `Place Order — ₹${finalTotal + shippingFee}`}
                                 </button>
                             </div>
                         </div>

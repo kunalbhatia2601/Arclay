@@ -78,7 +78,7 @@ async function getHandler(req) {
 // POST create new order
 async function postHandler(req) {
     try {
-        const { shippingAddress, paymentMethod, notes, couponCode } = await req.json();
+        const { shippingAddress, paymentMethod, notes, couponCode, shippingFee = 0 } = await req.json();
 
         if (!shippingAddress || !paymentMethod) {
             return Response.json(
@@ -200,7 +200,7 @@ async function postHandler(req) {
             }
         }
 
-        const totalAmount = Math.max(0, subtotal - discountAmount);
+        const totalAmount = Math.max(0, subtotal - discountAmount) + (shippingFee || 0);
 
         // Create order
         const order = await Order.create({
@@ -215,6 +215,7 @@ async function postHandler(req) {
             coupon: coupon?._id || null,
             couponCode: appliedCouponCode,
             totalAmount,
+            shippingFee: shippingFee || 0,
             notes: notes || ''
         });
 

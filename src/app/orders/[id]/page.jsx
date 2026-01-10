@@ -201,6 +201,14 @@ export default function OrderDetailPage() {
                                         <span>-₹{order.discountAmount || 0}</span>
                                     </div>
                                 )}
+                                {
+                                    order.shippingFee && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Shipping Fee</span>
+                                            <span>₹{order.shippingFee}</span>
+                                        </div>
+                                    )
+                                }
                                 <div className="flex justify-between text-2xl font-bold pt-2 border-t border-border">
                                     <span>Total</span>
                                     <span>₹{order.totalAmount}</span>

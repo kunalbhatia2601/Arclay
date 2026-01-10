@@ -135,6 +135,52 @@ const OrderSchema = new mongoose.Schema({
         type: String,
         default: '',
         maxlength: 500
+    },
+    shippingFee: {
+        type: Number,
+        default: 0
+    },
+    shipping: {
+        shiprocketOrderId: {
+            type: String,
+            default: ''
+        },
+        shipmentId: {
+            type: String,
+            default: ''
+        },
+        awbCode: {
+            type: String,
+            default: ''
+        },
+        courierName: {
+            type: String,
+            default: ''
+        },
+        courierId: {
+            type: Number,
+            default: null
+        },
+        label: {
+            type: String,
+            default: ''
+        },
+        trackingUrl: {
+            type: String,
+            default: ''
+        },
+        estimatedDelivery: {
+            type: Date,
+            default: null
+        },
+        status: {
+            type: String,
+            default: ''
+        },
+        lastUpdate: {
+            type: Date,
+            default: null
+        }
     }
 }, {
     timestamps: true

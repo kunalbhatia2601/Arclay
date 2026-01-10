@@ -29,6 +29,11 @@ export default function ProductDetailPage({ params }) {
     const [submittingReview, setSubmittingReview] = useState(false);
     const [activeTab, setActiveTab] = useState("description");
 
+    // Pincode check state
+    const [pincode, setPincode] = useState("");
+    const [checkingPincode, setCheckingPincode] = useState(false);
+    const [pincodeResult, setPincodeResult] = useState(null);
+
     useEffect(() => {
         fetchProduct();
     }, [id]);
@@ -482,8 +487,73 @@ export default function ProductDetailPage({ params }) {
                                 </Button>
                             </div>
 
+                            {/* Pincode Serviceability Check */}
+                            <div className="mt-6 p-4 bg-muted/50 rounded-xl">
+                                <h3 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                                    <span>📍</span> Check Delivery
+                                </h3>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={pincode}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                            setPincode(val);
+                                            if (val.length < 6) setPincodeResult(null);
+                                        }}
+                                        placeholder="Enter 6-digit pincode"
+                                        maxLength={6}
+                                        className="flex-1 px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    />
+                                    <button
+                                        onClick={async () => {
+                                            if (pincode.length !== 6) return;
+                                            setCheckingPincode(true);
+                                            setPincodeResult(null);
+                                            try {
+                                                const res = await fetch('/api/shipping/serviceability', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ pincode })
+                                                });
+                                                const data = await res.json();
+                                                setPincodeResult(data);
+                                            } catch (err) {
+                                                setPincodeResult({ serviceable: false, error: true });
+                                            } finally {
+                                                setCheckingPincode(false);
+                                            }
+                                        }}
+                                        disabled={pincode.length !== 6 || checkingPincode}
+                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {checkingPincode ? 'Checking...' : 'Check'}
+                                    </button>
+                                </div>
+                                {pincodeResult && (
+                                    <div className={`mt-3 p-3 rounded-lg text-sm ${pincodeResult.serviceable ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                                        {pincodeResult.serviceable ? (
+                                            <div className="flex items-center gap-2">
+                                                <span>✅</span>
+                                                <span>
+                                                    Delivery available to {pincode}
+                                                    {pincodeResult.estimatedDays && (
+                                                        <span className="font-medium"> • Est. delivery in {pincodeResult.estimatedDays} days</span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2">
+                                                <span>❌</span>
+                                                <span>Sorry, delivery is not available to this pincode</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Features */}
-                            <div className="mt-8 pt-8 border-t border-border">
+                            {/* <div className="mt-8 pt-8 border-t border-border">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">
@@ -510,7 +580,7 @@ export default function ProductDetailPage({ params }) {
                                         <span className="text-sm text-muted-foreground">Quality Assured</span>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 

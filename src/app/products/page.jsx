@@ -251,7 +251,7 @@ export default function ProductsPage() {
                                             return (
                                                 <Link
                                                     key={product._id}
-                                                    href={`/products/${product._id}`}
+                                                    href={`/products/${product._id}?p=${product.name.toLowerCase().replace(/\s/g, "-")}`}
                                                     className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                                                 >
                                                     {/* Product Image */}

@@ -27,6 +27,12 @@ export default function AdminOrderDetail() {
     const [saving, setSaving] = useState(false);
     const [order, setOrder] = useState(null);
 
+    // Shipping state
+    const [couriers, setCouriers] = useState([]);
+    const [selectedCourier, setSelectedCourier] = useState(null);
+    const [loadingCouriers, setLoadingCouriers] = useState(false);
+    const [creatingShipment, setCreatingShipment] = useState(false);
+
     useEffect(() => {
         if (params.id) {
             fetchOrder();
@@ -78,6 +84,57 @@ export default function AdminOrderDetail() {
             alert("Failed to update order");
         } finally {
             setSaving(false);
+        }
+    };
+
+    // Fetch available couriers
+    const fetchCouriers = async () => {
+        try {
+            setLoadingCouriers(true);
+            const res = await fetch("/api/admin/shipping/couriers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ orderId: order._id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setCouriers(data.couriers || []);
+            } else {
+                alert(data.message || "Failed to fetch couriers");
+            }
+        } catch (error) {
+            console.error("Fetch couriers error:", error);
+        } finally {
+            setLoadingCouriers(false);
+        }
+    };
+
+    // Create shipment
+    const handleCreateShipment = async () => {
+        try {
+            setCreatingShipment(true);
+            const res = await fetch("/api/admin/shipping/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    orderId: order._id,
+                    courierId: selectedCourier?.courierId
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Shipment created successfully!");
+                fetchOrder();
+            } else {
+                alert(data.message || "Failed to create shipment");
+            }
+        } catch (error) {
+            console.error("Create shipment error:", error);
+            alert("Failed to create shipment");
+        } finally {
+            setCreatingShipment(false);
         }
     };
 
@@ -179,11 +236,127 @@ export default function AdminOrderDetail() {
                             <span>-₹{order.discountAmount || 0}</span>
                         </div>
                     )}
+                    {order.shippingFee > 0 && (
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Shipping</span>
+                            <span>₹{order.shippingFee}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between text-xl font-bold pt-2 border-t border-border">
                         <span>Total Amount</span>
                         <span>₹{order.totalAmount}</span>
                     </div>
                 </div>
+            </div>
+
+            {/* Shipping Management */}
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                <h2 className="font-serif text-xl font-bold mb-4">📦 Shipping</h2>
+                
+                {order.shipping?.awbCode ? (
+                    // Shipment exists - show tracking info
+                    <div className="space-y-4">
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+                            <p className="font-medium text-green-800">✅ Shipment Created</p>
+                            <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                                <div>
+                                    <p className="text-muted-foreground">AWB Number</p>
+                                    <p className="font-mono font-medium">{order.shipping.awbCode}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground">Courier</p>
+                                    <p className="font-medium">{order.shipping.courierName || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground">Status</p>
+                                    <p className="font-medium">{order.shipping.status || 'N/A'}</p>
+                                </div>
+                                {order.shipping.estimatedDelivery && (
+                                    <div>
+                                        <p className="text-muted-foreground">Est. Delivery</p>
+                                        <p className="font-medium">{new Date(order.shipping.estimatedDelivery).toLocaleDateString()}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            {order.shipping.label && (
+                                <a
+                                    href={order.shipping.label}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
+                                >
+                                    🏷️ Print Label
+                                </a>
+                            )}
+                            {order.shipping.trackingUrl && (
+                                <a
+                                    href={order.shipping.trackingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/70 transition"
+                                >
+                                    📡 Track Shipment
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    // No shipment - show courier selection
+                    <div className="space-y-4">
+                        <p className="text-muted-foreground">No shipment created yet.</p>
+                        
+                        {couriers.length === 0 ? (
+                            <button
+                                onClick={fetchCouriers}
+                                disabled={loadingCouriers}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition disabled:opacity-50"
+                            >
+                                {loadingCouriers ? 'Loading...' : '🚚 Get Available Couriers'}
+                            </button>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {couriers.map((courier) => (
+                                        <label
+                                            key={courier.courierId}
+                                            className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                                selectedCourier?.courierId === courier.courierId
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-border hover:border-primary/50'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="courier"
+                                                checked={selectedCourier?.courierId === courier.courierId}
+                                                onChange={() => setSelectedCourier(courier)}
+                                                className="sr-only"
+                                            />
+                                            <div className="flex-1">
+                                                <p className="font-medium">{courier.courierName}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {courier.estimatedDays} days • ₹{courier.rate}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-primary">₹{courier.rate}</p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={handleCreateShipment}
+                                    disabled={!selectedCourier || creatingShipment}
+                                    className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition disabled:opacity-50"
+                                >
+                                    {creatingShipment ? 'Creating...' : '✅ Create Shipment'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Shipping Address */}

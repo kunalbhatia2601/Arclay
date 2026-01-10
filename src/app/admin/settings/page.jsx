@@ -11,7 +11,8 @@ export default function AdminSettings() {
         razorpaySecret: false,
         stripeSecret: false,
         mailPassword: false,
-        geminiApiKey: false
+        geminiApiKey: false,
+        shiprocketPassword: false
     });
     const router = useRouter();
 
@@ -371,7 +372,7 @@ export default function AdminSettings() {
                         <div>
                             <h3 className="font-medium">Enable AI Image Generation</h3>
                             <p className="text-sm text-muted-foreground">
-                                Allow generating images using Google Gemini AI
+                                Allow generating images using Google Gemini AI (Google Cloud Account Required)
                             </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -406,6 +407,246 @@ export default function AdminSettings() {
                         <p className="text-xs text-muted-foreground mt-1">
                             Get your API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a>
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Shipping Settings */}
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                <h2 className="font-serif text-xl font-semibold text-foreground mb-6">
+                    📦 Shipping (Shiprocket)
+                </h2>
+                <div className="space-y-6">
+                    {/* Enable Shiprocket */}
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
+                        <div>
+                            <h3 className="font-medium">Enable Shiprocket</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Use Shiprocket for automated shipping
+                            </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={settings?.shipping?.shiprocket?.isEnabled || false}
+                                onChange={(e) => updateSetting('shipping.shiprocket.isEnabled', e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+
+                    {/* Shiprocket Credentials */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Email</label>
+                            <input
+                                type="email"
+                                value={settings?.shipping?.shiprocket?.email || ''}
+                                onChange={(e) => updateSetting('shipping.shiprocket.email', e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                placeholder="shiprocket@example.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Password</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type={showSecrets.shiprocketPassword ? "text" : "password"}
+                                    value={settings?.shipping?.shiprocket?.password || ''}
+                                    onChange={(e) => updateSetting('shipping.shiprocket.password', e.target.value)}
+                                    className="flex-1 px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSecrets(prev => ({ ...prev, shiprocketPassword: !prev.shiprocketPassword }))}
+                                    className="px-4 py-2 text-sm bg-muted rounded-xl hover:bg-muted/70"
+                                >
+                                    {showSecrets.shiprocketPassword ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mode Selection */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Shipping Mode</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${settings?.shipping?.shiprocket?.mode === 'manual' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                <input
+                                    type="radio"
+                                    name="shippingMode"
+                                    checked={settings?.shipping?.shiprocket?.mode === 'manual'}
+                                    onChange={() => updateSetting('shipping.shiprocket.mode', 'manual')}
+                                    className="sr-only"
+                                />
+                                <div>
+                                    <p className="font-medium">Manual</p>
+                                    <p className="text-xs text-muted-foreground">Create shipments when marking orders as Processing</p>
+                                </div>
+                            </label>
+                            <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${settings?.shipping?.shiprocket?.mode === 'automatic' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                <input
+                                    type="radio"
+                                    name="shippingMode"
+                                    checked={settings?.shipping?.shiprocket?.mode === 'automatic'}
+                                    onChange={() => updateSetting('shipping.shiprocket.mode', 'automatic')}
+                                    className="sr-only"
+                                />
+                                <div>
+                                    <p className="font-medium">Automatic</p>
+                                    <p className="text-xs text-muted-foreground">Auto-create shipments on payment success</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Warehouse Address */}
+                    <div className="border-t border-border pt-6">
+                        <h3 className="font-medium mb-4">Warehouse / Pickup Address</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Location Name</label>
+                                <input
+                                    type="text"
+                                    value={settings?.shipping?.warehouse?.name || ''}
+                                    onChange={(e) => updateSetting('shipping.warehouse.name', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Main Warehouse"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Phone</label>
+                                <input
+                                    type="tel"
+                                    value={settings?.shipping?.warehouse?.phone || ''}
+                                    onChange={(e) => updateSetting('shipping.warehouse.phone', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="9876543210"
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium mb-2">Address</label>
+                                <input
+                                    type="text"
+                                    value={settings?.shipping?.warehouse?.address || ''}
+                                    onChange={(e) => updateSetting('shipping.warehouse.address', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="123 Street, Area"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">City</label>
+                                <input
+                                    type="text"
+                                    value={settings?.shipping?.warehouse?.city || ''}
+                                    onChange={(e) => updateSetting('shipping.warehouse.city', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Mumbai"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">State</label>
+                                <input
+                                    type="text"
+                                    value={settings?.shipping?.warehouse?.state || ''}
+                                    onChange={(e) => updateSetting('shipping.warehouse.state', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Maharashtra"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Pincode</label>
+                                <input
+                                    type="text"
+                                    value={settings?.shipping?.warehouse?.pincode || ''}
+                                    onChange={(e) => updateSetting('shipping.warehouse.pincode', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="400001"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Rate Calculation */}
+                    <div className="border-t border-border pt-6">
+                        <h3 className="font-medium mb-4">Shipping Rate Calculation</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${settings?.shipping?.rateCalculation === 'free_threshold' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                <input
+                                    type="radio"
+                                    name="rateCalculation"
+                                    checked={settings?.shipping?.rateCalculation === 'free_threshold'}
+                                    onChange={() => updateSetting('shipping.rateCalculation', 'free_threshold')}
+                                    className="sr-only"
+                                />
+                                <div>
+                                    <p className="font-medium">Free Above Threshold</p>
+                                    <p className="text-xs text-muted-foreground">Free shipping above a certain amount</p>
+                                </div>
+                            </label>
+                            <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${settings?.shipping?.rateCalculation === 'flat' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                <input
+                                    type="radio"
+                                    name="rateCalculation"
+                                    checked={settings?.shipping?.rateCalculation === 'flat'}
+                                    onChange={() => updateSetting('shipping.rateCalculation', 'flat')}
+                                    className="sr-only"
+                                />
+                                <div>
+                                    <p className="font-medium">Flat Rate</p>
+                                    <p className="text-xs text-muted-foreground">Fixed shipping fee for all orders</p>
+                                </div>
+                            </label>
+                            <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${settings?.shipping?.rateCalculation === 'realtime' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                <input
+                                    type="radio"
+                                    name="rateCalculation"
+                                    checked={settings?.shipping?.rateCalculation === 'realtime'}
+                                    onChange={() => updateSetting('shipping.rateCalculation', 'realtime')}
+                                    className="sr-only"
+                                />
+                                <div>
+                                    <p className="font-medium">Real-time Rates</p>
+                                    <p className="text-xs text-muted-foreground">Fetch rates from Shiprocket</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Free Shipping Threshold (₹)</label>
+                                <input
+                                    type="number"
+                                    value={settings?.shipping?.freeShippingThreshold || 499}
+                                    onChange={(e) => updateSetting('shipping.freeShippingThreshold', Number(e.target.value))}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="499"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Flat Rate (₹)</label>
+                                <input
+                                    type="number"
+                                    value={settings?.shipping?.flatRate || 50}
+                                    onChange={(e) => updateSetting('shipping.flatRate', Number(e.target.value))}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Default Weight (kg)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    value={settings?.shipping?.defaultWeight || 0.5}
+                                    onChange={(e) => updateSetting('shipping.defaultWeight', Number(e.target.value))}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="0.5"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
