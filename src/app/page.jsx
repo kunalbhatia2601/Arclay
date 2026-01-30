@@ -1,4 +1,5 @@
 import Hero from "./components/Hero";
+import ProductAds from "./components/ProductAds";
 import ProductHighlight from "./components/ProductHighlight";
 import FeaturedProducts from "./components/FeaturedProducts";
 import WhyEssvora from "./components/WhyEssvora";
@@ -15,7 +16,9 @@ export default function Home() {
         <WhyEssvora />
         <OurStory />
         <SocialProof />
+        <ProductAds position="banner" />
       </main>
     </div>
   );
 }
+
