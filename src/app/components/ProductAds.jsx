@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 
 const ADS_PER_PAGE = 5;
 
@@ -9,6 +10,7 @@ export default function ProductAds({ position = "banner" }) {
     const [ads, setAds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(0);
+    const [selectedAd, setSelectedAd] = useState(null);
 
     useEffect(() => {
         fetchAds();
@@ -43,12 +45,12 @@ export default function ProductAds({ position = "banner" }) {
     }
 
     if (ads.length === 0) {
-        return null;
+        return null; // Don't render anything if no ads
     }
 
     const totalPages = Math.ceil(ads.length / ADS_PER_PAGE);
     const showPagination = ads.length > ADS_PER_PAGE;
-
+    
     // Get current page's ads
     const startIndex = currentPage * ADS_PER_PAGE;
     const visibleAds = ads.slice(startIndex, startIndex + ADS_PER_PAGE);
@@ -68,7 +70,7 @@ export default function ProductAds({ position = "banner" }) {
                     {/* Ads Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
                         {visibleAds.map((ad) => (
-                            <AdCard key={ad._id} ad={ad} />
+                            <AdCard key={ad._id} ad={ad} onClick={() => setSelectedAd(ad)} />
                         ))}
                     </div>
 
@@ -114,14 +116,22 @@ export default function ProductAds({ position = "banner" }) {
                     </div>
                 )}
             </div>
+
+            {/* Ad Modal */}
+            {selectedAd && (
+                <AdModal ad={selectedAd} onClose={() => setSelectedAd(null)} />
+            )}
         </section>
     );
 }
 
 // Individual Ad Card Component
-function AdCard({ ad }) {
+function AdCard({ ad, onClick }) {
     return (
-        <div className="relative aspect-[3/4] rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all group hover:scale-[1.02]">
+        <div 
+            onClick={onClick}
+            className="relative aspect-[3/4] rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all group hover:scale-[1.02] cursor-pointer"
+        >
             {/* Background Media */}
             {ad.mediaType === "video" ? (
                 <video
@@ -153,17 +163,97 @@ function AdCard({ ad }) {
                         {ad.description}
                     </p>
                 )}
-                {ad.linkUrl && (
-                    <Link
-                        href={ad.linkUrl}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 lg:px-4 lg:py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white text-xs lg:text-sm font-medium transition-all"
-                    >
-                        <span>→</span>
-                        <span className="hidden sm:inline">Tap to view product</span>
-                        <span className="sm:hidden">View</span>
-                    </Link>
-                )}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 lg:px-4 lg:py-2 bg-white/20 group-hover:bg-white/30 backdrop-blur-sm rounded-full text-white text-xs lg:text-sm font-medium transition-all">
+                    <span>→</span>
+                    <span className="hidden sm:inline">Tap to view</span>
+                    <span className="sm:hidden">View</span>
+                </div>
             </div>
         </div>
     );
+}
+
+// Full Screen/Modal Ad View
+function AdModal({ ad, onClose }) {
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
+    const ModalContent = (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in"
+                onClick={onClose}
+            />
+
+            {/* Close Button */}
+            <button 
+                onClick={onClose}
+                className="absolute top-4 right-4 z-10 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors"
+                aria-label="Close modal"
+            >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            {/* Modal Card */}
+            <div className="relative w-full max-w-lg aspect-[3/4] sm:aspect-[9/16] max-h-[90vh] bg-black rounded-3xl overflow-hidden shadow-2xl animate-scale-in">
+                {/* Media */}
+                <div className="absolute inset-0">
+                    {ad.mediaType === "video" ? (
+                        <video
+                            src={ad.mediaUrl}
+                            className="w-full h-full object-cover"
+                            autoPlay
+                            loop
+                            playsInline
+                            controls={false}
+                        />
+                    ) : (
+                        <img
+                            src={ad.mediaUrl}
+                            alt={ad.title}
+                            className="w-full h-full object-cover"
+                        />
+                    )}
+                </div>
+
+                {/* Overlay & Content */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+
+                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white text-center">
+                    <h2 className="font-serif text-2xl sm:text-3xl font-bold mb-3 animate-slide-up">
+                        {ad.title}
+                    </h2>
+                    {ad.description && (
+                        <p className="text-white/90 text-sm sm:text-base mb-6 leading-relaxed animate-slide-up delay-100">
+                            {ad.description}
+                        </p>
+                    )}
+                    
+                    {ad.linkUrl && (
+                        <Link
+                            href={ad.linkUrl}
+                            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-white text-black hover:bg-white/90 rounded-full font-semibold transition-all hover:scale-105 shadow-lg animate-slide-up delay-200 pointer-events-auto"
+                        >
+                            <span>Shop Now</span>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </Link>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
+    // Use portal to render outside the section hierarchy
+    if (typeof window === 'undefined') return null;
+    return createPortal(ModalContent, document.body);
 }

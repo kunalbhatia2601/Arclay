@@ -17,19 +17,24 @@ const UPLOAD_FOLDER = process.env.NEXT_PUBLIC_SITE_NAME || 'ecommerce';
  * @returns {Promise<Object>} - Cloudinary upload result
  */
 export async function uploadImage(file, options = {}) {
+    const resourceType = options.resource_type || 'image';
+
     const uploadOptions = {
         folder: UPLOAD_FOLDER,
-        resource_type: 'image',
-        // Image optimization - convert to WebP format
-        format: 'webp',
-        transformation: [
-            {
-                quality: 'auto:good',  // Auto quality optimization
-                fetch_format: 'webp',  // Convert to WebP
-            }
-        ],
+        resource_type: resourceType,
         ...options,
     };
+
+    // Only apply image optimizations if we are strictly uploading an image
+    if (resourceType === 'image') {
+        uploadOptions.format = 'webp';
+        uploadOptions.transformation = [
+            {
+                quality: 'auto:good',
+                fetch_format: 'webp',
+            }
+        ];
+    }
 
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -68,15 +73,14 @@ export async function deleteImage(publicId) {
  * @returns {Promise<Object>} - List of images
  */
 export async function listImages(options = {}) {
-    const { folder = UPLOAD_FOLDER, maxResults = 100, nextCursor = null } = options;
-
-    console.log(folder, maxResults, nextCursor);
+    const { folder = UPLOAD_FOLDER, maxResults = 100, nextCursor = null, resource_type = 'image' } = options;
 
     return cloudinary.api.resources({
         type: 'upload',
         prefix: folder,
         max_results: maxResults,
         next_cursor: nextCursor,
+        resource_type: resource_type,
     });
 }
 

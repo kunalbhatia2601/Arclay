@@ -22,8 +22,15 @@ async function postHandler(req) {
         // Convert to base64 for Cloudinary
         const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
 
+        // Determine resource type based on MIME type
+        const isVideo = file.type.startsWith('video/');
+        const resourceType = isVideo ? 'video' : 'image';
+
         // Upload to Cloudinary
-        const result = await uploadImage(base64, { folder });
+        const result = await uploadImage(base64, {
+            folder,
+            resource_type: resourceType
+        });
 
         return Response.json({
             success: true,
@@ -33,6 +40,7 @@ async function postHandler(req) {
                 width: result.width,
                 height: result.height,
                 format: result.format,
+                resource_type: result.resource_type
             }
         });
     } catch (error) {

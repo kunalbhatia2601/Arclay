@@ -189,7 +189,7 @@ export default function ProductAdModal({ isOpen, onClose, onSuccess, editingAd =
                     </div>
 
                     {/* Media Type */}
-                    <div>
+                    {/* <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
                             Media Type
                         </label>
@@ -217,33 +217,30 @@ export default function ProductAdModal({ isOpen, onClose, onSuccess, editingAd =
                                 <span>🎬 Video</span>
                             </label>
                         </div>
-                    </div>
+                    </div> */}
 
-                    {/* Media URL */}
-                    {formData.mediaType === "image" ? (
+                    {/* Media Selection */}
+                    <div>
                         <ImagePicker
+                            key={formData.mediaType}
                             value={formData.mediaUrl}
-                            onChange={(url) => setFormData({ ...formData, mediaUrl: url })}
-                            label="Ad Image *"
+                            onChange={(url) => {
+                                const isVideo = url.match(/\.(mp4|webm|mov)|video/i);
+                                setFormData({
+                                    ...formData,
+                                    mediaUrl: url,
+                                    mediaType: isVideo ? "video" : "image"
+                                });
+                            }}
+                            label={"Ad Image/Video"}
+                            type="all"
                         />
-                    ) : (
-                        <div>
-                            <label className="block text-sm font-medium text-foreground mb-2">
-                                Video URL <span className="text-destructive">*</span>
-                            </label>
-                            <input
-                                type="url"
-                                value={formData.mediaUrl}
-                                onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
-                                placeholder="https://example.com/video.mp4 or YouTube/Vimeo URL"
-                                required
-                                className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                            />
+                        {formData.mediaType === "video" && (
                             <p className="text-xs text-muted-foreground mt-1">
-                                Supports direct video URLs (.mp4, .webm) or YouTube/Vimeo embed URLs
+                                Supports .mp4, .webm files or direct URLs
                             </p>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* Link URL - Product Selector or Custom URL */}
                     <div>

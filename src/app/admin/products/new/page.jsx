@@ -316,6 +316,7 @@ export default function NewProductPage() {
                             onChange={(images) => setFormData({ ...formData, images })}
                             multiple={true}
                             label="Product Images"
+                            type="all"
                         />
                     </div>
 
