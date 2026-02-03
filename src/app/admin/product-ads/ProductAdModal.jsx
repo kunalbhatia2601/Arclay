@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ImagePicker from "@/app/components/ImagePicker";
+import { toast } from "react-toastify";
 
 export default function ProductAdModal({ isOpen, onClose, onSuccess, editingAd = null }) {
     const [loading, setLoading] = useState(false);
@@ -120,11 +121,11 @@ export default function ProductAdModal({ isOpen, onClose, onSuccess, editingAd =
                 onSuccess();
                 onClose();
             } else {
-                alert(data.message || "Failed to save product ad");
+                toast.error(data.message || "Failed to save product ad");
             }
         } catch (error) {
             console.error("Failed to save product ad:", error);
-            alert("Failed to save product ad");
+            toast.error("Failed to save product ad");
         } finally {
             setLoading(false);
         }

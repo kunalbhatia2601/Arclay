@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 export default function AdminSettings() {
     const [loading, setLoading] = useState(true);
@@ -51,13 +52,13 @@ export default function AdminSettings() {
             const data = await res.json();
 
             if (data.success) {
-                alert("Settings saved successfully!");
+                toast.success("Settings saved successfully!");
             } else {
-                alert(data.message || "Failed to save settings");
+                toast.error(data.message || "Failed to save settings");
             }
         } catch (error) {
             console.error("Save error:", error);
-            alert("Failed to save settings");
+            toast.error("Failed to save settings");
         } finally {
             setSaving(false);
         }

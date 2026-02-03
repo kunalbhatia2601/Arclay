@@ -8,6 +8,20 @@ export function UserProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [pendingVerificationEmail, setPendingVerificationEmail] = useState(null);
+    const [cartCount, setCartCount] = useState(0);
+
+    const fetchCart = useCallback(async () => {
+        try {
+            const res = await fetch("/api/cart", { credentials: "include" });
+            const data = await res.json();
+            if (data.success) {
+                const count = data.cart?.items?.reduce((acc, item) => acc + 1, 0) || 0;
+                setCartCount(count);
+            }
+        } catch (error) {
+            console.error("Failed to fetch cart:", error);
+        }
+    }, []);
 
     const fetchUser = useCallback(async () => {
         try {
@@ -36,6 +50,14 @@ export function UserProvider({ children }) {
     useEffect(() => {
         fetchUser();
     }, [fetchUser]);
+
+    useEffect(() => {
+        if (user) {
+            fetchCart();
+        } else {
+            setCartCount(0);
+        }
+    }, [user, fetchCart]);
 
     const login = async (email, password) => {
         try {
@@ -176,6 +198,9 @@ export function UserProvider({ children }) {
     const value = {
         user,
         loading,
+        cartCount,
+        setCartCount,
+        fetchCart,
         login,
         register,
         logout,

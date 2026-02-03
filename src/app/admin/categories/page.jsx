@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -69,11 +70,11 @@ export default function CategoriesPage() {
             if (data.success) {
                 fetchCategories();
             } else {
-                alert(data.message);
+                toast.error(data.message);
             }
         } catch (error) {
             console.error("Delete failed:", error);
-            alert("Failed to delete category");
+            toast.error("Failed to delete category");
         }
     };
 

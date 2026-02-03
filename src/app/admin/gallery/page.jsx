@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import ImageGeneratorModal from "@/app/components/ImageGeneratorModal";
+import { toast } from "react-toastify";
 
 export default function GalleryPage() {
     const [images, setImages] = useState([]);
@@ -91,7 +92,7 @@ export default function GalleryPage() {
                 setImages(prev => prev.filter(img => img.publicId !== publicId));
                 setSelectedImages(prev => prev.filter(id => id !== publicId));
             } else {
-                alert(data.message || 'Failed to delete');
+                toast.error(data.message || 'Failed to delete');
             }
         } catch (error) {
             console.error('Delete failed:', error);

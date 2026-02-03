@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 export default function CartPage() {
-    const { isAuthenticated, loading: userLoading } = useUser();
+    const { isAuthenticated, loading: userLoading, setCartCount } = useUser();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [cart, setCart] = useState(null);
@@ -28,6 +29,7 @@ export default function CartPage() {
             const data = await res.json();
             if (data.success) {
                 setCart(data.cart);
+                setCartCount(data.cart?.items?.length || 0);
             }
         } catch (error) {
             console.error("Failed to fetch cart:", error);
@@ -55,11 +57,11 @@ export default function CartPage() {
             if (data.success) {
                 await fetchCart();
             } else {
-                alert(data.message || "Failed to update quantity");
+                toast.error(data.message || "Failed to update quantity");
             }
         } catch (error) {
             console.error("Update error:", error);
-            alert("Failed to update quantity");
+            toast.error("Failed to update quantity");
         } finally {
             setUpdating(false);
         }
@@ -80,11 +82,11 @@ export default function CartPage() {
             if (data.success) {
                 await fetchCart();
             } else {
-                alert(data.message || "Failed to remove item");
+                toast.error(data.message || "Failed to remove item");
             }
         } catch (error) {
             console.error("Remove error:", error);
-            alert("Failed to remove item");
+            toast.error("Failed to remove item");
         } finally {
             setUpdating(false);
         }

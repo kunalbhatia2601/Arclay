@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 
 export default function AdminReviewsPage() {
     const [reviews, setReviews] = useState([]);
@@ -66,11 +67,11 @@ export default function AdminReviewsPage() {
             if (data.success) {
                 fetchReviews();
             } else {
-                alert(data.message || "Failed to delete review");
+                toast.error(data.message || "Failed to delete review");
             }
         } catch (error) {
             console.error("Delete review error:", error);
-            alert("Failed to delete review");
+            toast.error("Failed to delete review");
         }
     };
 

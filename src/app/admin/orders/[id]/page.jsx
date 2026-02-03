@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
@@ -74,14 +75,14 @@ export default function AdminOrderDetail() {
             const data = await res.json();
 
             if (data.success) {
-                alert("Order updated successfully!");
+                toast.success("Order updated successfully!");
                 fetchOrder();
             } else {
-                alert(data.message || "Failed to update order");
+                toast.error(data.message || "Failed to update order");
             }
         } catch (error) {
             console.error("Save error:", error);
-            alert("Failed to update order");
+            toast.error("Failed to update order");
         } finally {
             setSaving(false);
         }
@@ -101,7 +102,7 @@ export default function AdminOrderDetail() {
             if (data.success) {
                 setCouriers(data.couriers || []);
             } else {
-                alert(data.message || "Failed to fetch couriers");
+                toast.error(data.message || "Failed to fetch couriers");
             }
         } catch (error) {
             console.error("Fetch couriers error:", error);
@@ -125,14 +126,14 @@ export default function AdminOrderDetail() {
             });
             const data = await res.json();
             if (data.success) {
-                alert("Shipment created successfully!");
+                toast.success("Shipment created successfully!");
                 fetchOrder();
             } else {
-                alert(data.message || "Failed to create shipment");
+                toast.error(data.message || "Failed to create shipment");
             }
         } catch (error) {
             console.error("Create shipment error:", error);
-            alert("Failed to create shipment");
+            toast.error("Failed to create shipment");
         } finally {
             setCreatingShipment(false);
         }

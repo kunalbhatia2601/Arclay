@@ -1,3 +1,4 @@
+import { ToastContainer } from "react-toastify";
 import { Playfair_Display, Inter, Geist_Mono, Kumbh_Sans } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/context/UserContext";
@@ -56,6 +57,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${playfair.variable} ${inter.variable} ${geistMono.variable} ${kumbhSans.variable} antialiased`}
       >
+        <ToastContainer />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 
 const PRODUCT_FIELDS = [
@@ -55,7 +56,7 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }) {
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
             if (jsonData.length < 2) {
-                alert("File must have headers and at least one data row");
+                toast.error("File must have headers and at least one data row");
                 return;
             }
 
@@ -80,7 +81,7 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }) {
             setStep(2);
         } catch (error) {
             console.error("Failed to parse file:", error);
-            alert("Failed to parse file. Please check the format.");
+            toast.error("Failed to parse file. Please check the format.");
         }
     };
 
@@ -102,7 +103,7 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }) {
         // Validate required fields (category is optional, defaults to SITE_NAME)
         const invalidRows = mappedData.filter((p, i) => !p.name || !p.regularPrice);
         if (invalidRows.length > 0) {
-            alert(`${invalidRows.length} rows are missing required fields (name or regularPrice)`);
+            toast.error(`${invalidRows.length} rows are missing required fields (name or regularPrice)`);
             return;
         }
 

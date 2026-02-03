@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 
 const timeOptions = [
     { value: 0, label: "All" },
@@ -56,7 +57,7 @@ export default function AdminCartsPage() {
             });
             const data = await res.json();
             if (data.success) {
-                alert("Reminder email sent successfully!");
+                toast.success("Reminder email sent successfully!");
                 // Update local state
                 setCarts(prev => prev.map(cart =>
                     cart._id === cartId
@@ -68,11 +69,11 @@ export default function AdminCartsPage() {
                         : cart
                 ));
             } else {
-                alert(data.message || "Failed to send email");
+                toast.error(data.message || "Failed to send email");
             }
         } catch (error) {
             console.error("Send reminder error:", error);
-            alert("Failed to send reminder email");
+            toast.error("Failed to send reminder email");
         } finally {
             setSending(prev => ({ ...prev, [cartId]: false }));
         }

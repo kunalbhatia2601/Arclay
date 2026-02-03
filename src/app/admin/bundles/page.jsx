@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 
 export default function AdminBundlesPage() {
     const [bundles, setBundles] = useState([]);
@@ -90,11 +91,11 @@ export default function AdminBundlesPage() {
                 fetchBundles();
                 closeModal();
             } else {
-                alert(data.message || "Failed to save bundle");
+                toast.error(data.message || "Failed to save bundle");
             }
         } catch (error) {
             console.error("Save bundle error:", error);
-            alert("Failed to save bundle");
+            toast.error("Failed to save bundle");
         }
     };
 
@@ -109,11 +110,11 @@ export default function AdminBundlesPage() {
             if (data.success) {
                 fetchBundles();
             } else {
-                alert(data.message || "Failed to delete bundle");
+                toast.error(data.message || "Failed to delete bundle");
             }
         } catch (error) {
             console.error("Delete bundle error:", error);
-            alert("Failed to delete bundle");
+            toast.error("Failed to delete bundle");
         }
     };
 

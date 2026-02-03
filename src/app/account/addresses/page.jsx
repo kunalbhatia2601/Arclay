@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
 
 export default function AddressesPage() {
     const { isAuthenticated, loading: userLoading } = useUser();
@@ -66,17 +67,17 @@ export default function AddressesPage() {
             const data = await res.json();
 
             if (data.success) {
-                alert(editingId ? 'Address updated!' : 'Address added!');
+                toast.success(editingId ? 'Address updated!' : 'Address added!');
                 setShowForm(false);
                 setEditingId(null);
                 resetForm();
                 fetchAddresses();
             } else {
-                alert(data.message || 'Failed to save address');
+                toast.error(data.message || 'Failed to save address');
             }
         } catch (error) {
             console.error('Save address error:', error);
-            alert('Failed to save address');
+            toast.error('Failed to save address');
         }
     };
 
@@ -109,14 +110,14 @@ export default function AddressesPage() {
             const data = await res.json();
 
             if (data.success) {
-                alert('Address deleted!');
+                toast.success('Address deleted!');
                 fetchAddresses();
             } else {
-                alert(data.message || 'Failed to delete address');
+                toast.error(data.message || 'Failed to delete address');
             }
         } catch (error) {
             console.error('Delete address error:', error);
-            alert('Failed to delete address');
+            toast.error('Failed to delete address');
         }
     };
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import ProductCard from "@/app/components/ProductCard";
+import { toast } from "react-toastify";
 
 export default function ProductDetailPage({ params }) {
     const { id } = use(params);
@@ -102,16 +103,16 @@ export default function ProductDetailPage({ params }) {
             });
             const data = await res.json();
             if (data.success) {
-                alert("Review submitted! It will be visible after admin approval.");
+                toast.success("Review submitted! It will be visible after admin approval.");
                 setShowReviewForm(false);
                 setReviewComment("");
                 setCanReview(false);
             } else {
-                alert(data.message || "Failed to submit review");
+                toast.error(data.message || "Failed to submit review");
             }
         } catch (error) {
             console.error("Submit review error:", error);
-            alert("Failed to submit review");
+            toast.error("Failed to submit review");
         } finally {
             setSubmittingReview(false);
         }
@@ -190,7 +191,7 @@ export default function ProductDetailPage({ params }) {
         }
 
         if (!selectedVariant) {
-            alert("Please select all options");
+            toast.error("Please select all options");
             return;
         }
 
@@ -218,20 +219,18 @@ export default function ProductDetailPage({ params }) {
             const data = await res.json();
 
             if (data.success) {
-                alert("Added to cart!");
+                toast.success("Added to cart!");
                 router.push("/cart");
             } else {
-                alert(data.message || "Failed to add to cart");
+                toast.error(data.message || "Failed to add to cart");
             }
         } catch (error) {
             console.error("Add to cart error:", error);
-            alert("Failed to add to cart");
+            toast.error("Failed to add to cart");
         } finally {
             setAddingToCart(false);
         }
     };
-
-
 
     const renderStars = (count) => {
         return Array.from({ length: 5 }, (_, i) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -252,11 +253,11 @@ export default function AdminCouponsPage() {
                 closeModal();
                 fetchCoupons();
             } else {
-                alert(data.message || "Failed to save coupon");
+                toast.error(data.message || "Failed to save coupon");
             }
         } catch (error) {
             console.error("Save coupon error:", error);
-            alert("Failed to save coupon");
+            toast.error("Failed to save coupon");
         }
     };
 
@@ -271,10 +272,11 @@ export default function AdminCouponsPage() {
             if (data.success) {
                 fetchCoupons();
             } else {
-                alert(data.message || "Failed to delete coupon");
+                toast.error(data.message || "Failed to delete coupon");
             }
         } catch (error) {
             console.error("Delete coupon error:", error);
+            toast.error("Failed to delete coupon");
         }
     };
 

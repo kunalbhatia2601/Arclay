@@ -6,12 +6,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, ShoppingBag } from "lucide-react";
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "ESSVORA";
 
 export default function Navbar() {
-    const { user, isAuthenticated, isAdmin, logout, loading } = useUser();
+    const { user, isAuthenticated, isAdmin, logout, loading, cartCount } = useUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [showNavbar, setShowNavbar] = useState(true);
@@ -72,28 +72,40 @@ export default function Navbar() {
                         {loading ? (
                             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                         ) : isAuthenticated ? (
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                    className="flex items-center gap-3 px-1 py-1 rounded-full hover:bg-muted transition-colors"
-                                >
-                                    <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-                                        {user?.name?.[0]?.toUpperCase() || "U"}
-                                    </div>
-                                </button>
-                                {/* User Dropdown */}
-                                {isUserMenuOpen && (
-                                    <div className="absolute right-0 top-full mt-4 w-48 bg-card border border-border rounded-xl shadow-xl py-2 animate-fade-in-up">
-                                        <div className="px-4 py-3 border-b border-border">
-                                            <p className="font-bold text-foreground truncate">{user?.name}</p>
-                                            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                            <>
+                                {/* Cart Icon */}
+                                <Link href="/cart" className="relative p-2 rounded-full hover:bg-muted transition-colors text-foreground group">
+                                    <ShoppingBag className="w-5 h-5 group-hover:text-primary transition-colors" />
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold h-4 min-w-[16px] px-0.5 rounded-full flex items-center justify-center border-2 border-background">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                        className="flex items-center gap-3 px-1 py-1 rounded-full hover:bg-muted transition-colors transition-transform active:scale-95"
+                                    >
+                                        <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-md">
+                                            {user?.name?.[0]?.toUpperCase() || "U"}
                                         </div>
-                                        <Link href="/account" className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors" onClick={() => setIsUserMenuOpen(false)}>Account</Link>
-                                        <Link href="/orders" className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors" onClick={() => setIsUserMenuOpen(false)}>Orders</Link>
-                                        <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors">Sign Out</button>
-                                    </div>
-                                )}
-                            </div>
+                                    </button>
+                                    {/* User Dropdown */}
+                                    {isUserMenuOpen && (
+                                        <div className="absolute right-0 top-full mt-4 w-48 bg-card border border-border rounded-xl shadow-xl py-2 animate-fade-in-up">
+                                            <div className="px-4 py-3 border-b border-border">
+                                                <p className="font-bold text-foreground truncate">{user?.name}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                                            </div>
+                                            <Link href="/account" className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors" onClick={() => setIsUserMenuOpen(false)}>Account</Link>
+                                            <Link href="/orders" className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors" onClick={() => setIsUserMenuOpen(false)}>Orders</Link>
+                                            <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors">Sign Out</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         ) : (
                             <div className="flex items-center gap-4">
                                 <Link href="/login" className="text-sm font-bold text-foreground hover:text-primary transition-colors">
@@ -110,6 +122,16 @@ export default function Navbar() {
 
                     {/* Mobile Menu Toggle & Theme Toggle */}
                     <div className="lg:hidden flex items-center gap-4">
+                        {isAuthenticated && (
+                            <Link href="/cart" className="relative p-2 text-foreground">
+                                <ShoppingBag className="w-5 h-5" />
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
                         <button
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                             className="p-2 rounded-full hover:bg-muted transition-colors text-foreground"

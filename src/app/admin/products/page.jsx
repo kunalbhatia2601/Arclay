@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import BulkUploadModal from "./BulkUploadModal";
+import { toast } from "react-toastify";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -85,11 +86,11 @@ export default function ProductsPage() {
             if (data.success) {
                 fetchProducts();
             } else {
-                alert(data.message);
+                toast.error(data.message);
             }
         } catch (error) {
             console.error("Delete failed:", error);
-            alert("Failed to delete product");
+            toast.error("Failed to delete product");
         }
     };
 

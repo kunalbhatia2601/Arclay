@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ProductAdModal from "./ProductAdModal";
+import { toast } from "react-toastify";
 
 export default function ProductAdsPage() {
     const [ads, setAds] = useState([]);
@@ -43,11 +44,11 @@ export default function ProductAdsPage() {
             if (data.success) {
                 fetchAds();
             } else {
-                alert(data.message);
+                toast.error(data.message);
             }
         } catch (error) {
             console.error("Delete failed:", error);
-            alert("Failed to delete ad");
+            toast.error("Failed to delete ad");
         }
     };
 

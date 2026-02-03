@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 export default function CheckoutPage() {
     const { isAuthenticated, user, loading: userLoading } = useUser();
@@ -284,7 +285,7 @@ export default function CheckoutPage() {
             const orderData = await orderRes.json();
 
             if (!orderData.success) {
-                alert(orderData.message || "Failed to create order");
+                toast.error(orderData.message || "Failed to create order");
                 setSubmitting(false);
                 return;
             }
@@ -294,7 +295,7 @@ export default function CheckoutPage() {
             // Handle different payment methods
             if (formData.paymentMethod === "cod") {
                 // COD - order is already placed
-                alert("Order placed successfully!");
+                toast.success("Order placed successfully!");
                 router.push(`/orders/${order._id}`);
             } else if (formData.paymentMethod === "razorpay") {
                 // Razorpay payment flow
@@ -305,7 +306,7 @@ export default function CheckoutPage() {
             }
         } catch (error) {
             console.error("Order error:", error);
-            alert("Failed to place order");
+            toast.error("Failed to place order");
             setSubmitting(false);
         }
     };
@@ -323,7 +324,7 @@ export default function CheckoutPage() {
             const data = await res.json();
 
             if (!data.success) {
-                alert(data.message || "Failed to initiate payment");
+                toast.error(data.message || "Failed to initiate payment");
                 setSubmitting(false);
                 return;
             }
@@ -364,16 +365,16 @@ export default function CheckoutPage() {
                     const verifyData = await verifyRes.json();
 
                     if (verifyData.success) {
-                        alert("Payment successful!");
+                        toast.success("Payment successful!");
                         router.push(`/orders/${order._id}`);
                     } else {
-                        alert("Payment verification failed!");
+                        toast.error("Payment verification failed!");
                         setSubmitting(false);
                     }
                 },
                 modal: {
                     ondismiss: function () {
-                        alert("Payment cancelled");
+                        toast.error("Payment cancelled");
                         setSubmitting(false);
                     }
                 },
@@ -387,7 +388,7 @@ export default function CheckoutPage() {
             razorpay.open();
         } catch (error) {
             console.error("Razorpay error:", error);
-            alert("Payment failed");
+            toast.error("Payment failed");
             setSubmitting(false);
         }
     };
@@ -396,7 +397,7 @@ export default function CheckoutPage() {
         try {
             // For now, just alert that Stripe integration is pending
             // Full Stripe Elements integration requires more setup
-            alert("Stripe payment integration is pending. Please use COD or Razorpay for now.");
+            toast.error("Stripe payment integration is pending. Please use COD or Razorpay for now.");
             setSubmitting(false);
 
             // TODO: Implement Stripe Payment Elements
@@ -407,7 +408,7 @@ export default function CheckoutPage() {
             // 5. Navigate to order page
         } catch (error) {
             console.error("Stripe error:", error);
-            alert("Payment failed");
+            toast.error("Payment failed");
             setSubmitting(false);
         }
     };
