@@ -251,6 +251,129 @@ export const brandContent = {
             tagline: "Ancient Wisdom. Modern Wellness. Authentic Ayurvedic products.",
             newsletterPrompt: "Join our list",
         }
+    },
+
+    arclay: {
+        hero: {
+            titleLine1: "Discover Quality.",
+            titleLine2: "Delivered Fast.",
+            subtitle: "Your one-stop destination for premium products at unbeatable prices.",
+            ctaPrimary: "SHOP NOW",
+            ctaSecondary: "VIEW CATEGORIES",
+            products: [
+                { name: "Electronics", color: "blue", size: "large" },
+                { name: "Fashion", color: "pink", size: "medium" },
+                { name: "Home & Living", color: "amber", size: "medium" },
+                { name: "Accessories", color: "purple", size: "small" },
+                { name: "Gadgets", color: "cyan", size: "small" },
+                { name: "Lifestyle", color: "rose", size: "small" },
+            ]
+        },
+
+        productHighlight: {
+            sectionTitle: "SHOP BY CATEGORY",
+            categories: [
+                {
+                    id: 1,
+                    title: "TRENDING NOW",
+                    subtitle: "Hot picks",
+                    emoji: "🔥",
+                    bgColor: "bg-rose-50",
+                    products: ["Best Sellers", "New Arrivals", "Editor's Choice"],
+                },
+                {
+                    id: 2,
+                    title: "TOP DEALS",
+                    subtitle: "Save big",
+                    emoji: "💰",
+                    bgColor: "bg-blue-50",
+                    products: ["Flash Sale", "Clearance", "Bundle Offers"],
+                },
+                {
+                    id: 3,
+                    title: "PREMIUM PICKS",
+                    subtitle: "Quality first",
+                    emoji: "✨",
+                    bgColor: "bg-purple-50",
+                    products: ["Curated Collection", "Exclusive Items", "Limited Edition"],
+                },
+            ]
+        },
+
+        whyUs: {
+            sectionTitle: "WHY CHOOSE ARCLAY",
+            features: [
+                {
+                    id: 1,
+                    title: "Fast Delivery",
+                    icon: "package",
+                },
+                {
+                    id: 2,
+                    title: "Secure Payment",
+                    icon: "jar",
+                },
+                {
+                    id: 3,
+                    title: "Quality Assured",
+                    icon: "leaf",
+                },
+                {
+                    id: 4,
+                    title: "Easy Returns",
+                    icon: "no-preservatives",
+                },
+            ]
+        },
+
+        ourStory: {
+            sectionLabel: "ABOUT US",
+            title: "Shopping made simple, quality made priority.",
+            description: "At Arclay, we believe everyone deserves access to premium products without the premium price tag. We curate the best from around the world.",
+            additionalText: "Our team handpicks every product to ensure it meets our high standards of quality, durability, and value. Your satisfaction is our mission.",
+            stats: [
+                { value: "50K+", label: "Happy Customers" },
+                { value: "10K+", label: "Products" },
+                { value: "99%", label: "Satisfaction" },
+            ]
+        },
+
+        socialProof: {
+            sectionLabel: "REVIEWS",
+            statsTitle: "Trusted by 50,000+",
+            statsSubtitle: "happy shoppers",
+            rating: "4.9/5",
+            reviewCount: "12,500 reviews",
+            communityText: "Join our community",
+            reviews: [
+                {
+                    id: 1,
+                    rating: 5,
+                    text: "Amazing quality and super fast delivery. Will definitely shop again!",
+                    author: "Sarah M.",
+                    location: "New York",
+                },
+                {
+                    id: 2,
+                    rating: 5,
+                    text: "Best online shopping experience. Great prices and excellent service.",
+                    author: "James K.",
+                    location: "London",
+                },
+                {
+                    id: 3,
+                    rating: 5,
+                    text: "Love the product quality. Packaging was perfect too!",
+                    author: "Priya R.",
+                    location: "Mumbai",
+                },
+            ]
+        },
+
+        footer: {
+            tagline: "Discover Quality. Delivered Fast. Your trusted shopping destination.",
+            newsletterPrompt: "Get exclusive deals",
+        }
     }
 };
 
@@ -259,7 +382,9 @@ export const brandContent = {
  */
 export const getTheme = (siteName) => {
     const normalized = (siteName || "").toLowerCase().replace(/\s+/g, '');
-    return normalized.includes('vedicbro') ? 'vedicbro' : 'essvora';
+    if (normalized.includes('vedicbro')) return 'vedicbro';
+    if (normalized.includes('arclay')) return 'arclay';
+    return 'essvora';
 };
 
 /**
