@@ -38,6 +38,6 @@ jobs:
             ~/.bun/bin/bun run build
             
             echo "🔄 Restarting PM2 process..."
-            pm2 restart arclay
+            pm2 restart arclay --update-env
             
             echo "✅ Deployment complete!"
