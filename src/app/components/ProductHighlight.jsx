@@ -31,36 +31,36 @@ export default function ProductHighlight() {
     }, []);
 
     return (
-        <section className="py-20 lg:py-28 bg-[#0A0A0A] relative overflow-hidden">
+        <section className="py-20 bg-background relative overflow-hidden">
+            <div className="absolute inset-0 bg-pattern opacity-5 pointer-events-none"></div>
+
             <div className="container mx-auto px-4 lg:px-8 relative z-10">
 
                 {/* Section Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 border-b border-white/5 pb-8">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                     <div>
                         <span className="text-primary font-bold tracking-widest uppercase text-xs mb-2 block">
                             Limited Edition
                         </span>
-                        <h2 className="font-heading text-4xl lg:text-5xl font-black text-white leading-tight">
+                        <h2 className="font-heading text-4xl lg:text-5xl font-black text-foreground leading-tight">
                             CURATED <span className="text-primary">COMBOS</span>
                         </h2>
                     </div>
 
+                    {/* Navigation Buttons for future implementation */}
                     <div className="hidden md:flex gap-2">
-                        {/* Navigation Arrows (Optional) */}
-                        <div className="flex gap-2">
-                            <button className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all">
-                                ←
-                            </button>
-                            <button className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all">
-                                →
-                            </button>
-                        </div>
+                        <button className="p-3 rounded-full border border-border text-foreground hover:bg-muted transition-colors">
+                            ←
+                        </button>
+                        <button className="p-3 rounded-full border border-border text-foreground hover:bg-muted transition-colors">
+                            →
+                        </button>
                     </div>
                 </div>
 
                 {loading ? (
                     <div className="flex justify-center py-20">
-                        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
@@ -73,7 +73,7 @@ export default function ProductHighlight() {
                 {/* View All Button */}
                 <div className="mt-16 text-center">
                     <Link href="/shop">
-                        <Button variant="outline" className="border-white/10 text-white hover:bg-white hover:text-black rounded-full px-10 py-6 text-sm font-bold tracking-widest uppercase transition-all">
+                        <Button variant="outline" className="border-border text-foreground hover:bg-foreground hover:text-background rounded-full px-10 py-6 text-sm font-bold tracking-widest uppercase transition-all">
                             View All Combos
                         </Button>
                     </Link>
@@ -104,10 +104,10 @@ function BundleCard({ bundle }) {
     return (
         <Link
             href={`/bundles/${bundle.slug}`}
-            className="group relative bg-[#1E1E1E] hover:bg-[#252525] rounded-3xl p-4 transition-all duration-300 border border-white/5 hover:border-primary/30 flex items-center gap-6"
+            className="group relative bg-card hover:bg-accent/50 rounded-3xl p-4 transition-all duration-300 border border-border hover:border-primary/30 flex items-center gap-6"
         >
             {/* Circular Image Mask */}
-            <div className="shrink-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden border-2 border-white/10 shadow-lg relative bg-[#121212]">
+            <div className="shrink-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden border-2 border-border shadow-lg relative bg-background">
                 {currentImage ? (
                     <img
                         key={currentImage} // Key helps React identify change, simple crossfade can occur if supported but simple switch is robust
@@ -120,34 +120,34 @@ function BundleCard({ bundle }) {
                 )}
                 {/* Quick Add Button Overlay */}
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-bold text-lg">+</span>
+                    <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">+</span>
                 </div>
             </div>
 
             {/* Content Info */}
             <div className="flex-1 py-2 pr-4">
                 <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-heading text-xl font-bold text-white group-hover:text-primary transition-colors line-clamp-1">
+                    <h3 className="font-heading text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                         {bundle.title || bundle.name}
                     </h3>
                 </div>
 
-                <p className="text-sm text-white/50 line-clamp-2 mb-4 font-medium leading-relaxed">
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4 font-medium leading-relaxed">
                     <span className="text-primary/80 uppercase text-[10px] font-bold tracking-wider block mb-1">Includes</span>
                     {bundle.products?.map(p => p.name).join(" + ") || "Curated Items"}
                 </p>
 
                 <div className="flex items-center gap-4 justify-between mt-auto">
                     {/* Item Count Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted rounded-full border border-border">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
-                        <span className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             {bundle.products?.length || 0} Products
                         </span>
                     </div>
 
                     {/* Dynamic CTA */}
-                    <div className="text-xs font-bold text-white border-b border-primary pb-0.5 group-hover:text-primary transition-colors">
+                    <div className="text-xs font-bold text-foreground border-b border-primary pb-0.5 group-hover:text-primary transition-colors">
                         {bundle.btnTxt || "View Bundle"}
                     </div>
                 </div>

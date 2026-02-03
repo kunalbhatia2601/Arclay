@@ -64,7 +64,7 @@ export default function ProductAds({ position = "banner" }) {
     };
 
     return (
-        <section className="py-16 lg:py-24 bg-[#121212] border-t border-white/5">
+        <section className="py-16 lg:py-24 bg-muted border-t border-border">
             <div className="container mx-auto px-4 lg:px-8">
 
                 {/* Section Header */}
@@ -73,13 +73,13 @@ export default function ProductAds({ position = "banner" }) {
                         <p className="text-xs font-bold tracking-[0.3em] text-primary uppercase mb-3">
                             Discover More
                         </p>
-                        <h2 className="font-heading text-3xl lg:text-4xl font-black text-white tracking-tight">
-                            TRENDING <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/50">STORIES</span>
+                        <h2 className="font-heading text-3xl lg:text-4xl font-black text-foreground tracking-tight">
+                            TRENDING <span className="text-transparent bg-clip-text bg-linear-to-r from-foreground to-muted-foreground">STORIES</span>
                         </h2>
                     </div>
 
                     {/* Optional: Add custom navigation or description here */}
-                    <div className="hidden md:block h-px flex-1 bg-white/10 mx-8 mb-4"></div>
+                    <div className="hidden md:block h-px flex-1 bg-border mx-8 mb-4"></div>
                 </div>
 
                 <div className="relative">
@@ -95,7 +95,7 @@ export default function ProductAds({ position = "banner" }) {
                         <>
                             <button
                                 onClick={goToPrevPage}
-                                className="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#1E1E1E] border border-white/10 shadow-lg text-white flex items-center justify-center transition-all hover:scale-110 hover:bg-primary hover:text-black z-10 hover:border-primary"
+                                className="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-card border border-border shadow-lg text-foreground flex items-center justify-center transition-all hover:scale-110 hover:bg-primary hover:text-black z-10 hover:border-primary"
                                 aria-label="Previous page"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +104,7 @@ export default function ProductAds({ position = "banner" }) {
                             </button>
                             <button
                                 onClick={goToNextPage}
-                                className="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#1E1E1E] border border-white/10 shadow-lg text-white flex items-center justify-center transition-all hover:scale-110 hover:bg-primary hover:text-black z-10 hover:border-primary"
+                                className="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-card border border-border shadow-lg text-foreground flex items-center justify-center transition-all hover:scale-110 hover:bg-primary hover:text-black z-10 hover:border-primary"
                                 aria-label="Next page"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +124,7 @@ export default function ProductAds({ position = "banner" }) {
                                 onClick={() => setCurrentPage(idx)}
                                 className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentPage
                                     ? "bg-primary w-8"
-                                    : "bg-white/10 w-4 hover:bg-white/30"
+                                    : "bg-foreground/10 w-4 hover:bg-foreground/30"
                                     }`}
                                 aria-label={`Go to page ${idx + 1}`}
                             />
@@ -146,7 +146,7 @@ function AdCard({ ad, onClick }) {
     return (
         <div
             onClick={onClick}
-            className="relative aspect-[3/4] rounded-3xl overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(204,255,0,0.15)] transition-all duration-500 group hover:-translate-y-2 cursor-pointer border border-white/5 bg-[#121212]"
+            className="relative aspect-[3/4] rounded-3xl overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(204,255,0,0.15)] transition-all duration-500 group hover:-translate-y-2 cursor-pointer border border-border bg-muted"
         >
             {/* Background Media */}
             {ad.mediaType === "video" ? (
@@ -169,7 +169,7 @@ function AdCard({ ad, onClick }) {
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-80" />
 
-            {/* Content at Bottom */}
+            {/* Content at Bottom - Keeping white because it's over dark media/gradient */}
             <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform transition-transform duration-300">
                 <h3 className="font-heading text-lg font-bold mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
                     {ad.title}
@@ -218,7 +218,7 @@ function AdModal({ ad, onClose }) {
             </button>
 
             {/* Modal Card */}
-            <div className="relative w-full max-w-lg aspect-[3/4] sm:aspect-[9/16] max-h-[90vh] bg-[#121212] rounded-3xl overflow-hidden shadow-2xl animate-scale-in border border-white/10">
+            <div className="relative w-full max-w-lg aspect-[3/4] sm:aspect-[9/16] max-h-[90vh] bg-background rounded-3xl overflow-hidden shadow-2xl animate-scale-in border border-border">
                 {/* Media */}
                 <div className="absolute inset-0">
                     {ad.mediaType === "video" ? (
@@ -239,7 +239,7 @@ function AdModal({ ad, onClose }) {
                     )}
                 </div>
 
-                {/* Overlay & Content */}
+                {/* Overlay & Content - Keeping white text for readability over media */}
                 <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent pointer-events-none" />
 
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white text-center">
@@ -267,7 +267,6 @@ function AdModal({ ad, onClose }) {
             </div>
         </div>
     );
-
     // Use portal to render outside the section hierarchy
     if (typeof window === 'undefined') return null;
     return createPortal(ModalContent, document.body);

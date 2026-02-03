@@ -97,17 +97,17 @@ export default function FeaturedProducts() {
     const showCarousel = products.length > visibleCount;
 
     return (
-        <section className="py-20 lg:py-28 bg-[#0A0A0A] relative border-b border-white/5">
+        <section className="py-20 lg:py-28 bg-background relative border-b border-border">
             <div className="container mx-auto px-4 lg:px-8 relative z-10">
                 {/* Section Header - Minimal & Centered */}
                 <div className="text-center mb-16 max-w-2xl mx-auto">
                     <p className="text-xs font-bold tracking-[0.3em] text-primary uppercase mb-4">
                         Discover Excellence
                     </p>
-                    <h2 className="font-heading text-4xl lg:text-5xl font-black text-white tracking-tight mb-4">
-                        CURATED <span className="text-white/50">COLLECTION</span>
+                    <h2 className="font-heading text-4xl lg:text-5xl font-black text-foreground tracking-tight mb-4">
+                        CURATED <span className="text-muted-foreground">COLLECTION</span>
                     </h2>
-                    <p className="text-white/40 font-light text-lg">
+                    <p className="text-muted-foreground font-light text-lg">
                         Thoughtfully selected products representing the pinnacle of quality and craftsmanship.
                     </p>
                 </div>
@@ -123,14 +123,14 @@ export default function FeaturedProducts() {
                             <>
                                 <button
                                     onClick={goPrev}
-                                    className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 w-14 h-14 rounded-full bg-[#1E1E1E] text-white items-center justify-center transition-all opacity-0 group-hover/slider:opacity-100 hover:bg-primary hover:text-black hover:scale-110 shadow-2xl"
+                                    className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 w-14 h-14 rounded-full bg-card border border-border text-foreground items-center justify-center transition-all opacity-0 group-hover/slider:opacity-100 hover:bg-primary hover:text-primary-foreground hover:scale-110 shadow-2xl"
                                     aria-label="Previous"
                                 >
                                     <span className="text-xl">←</span>
                                 </button>
                                 <button
                                     onClick={goNext}
-                                    className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10 w-14 h-14 rounded-full bg-[#1E1E1E] text-white items-center justify-center transition-all opacity-0 group-hover/slider:opacity-100 hover:bg-primary hover:text-black hover:scale-110 shadow-2xl"
+                                    className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10 w-14 h-14 rounded-full bg-card border border-border text-foreground items-center justify-center transition-all opacity-0 group-hover/slider:opacity-100 hover:bg-primary hover:text-primary-foreground hover:scale-110 shadow-2xl"
                                     aria-label="Next"
                                 >
                                     <span className="text-xl">→</span>
@@ -153,9 +153,9 @@ export default function FeaturedProducts() {
                                         className="group relative flex flex-col"
                                     >
                                         {/* Product Image Stage */}
-                                        <div className="aspect-[3/4] bg-[#121212] rounded-3xl overflow-hidden relative mb-6">
+                                        <div className="aspect-[3/4] bg-muted rounded-3xl overflow-hidden relative mb-6">
                                             {/* Background Glow */}
-                                            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                            <div className="absolute inset-0 bg-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                                             {product.images?.[0] ? (
                                                 <img
@@ -170,7 +170,7 @@ export default function FeaturedProducts() {
                                             {/* Badges */}
                                             <div className="absolute top-4 left-4 flex flex-col gap-2">
                                                 {hasSale && (
-                                                    <span className="bg-primary text-black text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                                                         -20%
                                                     </span>
                                                 )}
@@ -178,7 +178,7 @@ export default function FeaturedProducts() {
 
                                             {/* Quick Actions (Slide Up) */}
                                             <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                                <button className="w-full h-12 bg-white text-black font-bold uppercase text-xs tracking-widest rounded-full hover:bg-primary transition-colors shadow-xl">
+                                                <button className="w-full h-12 bg-foreground text-background font-bold uppercase text-xs tracking-widest rounded-full hover:bg-primary hover:text-primary-foreground transition-colors shadow-xl">
                                                     Quick Add
                                                 </button>
                                             </div>
@@ -186,13 +186,13 @@ export default function FeaturedProducts() {
 
                                         {/* Product Info - Clean & Minimal */}
                                         <div className="space-y-1">
-                                            <h3 className="font-heading text-lg font-bold text-white leading-tight group-hover:text-primary transition-colors">
+                                            <h3 className="font-heading text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
                                                 {product.name}
                                             </h3>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-white/60 font-medium">₹{price}</span>
+                                                <span className="text-muted-foreground font-medium">₹{price}</span>
                                                 {hasSale && originalPrice && (
-                                                    <span className="text-white/20 line-through text-sm">₹{originalPrice}</span>
+                                                    <span className="text-muted-foreground/50 line-through text-sm">₹{originalPrice}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -205,7 +205,7 @@ export default function FeaturedProducts() {
 
                 {/* View All Button */}
                 <div className="text-center mt-10">
-                    <Link href="/shop" className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors uppercase tracking-widest text-xs font-bold border-b border-transparent hover:border-white pb-1">
+                    <Link href="/shop" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest text-xs font-bold border-b border-transparent hover:border-foreground pb-1">
                         Explore Full Collection
                     </Link>
                 </div>

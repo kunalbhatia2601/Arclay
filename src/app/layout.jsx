@@ -1,6 +1,7 @@
 import { Playfair_Display, Inter, Geist_Mono, Kumbh_Sans } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/context/UserContext";
+import { ThemeProvider } from "@/components/theme-provider";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -51,15 +52,22 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${playfair.variable} ${inter.variable} ${geistMono.variable} ${kumbhSans.variable} antialiased`}
       >
-        <UserProvider>
-          <Navbar />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <UserProvider>
+            <Navbar />
             {children}
-          <Footer />
-        </UserProvider>
+            <Footer />
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

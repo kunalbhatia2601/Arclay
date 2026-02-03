@@ -18,7 +18,7 @@ export default function Hero() {
 
             {/* Background Texture / Doodle (Optional) */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)', backgroundSize: '40px 40px' }}>
             </div>
 
             <div className="container mx-auto px-4 lg:px-8 relative z-10">
@@ -26,45 +26,45 @@ export default function Hero() {
 
                     {/* Left Content - Bold & Direct */}
                     <div className="space-y-8 lg:pr-12 animate-fade-in-up">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border">
                             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                            <span className="text-xs font-bold text-white tracking-widest uppercase">New Collection</span>
+                            <span className="text-xs font-bold text-foreground tracking-widest uppercase">New Collection</span>
                         </div>
 
-                        <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[0.9] tracking-tight">
+                        <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-foreground leading-[0.9] tracking-tight">
                             {heroContent.titleLine1 || "CRAFTED"} <br />
-                            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-white">
+                            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-foreground">
                                 {heroContent.titleLine2 || "QUALITY"}
                             </span>
                         </h1>
 
-                        <p className="text-lg text-white/60 max-w-md leading-relaxed font-light">
+                        <p className="text-lg text-muted-foreground max-w-md leading-relaxed font-light">
                             {heroContent.subtitle}
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
                             <Link href="/shop">
-                                <Button className="h-14 px-8 bg-primary hover:bg-white hover:text-black text-black text-base font-bold rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(204,255,0,0.2)]">
+                                <Button className="h-14 px-8 bg-primary hover:bg-foreground hover:text-background text-primary-foreground text-base font-bold rounded-full transition-all duration-300 shadow-xl hover:shadow-primary/20">
                                     {heroContent.ctaPrimary} <span className="ml-2">→</span>
                                 </Button>
                             </Link>
-                            <Button variant="outline" className="h-14 px-8 border-white/20 text-white hover:bg-white/10 hover:border-white rounded-full text-base font-bold">
+                            <Button variant="outline" className="h-14 px-8 border-border text-foreground hover:bg-accent hover:border-foreground/20 rounded-full text-base font-bold">
                                 {heroContent.ctaSecondary}
                             </Button>
                         </div>
 
                         {/* Trust/Stats Mini-Block */}
-                        <div className="flex items-center gap-6 pt-8 border-t border-white/10">
+                        <div className="flex items-center gap-6 pt-8 border-t border-border">
                             <div className="flex -space-x-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-[#121212] bg-white/10 flex items-center justify-center overflow-hidden">
+                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden">
                                         <div className="w-full h-full bg-linear-to-br from-gray-500 to-gray-700"></div>
                                     </div>
                                 ))}
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-xl font-black text-white">4.9/5</span>
-                                <span className="text-xs text-white/50 uppercase tracking-wider font-bold">From 2k+ Reviews</span>
+                                <span className="text-xl font-black text-foreground">4.9/5</span>
+                                <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold">From 2k+ Reviews</span>
                             </div>
                         </div>
                     </div>
@@ -74,11 +74,11 @@ export default function Hero() {
                         <div className="relative w-[350px] h-[350px] md:w-[500px] md:h-[500px]">
 
                             {/* Decorative Orbit Rings */}
-                            <div className="absolute inset-0 rounded-full border border-white/5 animate-[spin_10s_linear_infinite]"></div>
-                            <div className="absolute inset-4 rounded-full border border-white/5 animate-[spin_15s_linear_infinite_reverse]"></div>
+                            <div className="absolute inset-0 rounded-full border border-border animate-[spin_10s_linear_infinite]"></div>
+                            <div className="absolute inset-4 rounded-full border border-border animate-[spin_15s_linear_infinite_reverse]"></div>
 
                             {/* Main Circular Mask */}
-                            <div className="absolute inset-8 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl">
+                            <div className="absolute inset-8 rounded-full overflow-hidden border-4 border-muted shadow-2xl">
                                 <img
                                     src={MAIN_IMG}
                                     alt="Hero Product"
@@ -89,19 +89,19 @@ export default function Hero() {
                             </div>
 
                             {/* Floating "Experience" Badge */}
-                            <div className="absolute -left-4 top-1/2 -translate-y-1/2 bg-[#1E1E1E] border border-white/10 p-4 rounded-2xl shadow-xl flex items-center gap-4 animate-float">
+                            <div className="absolute -left-4 top-1/2 -translate-y-1/2 bg-card border border-border p-4 rounded-2xl shadow-xl flex items-center gap-4 animate-float">
                                 <div className="p-3 bg-primary/20 rounded-full text-primary">
                                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
                                 </div>
                                 <div>
-                                    <p className="text-white font-bold text-sm">Valid Quality</p>
-                                    <p className="text-white/50 text-xs">Certified Organic</p>
+                                    <p className="text-foreground font-bold text-sm">Valid Quality</p>
+                                    <p className="text-muted-foreground text-xs">Certified Organic</p>
                                 </div>
                             </div>
 
                             {/* Floating Price Tag */}
                             <div className="absolute right-0 bottom-12 animate-float" style={{ animationDelay: '1s' }}>
-                                <div className="bg-white text-black px-5 py-2 rounded-full font-black text-lg shadow-[0_10px_20px_rgba(0,0,0,0.3)] transform rotate-[-6deg] hover:rotate-0 transition-transform">
+                                <div className="bg-foreground text-background px-5 py-2 rounded-full font-black text-lg shadow-xl transform rotate-[-6deg] hover:rotate-0 transition-transform">
                                     Start ₹249
                                 </div>
                             </div>
