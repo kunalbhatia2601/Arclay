@@ -44,14 +44,14 @@ const icons = {
 
 export default function WhyEssvora() {
     return (
-        <section className="py-20 lg:py-28 bg-muted">
+        <section className="py-20 lg:py-28 bg-[#121212] border-t border-white/5">
             <div className="container mx-auto px-4 lg:px-8">
                 {/* Section Header */}
                 <div className="text-center mb-16">
-                    <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase mb-4">
+                    <p className="text-xs font-bold tracking-[0.3em] text-white/40 uppercase mb-4">
                         {whyUsContent.sectionTitle}
                     </p>
-                    <div className="decorative-line mx-auto"></div>
+                    <div className="h-1 w-20 bg-primary mx-auto rounded-full"></div>
                 </div>
 
                 {/* Features Grid */}
@@ -63,12 +63,12 @@ export default function WhyEssvora() {
                             style={{ animationDelay: `${index * 100}ms` }}
                         >
                             {/* Icon */}
-                            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-card flex items-center justify-center text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-lg group-hover:scale-110">
+                            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-[#1E1E1E] border border-white/5 flex items-center justify-center text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-black group-hover:shadow-[0_0_30px_rgba(204,255,0,0.3)]">
                                 {icons[feature.icon] || icons.leaf}
                             </div>
 
                             {/* Title */}
-                            <h3 className="font-medium text-sm text-foreground leading-tight">
+                            <h3 className="font-bold text-base text-white leading-tight uppercase tracking-wider group-hover:text-primary transition-colors">
                                 {feature.title}
                             </h3>
                         </div>

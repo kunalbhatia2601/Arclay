@@ -26,242 +26,111 @@ export default function Navbar() {
     }, [pathname]);
 
     return (
-        showNavbar && <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        showNavbar && <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-white/5">
             <nav className="container mx-auto px-4 lg:px-8">
                 <div className="flex items-center justify-between h-16 lg:h-20">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <span className="font-serif text-2xl lg:text-3xl font-bold text-foreground tracking-wide">
+
+                    {/* Minimalist Brand Logo */}
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <span className="text-xl lg:text-2xl font-bold text-white tracking-tight group-hover:text-primary transition-colors">
                             {siteName}
                         </span>
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1"></div>
                     </Link>
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden lg:flex items-center gap-8">
-                        <Link
-                            href="/"
-                            className="text-foreground/80 hover:text-primary transition-colors font-medium"
-                        >
-                            Home
-                        </Link>
-                        <Link
-                            href="/products"
-                            className="text-foreground/80 hover:text-primary transition-colors font-medium"
-                        >
-                            Products
-                        </Link>
-                        <a
-                            href="#contact"
-                            className="text-foreground/80 hover:text-primary transition-colors font-medium"
-                        >
-                            Contact
-                        </a>
+                    {/* Centered Navigation */}
+                    <div className="hidden lg:flex items-center gap-10">
+                        {["Home", "Products", "Contact"].map((item) => (
+                            <Link
+                                key={item}
+                                href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                                className="text-sm font-semibold text-white/70 hover:text-white transition-colors uppercase tracking-wide"
+                            >
+                                {item}
+                            </Link>
+                        ))}
                     </div>
 
-                    {/* Desktop CTA Buttons / User Menu */}
-                    <div className="hidden lg:flex items-center gap-4">
+                    {/* Right Actions - Neon CTA */}
+                    <div className="hidden lg:flex items-center gap-6">
                         {loading ? (
-                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                         ) : isAuthenticated ? (
-                            <>
-                                {/* Cart Icon */}
-                                <Link href="/cart" className="relative p-2 text-foreground hover:text-primary transition-colors">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                    </svg>
-                                </Link>
-
-                                {/* User Menu */}
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                        className="flex items-center gap-3 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                                    >
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                                            {user?.name?.[0]?.toUpperCase() || "U"}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                    className="flex items-center gap-3 px-1 py-1 rounded-full hover:bg-white/5 transition-colors"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-black font-bold text-sm">
+                                        {user?.name?.[0]?.toUpperCase() || "U"}
+                                    </div>
+                                </button>
+                                {/* User Dropdown */}
+                                {isUserMenuOpen && (
+                                    <div className="absolute right-0 top-full mt-4 w-48 bg-[#1E1E1E] border border-white/10 rounded-xl shadow-xl py-2 animate-fade-in-up">
+                                        <div className="px-4 py-3 border-b border-white/5">
+                                            <p className="font-bold text-white truncate">{user?.name}</p>
+                                            <p className="text-xs text-white/50 truncate">{user?.email}</p>
                                         </div>
-                                        <span className="font-medium text-foreground max-w-[120px] truncate">
-                                            {user?.name}
-                                        </span>
-                                        <svg
-                                            className={`w-4 h-4 text-muted-foreground transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-
-                                    {/* Dropdown Menu */}
-                                    {isUserMenuOpen && (
-                                        <div className="absolute right-0 top-full mt-2 w-48 bg-card rounded-xl shadow-lg border border-border py-2 animate-fade-in-up">
-                                            <div className="px-4 py-2 border-b border-border">
-                                                <p className="font-medium text-foreground truncate">{user?.name}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                                            </div>
-                                            <Link
-                                                href="/account"
-                                                className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-                                                onClick={() => setIsUserMenuOpen(false)}
-                                            >
-                                                My Account
-                                            </Link>
-                                            <Link
-                                                href="/orders"
-                                                className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-                                                onClick={() => setIsUserMenuOpen(false)}
-                                            >
-                                                My Orders
-                                            </Link>
-                                            {isAdmin && (
-                                                <Link
-                                                    href="/admin"
-                                                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-                                                    onClick={() => setIsUserMenuOpen(false)}
-                                                >
-                                                    Admin Panel
-                                                </Link>
-                                            )}
-                                            <button
-                                                onClick={handleLogout}
-                                                className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                                            >
-                                                Logout
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </>
+                                        <Link href="/account" className="block px-4 py-2 text-sm text-white/70 hover:text-primary hover:bg-white/5 transition-colors" onClick={() => setIsUserMenuOpen(false)}>Account</Link>
+                                        <Link href="/orders" className="block px-4 py-2 text-sm text-white/70 hover:text-primary hover:bg-white/5 transition-colors" onClick={() => setIsUserMenuOpen(false)}>Orders</Link>
+                                        <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors">Sign Out</button>
+                                    </div>
+                                )}
+                            </div>
                         ) : (
-                            <>
-                                <Link href="/login">
-                                    <Button variant="ghost" className="text-foreground hover:text-primary">
-                                        Log in
+                            <div className="flex items-center gap-4">
+                                <Link href="/login" className="text-sm font-bold text-white hover:text-primary transition-colors">
+                                    Login
+                                </Link>
+                                <Link href="/shop">
+                                    <Button className="bg-primary hover:bg-primary/90 text-black font-bold rounded-full px-6 h-10 shadow-[0_0_15px_rgba(204,255,0,0.3)] hover:shadow-[0_0_20px_rgba(204,255,0,0.5)] transition-all">
+                                        Shop Now
                                     </Button>
                                 </Link>
-                                <Link href="/signup">
-                                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
-                                        Sign up
-                                    </Button>
-                                </Link>
-                            </>
+                            </div>
                         )}
                     </div>
 
-                    {/* Mobile Menu Button */}
+                    {/* Mobile Menu Toggle */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="lg:hidden p-2 text-foreground"
-                        aria-label="Toggle menu"
+                        className="lg:hidden p-2 text-white"
                     >
-                        <svg
-                            className="w-6 h-6"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {isMenuOpen ? (
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             ) : (
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                             )}
                         </svg>
                     </button>
                 </div>
 
-                {/* Mobile Menu */}
+                {/* Mobile Drawer */}
                 {isMenuOpen && (
-                    <div className="lg:hidden border-t border-border py-4 animate-fade-in-up">
-                        <div className="flex flex-col gap-4">
-                            <Link
-                                href="/products"
-                                className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Products
-                            </Link>
-                            <a
-                                href="#contact"
-                                className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
-                            >
-                                Contact
-                            </a>
-                            <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                                {isAuthenticated ? (
-                                    <>
-                                        <div className="flex items-center gap-3 px-2 py-2">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                                                {user?.name?.[0]?.toUpperCase() || "U"}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-foreground">{user?.name}</p>
-                                                <p className="text-xs text-muted-foreground">{user?.email}</p>
-                                            </div>
-                                        </div>
-                                        <Link
-                                            href="/cart"
-                                            className="px-2 py-2 text-foreground hover:text-primary transition-colors font-medium"
-                                            onClick={() => setIsMenuOpen(false)}
-                                        >
-                                            🛒 Cart
-                                        </Link>
-                                        <Link
-                                            href="/account"
-                                            className="px-2 py-2 text-foreground hover:text-primary transition-colors font-medium"
-                                            onClick={() => setIsMenuOpen(false)}
-                                        >
-                                            My Account
-                                        </Link>
-                                        <Link
-                                            href="/orders"
-                                            className="px-2 py-2 text-foreground hover:text-primary transition-colors font-medium"
-                                            onClick={() => setIsMenuOpen(false)}
-                                        >
-                                            My Orders
-                                        </Link>
-                                        {isAdmin && (
-                                            <Link
-                                                href="/admin"
-                                                className="px-2 py-2 text-foreground hover:text-primary transition-colors font-medium"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Admin Panel
-                                            </Link>
-                                        )}
-                                        <Button
-                                            variant="ghost"
-                                            className="justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={handleLogout}
-                                        >
-                                            Logout
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                                            <Button variant="ghost" className="w-full justify-start text-foreground">
-                                                Log in
-                                            </Button>
-                                        </Link>
-                                        <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
-                                            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full">
-                                                Sign up
-                                            </Button>
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
+                    <div className="lg:hidden bg-[#1E1E1E] border-t border-white/10 absolute left-0 right-0 top-[64px] p-6 shadow-2xl animate-fade-in-up">
+                        <div className="flex flex-col gap-6">
+                            {["Home", "Shop", "Story", "Contact"].map((item) => (
+                                <Link
+                                    key={item}
+                                    href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                                    className="text-xl font-bold text-white hover:text-primary transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    {item}
+                                </Link>
+                            ))}
+                            {!isAuthenticated && (
+                                <div className="pt-6 border-t border-white/10 flex flex-col gap-4">
+                                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                                        <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 py-5 rounded-xl">Login</Button>
+                                    </Link>
+                                    <Link href="/shop" onClick={() => setIsMenuOpen(false)}>
+                                        <Button className="w-full bg-primary text-black font-bold py-5 rounded-xl">Shop Now</Button>
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -269,4 +138,3 @@ export default function Navbar() {
         </header>
     );
 }
-

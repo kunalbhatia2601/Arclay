@@ -2,169 +2,135 @@
 
 import { Button } from "@/components/ui/button";
 import { getBrandContent, getSiteName } from "@/config/brandContent";
+import Link from "next/link";
 
 const siteName = getSiteName();
 const content = getBrandContent(siteName);
-const isVedicBro = siteName.toLowerCase().includes('vedicbro');
 
-// Color mappings for product cards
-const colorMap = {
-    amber: {
-        bg: "from-amber-100 to-amber-200",
-        inner: "from-amber-600 to-amber-800",
-        border: "border-amber-300/50",
-        text: "text-amber-900"
-    },
-    yellow: {
-        bg: "from-yellow-50 to-yellow-100",
-        inner: "from-yellow-400 to-yellow-600",
-        border: "border-yellow-200/50",
-        text: "text-yellow-900"
-    },
-    green: {
-        bg: "from-green-50 to-green-100",
-        inner: "from-green-500 to-green-700",
-        border: "border-green-200/50",
-        text: "text-green-900"
-    },
-    orange: {
-        bg: "from-orange-50 to-orange-100",
-        inner: "from-orange-400 to-orange-600",
-        border: "border-orange-200/50",
-        text: "text-orange-900"
-    },
-    emerald: {
-        bg: "from-emerald-50 to-emerald-100",
-        inner: "from-emerald-500 to-emerald-700",
-        border: "border-emerald-200/50",
-        text: "text-emerald-900"
-    },
-    teal: {
-        bg: "from-teal-100 to-teal-200",
-        inner: "from-teal-600 to-teal-800",
-        border: "border-teal-300/50",
-        text: "text-teal-900"
-    },
-    lime: {
-        bg: "from-lime-50 to-lime-100",
-        inner: "from-lime-500 to-lime-700",
-        border: "border-lime-200/50",
-        text: "text-lime-900"
-    }
-};
+// Fallback images if not provided in content
+const MAIN_IMG = "https://images.unsplash.com/photo-1757358967353-0a256c8f8f03?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
 export default function Hero() {
     const heroContent = content.hero;
-    const products = heroContent.products;
 
     return (
-        <section className="relative min-h-screen flex items-center bg-background bg-pattern pt-20">
-            <div className="container mx-auto px-4 lg:px-8">
-                <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                    {/* Left Content */}
-                    <div className="space-y-8 animate-fade-in-up">
-                        <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-tight">
-                            {heroContent.titleLine1}
-                            <br />
-                            <span className="text-gradient">{heroContent.titleLine2}</span>
+        <section className="relative min-h-[95vh] flex items-center pt-24 pb-12 overflow-hidden bg-background">
+
+            {/* Background Texture / Doodle (Optional) */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+            </div>
+
+            <div className="container mx-auto px-4 lg:px-8 relative z-10">
+                <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+
+                    {/* Left Content - Bold & Direct */}
+                    <div className="space-y-8 lg:pr-12 animate-fade-in-up">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                            <span className="text-xs font-bold text-white tracking-widest uppercase">New Collection</span>
+                        </div>
+
+                        <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[0.9] tracking-tight">
+                            {heroContent.titleLine1 || "CRAFTED"} <br />
+                            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-white">
+                                {heroContent.titleLine2 || "QUALITY"}
+                            </span>
                         </h1>
 
-                        <p className="text-lg md:text-xl text-muted-foreground max-w-md leading-relaxed">
+                        <p className="text-lg text-white/60 max-w-md leading-relaxed font-light">
                             {heroContent.subtitle}
                         </p>
 
-                        <div className="flex flex-wrap gap-4">
-                            <Button
-                                size="lg"
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-6 text-base font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
-                            >
-                                {heroContent.ctaPrimary}
-                            </Button>
-                            <Button
-                                size="lg"
-                                variant="outline"
-                                className="border-2 border-foreground text-foreground hover:bg-foreground hover:text-background rounded-full px-8 py-6 text-base font-medium transition-all"
-                            >
+                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                            <Link href="/shop">
+                                <Button className="h-14 px-8 bg-primary hover:bg-white hover:text-black text-black text-base font-bold rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(204,255,0,0.2)]">
+                                    {heroContent.ctaPrimary} <span className="ml-2">→</span>
+                                </Button>
+                            </Link>
+                            <Button variant="outline" className="h-14 px-8 border-white/20 text-white hover:bg-white/10 hover:border-white rounded-full text-base font-bold">
                                 {heroContent.ctaSecondary}
                             </Button>
                         </div>
+
+                        {/* Trust/Stats Mini-Block */}
+                        <div className="flex items-center gap-6 pt-8 border-t border-white/10">
+                            <div className="flex -space-x-3">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-[#121212] bg-white/10 flex items-center justify-center overflow-hidden">
+                                        <div className="w-full h-full bg-linear-to-br from-gray-500 to-gray-700"></div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xl font-black text-white">4.9/5</span>
+                                <span className="text-xs text-white/50 uppercase tracking-wider font-bold">From 2k+ Reviews</span>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Right Content - Product Showcase */}
-                    <div className="relative animate-slide-in-right">
-                        <div className="relative w-full aspect-square max-w-lg mx-auto">
-                            {/* Background Circle */}
-                            <div className="absolute inset-0 bg-muted rounded-full opacity-50"></div>
+                    {/* Right Content - Circular Composition */}
+                    <div className="relative flex justify-center lg:justify-end animate-slide-in-right">
+                        <div className="relative w-[350px] h-[350px] md:w-[500px] md:h-[500px]">
 
-                            {/* Product Images Grid */}
-                            <div className="relative w-full h-full flex items-center justify-center">
-                                {/* Center Product - Large */}
-                                {products[0] && (
-                                    <div className="absolute z-10 animate-float">
-                                        <div className={`w-40 h-56 md:w-48 md:h-64 lg:w-56 lg:h-72 bg-gradient-to-b ${colorMap[products[0].color]?.bg || colorMap.amber.bg} rounded-xl shadow-2xl flex flex-col items-center justify-center p-4 border ${colorMap[products[0].color]?.border || colorMap.amber.border}`}>
-                                            <div className={`w-full h-3/4 bg-gradient-to-b ${colorMap[products[0].color]?.inner || colorMap.amber.inner} rounded-lg mb-2`}></div>
-                                            <span className={`text-xs font-semibold ${colorMap[products[0].color]?.text || colorMap.amber.text}`}>{products[0].name}</span>
-                                        </div>
-                                    </div>
-                                )}
+                            {/* Decorative Orbit Rings */}
+                            <div className="absolute inset-0 rounded-full border border-white/5 animate-[spin_10s_linear_infinite]"></div>
+                            <div className="absolute inset-4 rounded-full border border-white/5 animate-[spin_15s_linear_infinite_reverse]"></div>
 
-                                {/* Top Left Product */}
-                                {products[1] && (
-                                    <div className="absolute -top-4 left-4 md:left-8 z-20 animate-float delay-200">
-                                        <div className={`w-24 h-32 md:w-28 md:h-36 bg-gradient-to-b ${colorMap[products[1].color]?.bg || colorMap.yellow.bg} rounded-lg shadow-xl flex flex-col items-center justify-center p-2 border ${colorMap[products[1].color]?.border || colorMap.yellow.border} -rotate-6`}>
-                                            <div className={`w-full h-3/4 bg-gradient-to-b ${colorMap[products[1].color]?.inner || colorMap.yellow.inner} rounded mb-1`}></div>
-                                            <span className={`text-[10px] font-semibold ${colorMap[products[1].color]?.text || colorMap.yellow.text}`}>{products[1].name}</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Top Right Product */}
-                                {products[2] && (
-                                    <div className="absolute -top-4 right-4 md:right-8 z-20 animate-float delay-300">
-                                        <div className={`w-24 h-32 md:w-28 md:h-36 bg-gradient-to-b ${colorMap[products[2].color]?.bg || colorMap.amber.bg} rounded-lg shadow-xl flex flex-col items-center justify-center p-2 border ${colorMap[products[2].color]?.border || colorMap.amber.border} rotate-6`}>
-                                            <div className={`w-full h-3/4 bg-gradient-to-b ${colorMap[products[2].color]?.inner || colorMap.amber.inner} rounded mb-1`}></div>
-                                            <span className={`text-[10px] font-semibold ${colorMap[products[2].color]?.text || colorMap.amber.text}`}>{products[2].name}</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Bottom Left Product */}
-                                {products[3] && (
-                                    <div className="absolute bottom-8 left-0 md:left-4 z-5 animate-float delay-400">
-                                        <div className={`w-20 h-28 md:w-24 md:h-32 bg-gradient-to-b ${colorMap[products[3].color]?.bg || colorMap.green.bg} rounded-lg shadow-lg flex flex-col items-center justify-center p-2 border ${colorMap[products[3].color]?.border || colorMap.green.border} -rotate-3`}>
-                                            <div className={`w-full h-3/4 bg-gradient-to-b ${colorMap[products[3].color]?.inner || colorMap.green.inner} rounded mb-1`}></div>
-                                            <span className={`text-[10px] font-semibold ${colorMap[products[3].color]?.text || colorMap.green.text}`}>{products[3].name}</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Bottom Right Product */}
-                                {products[4] && (
-                                    <div className="absolute bottom-8 right-0 md:right-4 z-5 animate-float delay-500">
-                                        <div className={`w-20 h-28 md:w-24 md:h-32 bg-gradient-to-b ${colorMap[products[4].color]?.bg || colorMap.orange.bg} rounded-lg shadow-lg flex flex-col items-center justify-center p-2 border ${colorMap[products[4].color]?.border || colorMap.orange.border} rotate-3`}>
-                                            <div className={`w-full h-3/4 bg-gradient-to-b ${colorMap[products[4].color]?.inner || colorMap.orange.inner} rounded mb-1`}></div>
-                                            <span className={`text-[10px] font-semibold ${colorMap[products[4].color]?.text || colorMap.orange.text}`}>{products[4].name}</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Small Product - Right Side */}
-                                {products[5] && (
-                                    <div className="absolute right-0 md:right-2 top-1/3 z-15 animate-float delay-100">
-                                        <div className={`w-16 h-24 md:w-20 md:h-28 bg-gradient-to-b ${colorMap[products[5].color]?.bg || colorMap.emerald.bg} rounded-lg shadow-lg flex flex-col items-center justify-center p-1 border ${colorMap[products[5].color]?.border || colorMap.emerald.border} rotate-12`}>
-                                            <div className={`w-full h-3/4 bg-gradient-to-b ${colorMap[products[5].color]?.inner || colorMap.emerald.inner} rounded mb-1`}></div>
-                                            <span className={`text-[8px] font-semibold ${colorMap[products[5].color]?.text || colorMap.emerald.text}`}>{products[5].name}</span>
-                                        </div>
-                                    </div>
-                                )}
+                            {/* Main Circular Mask */}
+                            <div className="absolute inset-8 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl">
+                                <img
+                                    src={MAIN_IMG}
+                                    alt="Hero Product"
+                                    className="w-full h-full object-cover scale-110 hover:scale-100 transition-transform duration-700"
+                                />
+                                {/* Gradient Overlay for Depth */}
+                                <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/30"></div>
                             </div>
+
+                            {/* Floating "Experience" Badge */}
+                            <div className="absolute -left-4 top-1/2 -translate-y-1/2 bg-[#1E1E1E] border border-white/10 p-4 rounded-2xl shadow-xl flex items-center gap-4 animate-float">
+                                <div className="p-3 bg-primary/20 rounded-full text-primary">
+                                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-white font-bold text-sm">Valid Quality</p>
+                                    <p className="text-white/50 text-xs">Certified Organic</p>
+                                </div>
+                            </div>
+
+                            {/* Floating Price Tag */}
+                            <div className="absolute right-0 bottom-12 animate-float" style={{ animationDelay: '1s' }}>
+                                <div className="bg-white text-black px-5 py-2 rounded-full font-black text-lg shadow-[0_10px_20px_rgba(0,0,0,0.3)] transform rotate-[-6deg] hover:rotate-0 transition-transform">
+                                    Start ₹249
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Decorative Elements */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-muted/50 to-transparent"></div>
+            {/* Benefits Bar - Floating Bottom */}
+            {/* <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden lg:flex items-center bg-[#1E1E1E]/90 backdrop-blur-md border border-white/10 rounded-full p-2 pr-6 pl-8 gap-12 shadow-2xl max-w-4xl w-full mx-4 justify-between">
+                {[
+                    { label: 'Shipping', val: 'Fast Delivery' },
+                    { label: 'Quality', val: '100% Authentic' },
+                    { label: 'Support', val: '24/7 Service' }
+                ].map(benefit => (
+                    <div key={benefit.label} className="flex flex-col">
+                        <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider">{benefit.label}</span>
+                        <span className="text-sm font-bold text-white hover:text-primary transition-colors">{benefit.val}</span>
+                    </div>
+                ))}
+                <div className="h-8 w-[1px] bg-white/10 ml-auto mr-4"></div>
+                <Link href="/shop">
+                    <Button className="bg-primary text-black font-bold h-12 rounded-full px-8 hover:bg-white transition-colors">
+                        Start Shopping
+                    </Button>
+                </Link>
+            </div> */}
+
         </section>
     );
 }

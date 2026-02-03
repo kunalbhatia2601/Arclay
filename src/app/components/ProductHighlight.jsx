@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getBrandContent, getSiteName } from "@/config/brandContent";
+import { Button } from "@/components/ui/button";
 
 const siteName = getSiteName();
 const content = getBrandContent(siteName);
@@ -10,21 +11,7 @@ const content = getBrandContent(siteName);
 export default function ProductHighlight() {
     const [bundles, setBundles] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-
-    // Detect screen size
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    const visibleCount = isMobile ? 1 : 3;
+    const [activeCategory, setActiveCategory] = useState("All");
 
     useEffect(() => {
         const fetchBundles = async () => {
@@ -43,206 +30,133 @@ export default function ProductHighlight() {
         fetchBundles();
     }, []);
 
-    // Auto-slide carousel
-    useEffect(() => {
-        if (bundles.length <= visibleCount || isPaused) return;
-
-        const interval = setInterval(() => {
-            setCurrentIndex(prev => (prev + 1) % bundles.length);
-        }, 4000);
-
-        return () => clearInterval(interval);
-    }, [bundles.length, isPaused, visibleCount]);
-
-    // Get visible bundles
-    const getVisibleBundles = useCallback(() => {
-        if (bundles.length <= visibleCount) return bundles;
-
-        const visible = [];
-        for (let i = 0; i < visibleCount; i++) {
-            const idx = (currentIndex + i) % bundles.length;
-            visible.push({ ...bundles[idx], displayIndex: i });
-        }
-        return visible;
-    }, [bundles, currentIndex, visibleCount]);
-
-    const goToSlide = (index) => {
-        setCurrentIndex(index);
-    };
-
-    const goNext = () => {
-        setCurrentIndex(prev => (prev + 1) % bundles.length);
-    };
-
-    const goPrev = () => {
-        setCurrentIndex(prev => (prev - 1 + bundles.length) % bundles.length);
-    };
-
-    // If no bundles, don't render the section
-    if (!loading && bundles.length === 0) {
-        return null;
-    }
-
-    const visibleBundles = getVisibleBundles();
-    const showCarousel = bundles.length > visibleCount;
-
     return (
-        <section id="products" className="py-20 lg:py-28 bg-background">
-            <div className="container mx-auto px-4 lg:px-8">
+        <section className="py-20 lg:py-28 bg-[#0A0A0A] relative overflow-hidden">
+            <div className="container mx-auto px-4 lg:px-8 relative z-10">
+
                 {/* Section Header */}
-                <div className="text-center mb-16">
-                    <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase mb-4">
-                        {content.productHighlight.sectionTitle}
-                    </p>
-                    <div className="decorative-line mx-auto"></div>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 border-b border-white/5 pb-8">
+                    <div>
+                        <span className="text-primary font-bold tracking-widest uppercase text-xs mb-2 block">
+                            Limited Edition
+                        </span>
+                        <h2 className="font-heading text-4xl lg:text-5xl font-black text-white leading-tight">
+                            CURATED <span className="text-primary">COMBOS</span>
+                        </h2>
+                    </div>
+
+                    <div className="hidden md:flex gap-2">
+                        {/* Navigation Arrows (Optional) */}
+                        <div className="flex gap-2">
+                            <button className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all">
+                                ←
+                            </button>
+                            <button className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all">
+                                →
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center py-20">
                         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : (
-                    <div className="relative">
-                        {/* Navigation Arrows */}
-                        {showCarousel && (
-                            <>
-                                <button
-                                    onClick={goPrev}
-                                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 lg:-translate-x-8 z-10 w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors shadow-lg"
-                                    aria-label="Previous"
-                                >
-                                    ←
-                                </button>
-                                <button
-                                    onClick={goNext}
-                                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 lg:translate-x-8 z-10 w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors shadow-lg"
-                                    aria-label="Next"
-                                >
-                                    →
-                                </button>
-                            </>
-                        )}
-
-                        {/* Bundles Grid */}
-                        <div
-                            className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 pt-6 overflow-hidden"
-                            onMouseEnter={() => setIsPaused(true)}
-                            onMouseLeave={() => setIsPaused(false)}
-                        >
-                            {visibleBundles.map((bundle, index) => (
-                                <Link
-                                    href={`/bundles/${bundle.slug}`}
-                                    key={`${bundle._id}-${currentIndex}-${index}`}
-                                    className="group cursor-pointer"
-                                >
-                                    {/* Product Images Circle */}
-                                    <div className="relative w-48 h-48 mx-auto mb-6 bg-primary/5 rounded-full flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-xl">
-                                        {/* Product Cards - adaptive layout */}
-                                        {bundle.products?.length === 1 ? (
-                                            // Single product - centered, larger
-                                            <div className="w-24 h-28 bg-white rounded-lg shadow-md flex flex-col items-center justify-center p-2 border border-border/50 transition-all duration-300 group-hover:shadow-lg group-hover:scale-105">
-                                                {bundle.products[0].images?.[0] ? (
-                                                    <img
-                                                        src={bundle.products[0].images[0]}
-                                                        alt={bundle.products[0].name}
-                                                        className="w-16 h-18 object-cover rounded mb-1"
-                                                    />
-                                                ) : (
-                                                    <div className="w-16 h-18 bg-linear-to-b from-primary/30 to-primary/60 rounded mb-1"></div>
-                                                )}
-                                                <span className="text-[8px] font-medium text-foreground/70 text-center leading-tight">
-                                                    {bundle.products[0].name?.substring(0, 12) || 'Product'}
-                                                </span>
-                                            </div>
-                                        ) : bundle.products?.length === 2 ? (
-                                            // Two products - side by side
-                                            <div className="flex items-center justify-center gap-2">
-                                                {bundle.products.slice(0, 2).map((product, i) => (
-                                                    <div
-                                                        key={product._id || i}
-                                                        className={`w-18 h-22 bg-white rounded-lg shadow-md flex flex-col items-center justify-center p-1 border border-border/50 transition-all duration-300 group-hover:shadow-lg ${i === 0
-                                                                ? "-rotate-6 group-hover:-rotate-12"
-                                                                : "rotate-6 group-hover:rotate-12"
-                                                            }`}
-                                                    >
-                                                        {product.images?.[0] ? (
-                                                            <img
-                                                                src={product.images[0]}
-                                                                alt={product.name}
-                                                                className="w-12 h-14 object-cover rounded mb-1"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-12 h-14 bg-linear-to-b from-primary/30 to-primary/60 rounded mb-1"></div>
-                                                        )}
-                                                        <span className="text-[6px] font-medium text-foreground/70 text-center leading-tight">
-                                                            {product.name?.substring(0, 12) || 'Product'}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            // Three or more products - floating cards
-                                            <div className="relative w-full h-full">
-                                                {bundle.products?.slice(0, 3).map((product, i) => (
-                                                    <div
-                                                        key={product._id || i}
-                                                        className={`absolute w-16 h-20 bg-white rounded-lg shadow-md flex flex-col items-center justify-center p-1 border border-border/50 transition-all duration-300 group-hover:shadow-lg ${i === 0
-                                                            ? "top-2 left-1/2 -translate-x-1/2 -rotate-6 group-hover:-rotate-12 group-hover:-translate-y-2"
-                                                            : i === 1
-                                                                ? "bottom-4 left-4 rotate-6 group-hover:rotate-12 group-hover:-translate-x-2"
-                                                                : "bottom-4 right-4 -rotate-3 group-hover:-rotate-6 group-hover:translate-x-2"
-                                                            }`}
-                                                    >
-                                                        {product.images?.[0] ? (
-                                                            <img
-                                                                src={product.images[0]}
-                                                                alt={product.name}
-                                                                className="w-10 h-12 object-cover rounded mb-1"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-10 h-12 bg-linear-to-b from-primary/30 to-primary/60 rounded mb-1"></div>
-                                                        )}
-                                                        <span className="text-[6px] font-medium text-foreground/70 text-center leading-tight">
-                                                            {product.name?.substring(0, 12) || 'Product'}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Bundle Info */}
-                                    <div className="text-center">
-                                        <h3 className="font-serif text-lg font-semibold text-foreground mb-2 tracking-wide">
-                                            {bundle.title}
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
-                                            {bundle.btnTxt} →
-                                        </p>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-
-                        {/* Carousel Dots */}
-                        {bundles.length > 0 && (
-                            <div className="flex justify-center gap-2 mt-12">
-                                {bundles.map((_, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => goToSlide(i)}
-                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === currentIndex
-                                                ? 'bg-primary w-6'
-                                                : 'bg-border hover:bg-primary/50'
-                                            }`}
-                                        aria-label={`Go to slide ${i + 1}`}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                        {bundles.slice(0, 6).map((bundle, index) => (
+                            <BundleCard key={bundle._id || index} bundle={bundle} />
+                        ))}
                     </div>
                 )}
+
+                {/* View All Button */}
+                <div className="mt-16 text-center">
+                    <Link href="/shop">
+                        <Button variant="outline" className="border-white/10 text-white hover:bg-white hover:text-black rounded-full px-10 py-6 text-sm font-bold tracking-widest uppercase transition-all">
+                            View All Combos
+                        </Button>
+                    </Link>
+                </div>
             </div>
         </section>
+    );
+}
+
+function BundleCard({ bundle }) {
+    const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
+    // Rotate through the first image of each product in the bundle
+    const allImages = bundle.products?.map(p => p.images?.[0]).filter(Boolean) || [];
+
+    useEffect(() => {
+        if (allImages.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentImgIndex((prev) => (prev + 1) % allImages.length);
+        }, 4000);
+
+        return () => clearInterval(interval);
+    }, [allImages.length]);
+
+    const currentImage = allImages.length > 0 ? allImages[currentImgIndex] : null;
+
+    return (
+        <Link
+            href={`/bundles/${bundle.slug}`}
+            className="group relative bg-[#1E1E1E] hover:bg-[#252525] rounded-3xl p-4 transition-all duration-300 border border-white/5 hover:border-primary/30 flex items-center gap-6"
+        >
+            {/* Circular Image Mask */}
+            <div className="shrink-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden border-2 border-white/10 shadow-lg relative bg-[#121212]">
+                {currentImage ? (
+                    <img
+                        key={currentImage} // Key helps React identify change, simple crossfade can occur if supported but simple switch is robust
+                        src={currentImage}
+                        alt={bundle.title || bundle.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 animate-fade-in"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl grayscale opacity-20">📦</div>
+                )}
+                {/* Quick Add Button Overlay */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-bold text-lg">+</span>
+                </div>
+            </div>
+
+            {/* Content Info */}
+            <div className="flex-1 py-2 pr-4">
+                <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-heading text-xl font-bold text-white group-hover:text-primary transition-colors line-clamp-1">
+                        {bundle.title || bundle.name}
+                    </h3>
+                </div>
+
+                <p className="text-sm text-white/50 line-clamp-2 mb-4 font-medium leading-relaxed">
+                    <span className="text-primary/80 uppercase text-[10px] font-bold tracking-wider block mb-1">Includes</span>
+                    {bundle.products?.map(p => p.name).join(" + ") || "Curated Items"}
+                </p>
+
+                <div className="flex items-center gap-4 justify-between mt-auto">
+                    {/* Item Count Badge */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                        <span className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                            {bundle.products?.length || 0} Products
+                        </span>
+                    </div>
+
+                    {/* Dynamic CTA */}
+                    <div className="text-xs font-bold text-white border-b border-primary pb-0.5 group-hover:text-primary transition-colors">
+                        {bundle.btnTxt || "View Bundle"}
+                    </div>
+                </div>
+            </div>
+
+            {/* Decorative Arrow */}
+            <div className="hidden sm:block absolute right-6 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300 text-primary text-2xl">
+                →
+            </div>
+        </Link>
     );
 }

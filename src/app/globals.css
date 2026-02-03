@@ -67,96 +67,31 @@
    Primary (Dark Olive Green): #556B2F - Main brand color, buttons, CTAs
    Secondary (Royal Mustard Yellow): #D4A643 - Accents, highlights
    Accent (Deep Chili Red): #8B1A1A - Logo accent, emphasis
-   Gold (Aged Copper): #B8860B - Secondary accent
-   Background (Warm Ivory): #FAF8F5 - Main background
-   Foreground (Charcoal Black): #2D2D2D - Text color
-*/
-
+/* MODERN DARK PREMEIUM THEME */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
-  /* ESSVORA Theme - Light Mode (Default) */
-  --background: #FAF8F5;
-  /* Warm Ivory White */
-  --foreground: #2D2D2D;
-  /* Charcoal Black */
+  --background: #121212;
+  /* Deep Charcoal */
+  --foreground: #FFFFFF;
+  /* Pure White */
 
-  --card: #FFFFFF;
-  --card-foreground: #2D2D2D;
+  --card: #1E1E1E;
+  /* Soft Dark Gray */
+  --card-foreground: #FFFFFF;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #2D2D2D;
+  --popover: #1E1E1E;
+  --popover-foreground: #FFFFFF;
 
-  --primary: #556B2F;
-  /* Dark Olive Green */
-  --primary-foreground: #FFFFFF;
+  --primary: #CCFF00;
+  /* Neon Lime */
+  --primary-foreground: #000000;
+  /* Black on Neon */
 
-  --secondary: #D4A643;
-  /* Royal Mustard Yellow */
-  --secondary-foreground: #2D2D2D;
-
-  --muted: #F5F0E8;
-  /* Cream */
-  --muted-foreground: #6B6B6B;
-
-  --accent: #8B1A1A;
-  /* Deep Chili Red */
-  --accent-foreground: #FFFFFF;
-
-  --destructive: #8B1A1A;
-
-  --border: #E8E4DC;
-  --input: #E8E4DC;
-  --ring: #556B2F;
-
-  --chart-1: #556B2F;
-  /* Olive */
-  --chart-2: #D4A643;
-  /* Mustard */
-  --chart-3: #8B1A1A;
-  /* Chili */
-  --chart-4: #B8860B;
-  /* Copper */
-  --chart-5: #6B8B3D;
-  /* Light Olive */
-
-  --sidebar: #FAF8F5;
-  --sidebar-foreground: #2D2D2D;
-  --sidebar-primary: #556B2F;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5F0E8;
-  --sidebar-accent-foreground: #2D2D2D;
-  --sidebar-border: #E8E4DC;
-  --sidebar-ring: #556B2F;
-}
-
-/* =============================================
-   VEDICBRO THEME
-   Primary: Dark Slate Gray #284D5B
-   Secondary: Middle Green #62A22E  
-   Accent: Vivid Yellow #D0FB1F
-   Background: Light Blue Tint #E8F4F8
-   Fonts: Kumbh Sans (body), Singlet (display)
-   ============================================= */
-[data-theme="vedicbro"] {
-  --background: #E8F4F8;
-  --foreground: #284D5B;
-
-  --card: #FFFFFF;
-  --card-foreground: #284D5B;
-
-  --popover: #FFFFFF;
-  --popover-foreground: #284D5B;
-
-  --primary: #62A22E;
-  /* Middle Green */
-  --primary-foreground: #FFFFFF;
-
-  --secondary: #284D5B;
-  /* Dark Slate Gray */
+  --secondary: #2A2A2A;
+  /* Dark Surface Highlight */
   --secondary-foreground: #FFFFFF;
 
-  --muted: #D4EBE4;
   --muted-foreground: #4A6B7A;
 
   --accent: #D0FB1F;

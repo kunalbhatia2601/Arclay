@@ -50,7 +50,7 @@ export default function ProductAds({ position = "banner" }) {
 
     const totalPages = Math.ceil(ads.length / ADS_PER_PAGE);
     const showPagination = ads.length > ADS_PER_PAGE;
-    
+
     // Get current page's ads
     const startIndex = currentPage * ADS_PER_PAGE;
     const visibleAds = ads.slice(startIndex, startIndex + ADS_PER_PAGE);
@@ -64,8 +64,24 @@ export default function ProductAds({ position = "banner" }) {
     };
 
     return (
-        <section className="py-8 lg:py-12 bg-background">
+        <section className="py-16 lg:py-24 bg-[#121212] border-t border-white/5">
             <div className="container mx-auto px-4 lg:px-8">
+
+                {/* Section Header */}
+                <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                    <div>
+                        <p className="text-xs font-bold tracking-[0.3em] text-primary uppercase mb-3">
+                            Discover More
+                        </p>
+                        <h2 className="font-heading text-3xl lg:text-4xl font-black text-white tracking-tight">
+                            TRENDING <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/50">STORIES</span>
+                        </h2>
+                    </div>
+
+                    {/* Optional: Add custom navigation or description here */}
+                    <div className="hidden md:block h-px flex-1 bg-white/10 mx-8 mb-4"></div>
+                </div>
+
                 <div className="relative">
                     {/* Ads Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
@@ -74,12 +90,12 @@ export default function ProductAds({ position = "banner" }) {
                         ))}
                     </div>
 
-                    {/* Pagination Arrows - Only if more than 5 ads */}
+                    {/* Pagination Arrows */}
                     {showPagination && (
                         <>
                             <button
                                 onClick={goToPrevPage}
-                                className="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card shadow-lg hover:shadow-xl text-foreground flex items-center justify-center transition-all hover:scale-110 z-10"
+                                className="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#1E1E1E] border border-white/10 shadow-lg text-white flex items-center justify-center transition-all hover:scale-110 hover:bg-primary hover:text-black z-10 hover:border-primary"
                                 aria-label="Previous page"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +104,7 @@ export default function ProductAds({ position = "banner" }) {
                             </button>
                             <button
                                 onClick={goToNextPage}
-                                className="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card shadow-lg hover:shadow-xl text-foreground flex items-center justify-center transition-all hover:scale-110 z-10"
+                                className="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#1E1E1E] border border-white/10 shadow-lg text-white flex items-center justify-center transition-all hover:scale-110 hover:bg-primary hover:text-black z-10 hover:border-primary"
                                 aria-label="Next page"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,16 +115,16 @@ export default function ProductAds({ position = "banner" }) {
                     )}
                 </div>
 
-                {/* Page Indicators - Only if more than 5 ads */}
+                {/* Page Indicators */}
                 {showPagination && (
-                    <div className="flex justify-center gap-2 mt-6">
+                    <div className="flex justify-center gap-2 mt-8">
                         {[...Array(totalPages)].map((_, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => setCurrentPage(idx)}
-                                className={`h-2 rounded-full transition-all ${idx === currentPage
-                                    ? "bg-primary w-6"
-                                    : "bg-muted w-2 hover:bg-muted-foreground/30"
+                                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentPage
+                                    ? "bg-primary w-8"
+                                    : "bg-white/10 w-4 hover:bg-white/30"
                                     }`}
                                 aria-label={`Go to page ${idx + 1}`}
                             />
@@ -128,15 +144,15 @@ export default function ProductAds({ position = "banner" }) {
 // Individual Ad Card Component
 function AdCard({ ad, onClick }) {
     return (
-        <div 
+        <div
             onClick={onClick}
-            className="relative aspect-[3/4] rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all group hover:scale-[1.02] cursor-pointer"
+            className="relative aspect-[3/4] rounded-3xl overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(204,255,0,0.15)] transition-all duration-500 group hover:-translate-y-2 cursor-pointer border border-white/5 bg-[#121212]"
         >
             {/* Background Media */}
             {ad.mediaType === "video" ? (
                 <video
                     src={ad.mediaUrl}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     autoPlay
                     muted
                     loop
@@ -146,27 +162,26 @@ function AdCard({ ad, onClick }) {
                 <img
                     src={ad.mediaUrl}
                     alt={ad.title}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
             )}
 
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-80" />
 
             {/* Content at Bottom */}
-            <div className="absolute bottom-0 left-0 right-0 p-3 lg:p-4 text-white">
-                <h3 className="font-serif text-sm lg:text-lg font-bold mb-1 line-clamp-1">
+            <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform transition-transform duration-300">
+                <h3 className="font-heading text-lg font-bold mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
                     {ad.title}
                 </h3>
                 {ad.description && (
-                    <p className="text-white/80 text-xs lg:text-sm mb-2 lg:mb-3 line-clamp-2 hidden sm:block">
+                    <p className="text-white/70 text-xs mb-3 line-clamp-2 hidden sm:block font-medium">
                         {ad.description}
                     </p>
                 )}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 lg:px-4 lg:py-2 bg-white/20 group-hover:bg-white/30 backdrop-blur-sm rounded-full text-white text-xs lg:text-sm font-medium transition-all">
-                    <span>→</span>
-                    <span className="hidden sm:inline">Tap to view</span>
-                    <span className="sm:hidden">View</span>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/50 group-hover:text-white transition-colors">
+                    <div className="w-8 h-[1px] bg-primary"></div>
+                    View Story
                 </div>
             </div>
         </div>
@@ -186,15 +201,15 @@ function AdModal({ ad, onClose }) {
     const ModalContent = (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in"
+            <div
+                className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-fade-in"
                 onClick={onClose}
             />
 
             {/* Close Button */}
-            <button 
+            <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-10 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors"
+                className="absolute top-4 right-4 z-10 p-2 text-white/50 hover:text-white bg-black/20 hover:bg-white/10 rounded-full transition-colors border border-white/5"
                 aria-label="Close modal"
             >
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,7 +218,7 @@ function AdModal({ ad, onClose }) {
             </button>
 
             {/* Modal Card */}
-            <div className="relative w-full max-w-lg aspect-[3/4] sm:aspect-[9/16] max-h-[90vh] bg-black rounded-3xl overflow-hidden shadow-2xl animate-scale-in">
+            <div className="relative w-full max-w-lg aspect-[3/4] sm:aspect-[9/16] max-h-[90vh] bg-[#121212] rounded-3xl overflow-hidden shadow-2xl animate-scale-in border border-white/10">
                 {/* Media */}
                 <div className="absolute inset-0">
                     {ad.mediaType === "video" ? (
@@ -225,25 +240,25 @@ function AdModal({ ad, onClose }) {
                 </div>
 
                 {/* Overlay & Content */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent pointer-events-none" />
 
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white text-center">
-                    <h2 className="font-serif text-2xl sm:text-3xl font-bold mb-3 animate-slide-up">
+                <div className="absolute bottom-0 left-0 right-0 p-8 text-white text-center">
+                    <h2 className="font-heading text-3xl font-black mb-3 animate-slide-up text-primary">
                         {ad.title}
                     </h2>
                     {ad.description && (
-                        <p className="text-white/90 text-sm sm:text-base mb-6 leading-relaxed animate-slide-up delay-100">
+                        <p className="text-white/80 text-base mb-8 leading-relaxed animate-slide-up delay-100 font-medium">
                             {ad.description}
                         </p>
                     )}
-                    
+
                     {ad.linkUrl && (
                         <Link
                             href={ad.linkUrl}
-                            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-white text-black hover:bg-white/90 rounded-full font-semibold transition-all hover:scale-105 shadow-lg animate-slide-up delay-200 pointer-events-auto"
+                            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 bg-primary text-black rounded-full font-bold transition-all hover:scale-105 shadow-[0_0_30px_rgba(204,255,0,0.3)] animate-slide-up delay-200 pointer-events-auto"
                         >
                             <span>Shop Now</span>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                             </svg>
                         </Link>
