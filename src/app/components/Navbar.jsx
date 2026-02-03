@@ -167,6 +167,23 @@ export default function Navbar() {
                                     {item}
                                 </Link>
                             ))}
+                            {isAuthenticated && (
+                                <div className="pt-6 border-t border-border flex flex-col gap-4">
+                                    <Link href="/account" onClick={() => setIsMenuOpen(false)}>
+                                        <Button className="w-full bg-primary text-primary-foreground font-bold py-5 rounded-xl">My Account</Button>
+                                    </Link>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            handleLogout();
+                                            setIsMenuOpen(false);
+                                        }}
+                                        className="w-full border-border text-foreground hover:bg-muted py-5 rounded-xl"
+                                    >
+                                        Sign Out
+                                    </Button>
+                                </div>
+                            )}
                             {!isAuthenticated && (
                                 <div className="pt-6 border-t border-border flex flex-col gap-4">
                                     <Link href="/login" onClick={() => setIsMenuOpen(false)}>
