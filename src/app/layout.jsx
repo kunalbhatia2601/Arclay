@@ -40,7 +40,12 @@ const getTheme = (name) => {
   if (normalizedName.includes('vedic') || normalizedName.includes('vedicbro')) {
     return 'vedicbro';
   }
-  return 'essvora';
+  else if (normalizedName.includes('arclay')) {
+    return 'arclay';
+  }
+  else {
+    return 'essvora';
+  }
 };
 
 const theme = getTheme(siteName);
