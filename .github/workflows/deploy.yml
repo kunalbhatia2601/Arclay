@@ -31,13 +31,13 @@ jobs:
             echo "📥 Pulling latest changes..."
             git pull origin main
             
-            echo "📦 Installing dependencies..."
+            echo "📦 Installing dependencies... via pnpm"
             pnpm install
             
-            echo "🔨 Building application..."
+            echo "🔨 Building application... via pnpm"
             pnpm run build
             
-            echo "🔄 Restarting PM2 process..."
+            echo "🔄 Restarting PM2 process... via pm2 and updating env"
             pm2 restart arclay --update-env
             
             echo "✅ Deployment complete!"
