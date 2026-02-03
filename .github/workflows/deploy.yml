@@ -32,10 +32,10 @@ jobs:
             git pull origin main
             
             echo "📦 Installing dependencies..."
-            ~/.bun/bin/bun install
+            pnpm install
             
             echo "🔨 Building application..."
-            ~/.bun/bin/bun run build
+            pnpm run build
             
             echo "🔄 Restarting PM2 process..."
             pm2 restart arclay --update-env
