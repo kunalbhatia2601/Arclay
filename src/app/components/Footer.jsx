@@ -78,13 +78,13 @@ export default function Footer() {
                             <h4 className="text-lg font-bold text-foreground">Contact</h4>
                             <ul className="space-y-4">
                                 <li className="text-muted-foreground text-sm font-medium">
-                                    123 Culinary Avenue, <br /> Foodie City, FC 90210
+                                    Chitkara University, <br /> Rajpura, Punjab 140401
                                 </li>
                                 <li className="text-muted-foreground text-sm font-medium hover:text-primary cursor-pointer">
-                                    +1 (555) 123-4567
+                                    +91 82848-34841
                                 </li>
                                 <li className="text-muted-foreground text-sm font-medium hover:text-primary cursor-pointer">
-                                    hello@{siteName.toLowerCase()}.com
+                                    mails.kunalbhatia@gmail.com
                                 </li>
                             </ul>
                         </div>
