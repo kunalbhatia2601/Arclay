@@ -7,6 +7,7 @@ import { useUser } from "@/context/UserContext";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import ProductCard from "@/app/components/ProductCard";
 
 export default function ProductDetailPage({ params }) {
     const { id } = use(params);
@@ -230,13 +231,7 @@ export default function ProductDetailPage({ params }) {
         }
     };
 
-    const getRelatedProductPrice = (p) => {
-        const firstVariant = p.variants?.[0];
-        if (!firstVariant) return 0;
-        return firstVariant.salePrice && firstVariant.salePrice < firstVariant.regularPrice
-            ? firstVariant.salePrice
-            : firstVariant.regularPrice;
-    };
+
 
     const renderStars = (count) => {
         return Array.from({ length: 5 }, (_, i) => (
@@ -590,11 +585,10 @@ export default function ProductDetailPage({ params }) {
                         <div className="flex border-b border-border mb-8">
                             <button
                                 onClick={() => setActiveTab("description")}
-                                className={`px-6 py-3 font-medium text-sm transition-colors relative ${
-                                    activeTab === "description"
-                                        ? "text-primary"
-                                        : "text-muted-foreground hover:text-foreground"
-                                }`}
+                                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === "description"
+                                    ? "text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
+                                    }`}
                             >
                                 Description
                                 {activeTab === "description" && (
@@ -603,11 +597,10 @@ export default function ProductDetailPage({ params }) {
                             </button>
                             <button
                                 onClick={() => setActiveTab("reviews")}
-                                className={`px-6 py-3 font-medium text-sm transition-colors relative ${
-                                    activeTab === "reviews"
-                                        ? "text-primary"
-                                        : "text-muted-foreground hover:text-foreground"
-                                }`}
+                                className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === "reviews"
+                                    ? "text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
+                                    }`}
                             >
                                 Reviews ({reviews.length})
                                 {activeTab === "reviews" && (
@@ -741,34 +734,7 @@ export default function ProductDetailPage({ params }) {
                             </h2>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
                                 {relatedProducts.map(p => (
-                                    <Link
-                                        key={p._id}
-                                        href={`/products/${p._id}`}
-                                        className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                                    >
-                                        <div className="aspect-square bg-muted overflow-hidden">
-                                            {p.images?.[0] ? (
-                                                <img
-                                                    src={p.images[0]}
-                                                    alt={p.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
-                                            )}
-                                        </div>
-                                        <div className="p-4">
-                                            {p.category && (
-                                                <p className="text-xs text-primary font-medium uppercase tracking-wide mb-1 hidden sm:block">
-                                                    {p.category.name}
-                                                </p>
-                                            )}
-                                            <h3 className="font-serif text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                                                {p.name}
-                                            </h3>
-                                            <p className="font-bold text-foreground mt-2">₹{getRelatedProductPrice(p)}</p>
-                                        </div>
-                                    </Link>
+                                    <ProductCard key={p._id} product={p} />
                                 ))}
                             </div>
                         </section>

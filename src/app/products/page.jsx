@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import ProductCard from "@/app/components/ProductCard";
 
 export default function ProductsPage() {
     const [products, setProducts] = useState([]);
@@ -64,21 +65,6 @@ export default function ProductsPage() {
         setMinPrice("");
         setMaxPrice("");
         setSort("newest");
-    };
-
-    const getProductInfo = (product) => {
-        const firstVariant = product.variants?.[0];
-        if (!firstVariant) return { price: 0, originalPrice: null, hasSale: false, inStock: false };
-
-        const hasSale = firstVariant.salePrice && firstVariant.salePrice < firstVariant.regularPrice;
-        const totalStock = product.variants?.reduce((acc, v) => acc + (v.stock || 0), 0) || 0;
-
-        return {
-            price: hasSale ? firstVariant.salePrice : firstVariant.regularPrice,
-            originalPrice: hasSale ? firstVariant.regularPrice : null,
-            hasSale,
-            inStock: totalStock > 0
-        };
     };
 
     return (
@@ -246,65 +232,9 @@ export default function ProductsPage() {
                             ) : (
                                 <>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {products.map((product) => {
-                                            const { price, originalPrice, hasSale, inStock } = getProductInfo(product);
-                                            return (
-                                                <Link
-                                                    key={product._id}
-                                                    href={`/products/${product._id}?p=${product.name.toLowerCase().replace(/\s/g, "-")}`}
-                                                    className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                                                >
-                                                    {/* Product Image */}
-                                                    <div className="aspect-square bg-muted relative overflow-hidden">
-                                                        {product.images?.[0] ? (
-                                                            <img
-                                                                src={product.images[0]}
-                                                                alt={product.name}
-                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-6xl">
-                                                                📦
-                                                            </div>
-                                                        )}
-                                                        {hasSale && (
-                                                            <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                                                                SALE
-                                                            </div>
-                                                        )}
-                                                        {!inStock && (
-                                                            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                                                                <span className="bg-destructive text-destructive-foreground px-4 py-2 rounded-full font-medium">
-                                                                    Out of Stock
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Product Info */}
-                                                    <div className="p-5">
-                                                        {product.category && (
-                                                            <p className="text-xs text-primary font-medium uppercase tracking-wide mb-1">
-                                                                {product.category.name}
-                                                            </p>
-                                                        )}
-                                                        <h3 className="font-serif text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                                                            {product.name}
-                                                        </h3>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-xl text-foreground">
-                                                                ₹{price}
-                                                            </span>
-                                                            {hasSale && originalPrice && (
-                                                                <span className="text-muted-foreground line-through text-sm">
-                                                                    ₹{originalPrice}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </Link>
-                                            );
-                                        })}
+                                        {products.map((product) => (
+                                            <ProductCard key={product._id} product={product} />
+                                        ))}
                                     </div>
 
                                     {/* Pagination */}

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+import ProductCard from "./ProductCard";
+
 export default function FeaturedProducts() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -75,23 +77,10 @@ export default function FeaturedProducts() {
         setCurrentIndex(prev => (prev - 1 + products.length) % products.length);
     };
 
-    const getProductInfo = (product) => {
-        const firstVariant = product.variants?.[0];
-        if (!firstVariant) return { price: 0, originalPrice: null, hasSale: false };
 
-        const hasSale = firstVariant.salePrice && firstVariant.salePrice < firstVariant.regularPrice;
 
-        return {
-            price: hasSale ? firstVariant.salePrice : firstVariant.regularPrice,
-            originalPrice: hasSale ? firstVariant.regularPrice : null,
-            hasSale
-        };
-    };
 
-    // If no products, don't render the section
-    if (!loading && products.length === 0) {
-        return null;
-    }
+
 
     const visibleProducts = getVisibleProducts();
     const showCarousel = products.length > visibleCount;
@@ -144,61 +133,12 @@ export default function FeaturedProducts() {
                             onMouseEnter={() => setIsPaused(true)}
                             onMouseLeave={() => setIsPaused(false)}
                         >
-                            {visibleProducts.map((product, index) => {
-                                const { price, originalPrice, hasSale } = getProductInfo(product);
-                                return (
-                                    <Link
-                                        href={`/products/${product._id}`}
-                                        key={`${product._id}-${currentIndex}-${index}`}
-                                        className="group relative flex flex-col"
-                                    >
-                                        {/* Product Image Stage */}
-                                        <div className="aspect-[3/4] bg-muted rounded-3xl overflow-hidden relative mb-6">
-                                            {/* Background Glow */}
-                                            <div className="absolute inset-0 bg-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                                            {product.images?.[0] ? (
-                                                <img
-                                                    src={product.images[0]}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-4xl grayscale opacity-20">📦</div>
-                                            )}
-
-                                            {/* Badges */}
-                                            <div className="absolute top-4 left-4 flex flex-col gap-2">
-                                                {hasSale && (
-                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                                        -20%
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* Quick Actions (Slide Up) */}
-                                            <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                                <button className="w-full h-12 bg-foreground text-background font-bold uppercase text-xs tracking-widest rounded-full hover:bg-primary hover:text-primary-foreground transition-colors shadow-xl">
-                                                    Quick Add
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Product Info - Clean & Minimal */}
-                                        <div className="space-y-1">
-                                            <h3 className="font-heading text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
-                                                {product.name}
-                                            </h3>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-muted-foreground font-medium">₹{price}</span>
-                                                {hasSale && originalPrice && (
-                                                    <span className="text-muted-foreground/50 line-through text-sm">₹{originalPrice}</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
+                            {visibleProducts.map((product, index) => (
+                                <ProductCard
+                                    key={`${product._id}-${currentIndex}-${index}`}
+                                    product={product}
+                                />
+                            ))}
                         </div>
                     </div>
                 )}

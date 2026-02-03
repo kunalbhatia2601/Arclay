@@ -99,7 +99,7 @@ export default function Navbar() {
                                 <Link href="/login" className="text-sm font-bold text-foreground hover:text-primary transition-colors">
                                     Login
                                 </Link>
-                                <Link href="/shop">
+                                <Link href="/products">
                                     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full px-6 h-10 shadow-lg hover:shadow-primary/20 transition-all">
                                         Shop Now
                                     </Button>
