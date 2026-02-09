@@ -14,6 +14,7 @@ export async function GET(req) {
         const category = searchParams.get("category");
         const minPrice = searchParams.get("minPrice");
         const maxPrice = searchParams.get("maxPrice");
+        const isFeatured = searchParams.get("isFeatured");
         const sort = searchParams.get("sort") || "newest";
 
         // Build query - only active products
@@ -30,6 +31,11 @@ export async function GET(req) {
         // Category filter
         if (category) {
             query.category = category;
+        }
+
+        // Featured filter
+        if (isFeatured === 'true') {
+            query.isFeatured = true;
         }
 
         // Sort options

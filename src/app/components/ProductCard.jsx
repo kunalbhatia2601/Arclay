@@ -24,13 +24,10 @@ export default function ProductCard({ product }) {
     return (
         <Link
             href={`/products/${product._id}`}
-            className="group relative flex flex-col"
+            className="product-card group relative flex flex-col h-full"
         >
             {/* Product Image Stage */}
-            <div className="aspect-[3/4] bg-muted rounded-3xl overflow-hidden relative mb-4 border border-transparent group-hover:border-border transition-colors">
-                {/* Background Glow */}
-                <div className="absolute inset-0 bg-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
+            <div className="product-card-image aspect-square relative">
                 {product.images?.[0] ? (
                     <img
                         src={product.images[0]}
@@ -42,42 +39,53 @@ export default function ProductCard({ product }) {
                 )}
 
                 {/* Badges */}
-                <div className="absolute top-4 left-4 flex flex-col gap-2">
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {hasSale && (
-                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
                             Sale
                         </span>
                     )}
                     {!inStock && (
-                        <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                            Out of Stock
+                        <span className="bg-gray-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                            No Stock
+                        </span>
+                    )}
+                    {product.isNew && (
+                        <span className="bg-olive-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                            New
                         </span>
                     )}
                 </div>
 
-                {/* Quick Actions (Slide Up) */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <button className="w-full h-12 bg-foreground text-background font-bold uppercase text-xs tracking-widest rounded-full hover:bg-primary hover:text-primary-foreground transition-colors shadow-xl">
-                        Quick Add
-                    </button>
-                </div>
+                {/* Discount Badge */}
+                {hasSale && originalPrice && (
+                    <span className="absolute top-2 right-2 bg-yellow-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                        {Math.round((1 - price / originalPrice) * 100)}% OFF
+                    </span>
+                )}
             </div>
 
-            {/* Product Info - Clean & Minimal */}
-            <div className="space-y-1">
+            {/* Product Info */}
+            <div className="p-3 flex flex-col flex-1">
                 {product.category && (
-                    <p className="text-[10px] text-foreground font-bold uppercase tracking-widest mb-1 group-hover:opacity-100 group-hover:text-primary transition-opacity transform -translate-y-2 group-hover:translate-y-0 duration-300">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-1">
                         {product.category.name}
                     </p>
                 )}
-                <h3 className="font-heading text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-1">
+                <h3 className="font-medium text-sm text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2 mb-1">
                     {product.name}
                 </h3>
-                <div className="flex items-center gap-3">
-                    <span className="text-muted-foreground font-medium">₹{price}</span>
-                    {hasSale && originalPrice && (
-                        <span className="text-muted-foreground/50 line-through text-sm">₹{originalPrice}</span>
-                    )}
+
+                <div className="mt-auto flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-olive-700">₹{price}</span>
+                        {hasSale && originalPrice && (
+                            <span className="text-xs text-muted-foreground line-through">₹{originalPrice}</span>
+                        )}
+                    </div>
+                    <button className="w-8 h-8 rounded-full bg-olive-100 text-olive-600 flex items-center justify-center hover:bg-olive-500 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shopping-bag"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+                    </button>
                 </div>
             </div>
         </Link>

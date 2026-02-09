@@ -60,7 +60,7 @@
   --color-cream: #F5F0E8;
   --color-charcoal: #2D2D2D;
   --color-charcoal-light: #4A4A4A;
-}
+/* } */
 
 /* ESSVORA Color Palette 
    =====================
@@ -69,57 +69,91 @@
    Accent (Deep Chili Red): #8B1A1A - Logo accent, emphasis
 /* MODERN DARK PREMEIUM THEME */
 /* LIGHT THEME (Default CSS, overrides applied by next-themes class='dark') */
-:root {
-  --radius: 0.75rem;
+/* Shared Theme Variables */
+--radius: 0.75rem;
 
-  --background: #FFFFFF;
-  --foreground: #0A0A0A;
+/* Color Palette - Ported from Vite Project */
+--color-cream-50: #FFFBF5;
+--color-cream-100: #FFF8ED;
+--color-cream-200: #FFF3E0;
+--color-cream-300: #FFE8CC;
+--color-cream-400: #FFD9A8;
+--color-cream-500: #FFC785;
 
-  --card: #F5F5F5;
-  --card-foreground: #0A0A0A;
+--color-olive-50: #F5F7F0;
+--color-olive-100: #E8EDE0;
+--color-olive-200: #D4DDC4;
+--color-olive-300: #B5C49A;
+--color-olive-400: #96A770;
+--color-olive-500: #7A8A52;
+--color-olive-600: #5E6B3D;
+--color-olive-700: #46502E;
+--color-olive-800: #2F3620;
+--color-olive-900: #1A1E12;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #0A0A0A;
+--color-terracotta-50: #FDF5F3;
+--color-terracotta-100: #FAE8E3;
+--color-terracotta-200: #F5D0C5;
+--color-terracotta-300: #EDB09E;
+--color-terracotta-400: #E0856A;
+--color-terracotta-500: #D45D3D;
+--color-terracotta-600: #B84A2E;
+--color-terracotta-700: #963A25;
+--color-terracotta-800: #7A311F;
+--color-terracotta-900: #5C2618;
 
-  --primary: #65A30D;
-  /* Darker Lime/Olive for visibility on white */
-  --primary-foreground: #FFFFFF;
+--color-gold-50: #FFFBEB;
+--color-gold-100: #FEF3C7;
+--color-gold-200: #FDE68A;
+--color-gold-300: #FCD34D;
+--color-gold-400: #FBBF24;
+--color-gold-500: #F59E0B;
+--color-gold-600: #D97706;
 
-  --secondary: #F4F4F5;
-  --secondary-foreground: #18181B;
+/* Default Theme Mapping */
+--background: var(--color-cream-50);
+--foreground: #1A1E12;
+/* Olive 900 for high contrast text */
 
-  --muted: #F4F4F5;
-  --muted-foreground: #71717A;
+--card: #FFFFFF;
+--card-foreground: #1A1E12;
 
-  --accent: #F4F4F5;
-  --accent-foreground: #18181B;
+--popover: #FFFFFF;
+--popover-foreground: #1A1E12;
 
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAFA;
+--primary: var(--color-olive-500);
+--primary-foreground: #FFFFFF;
 
-  --border: #E4E4E7;
-  --input: #E4E4E7;
-  --ring: #65A30D;
+--secondary: var(--color-cream-200);
+--secondary-foreground: var(--color-olive-900);
 
-  --chart-1: #65A30D;
-  --chart-2: #3F6212;
-  --chart-3: #84CC16;
-  --chart-4: #ECFCCB;
-  --chart-5: #365314;
+--muted: var(--color-olive-100);
+--muted-foreground: var(--color-olive-600);
 
-  --sidebar: #F4F4F5;
-  --sidebar-foreground: #18181B;
-  --sidebar-primary: #65A30D;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E4E4E7;
-  --sidebar-accent-foreground: #18181B;
-  --sidebar-border: #E4E4E7;
-  --sidebar-ring: #65A30D;
+--accent: var(--color-terracotta-500);
+--accent-foreground: #FFFFFF;
 
-  /* ESSVORA Light Specifics */
-  --color-olive: #556B2F;
-  --color-mustard: #D4A643;
-  --color-copper: #B8860B;
+--destructive: #EF4444;
+--destructive-foreground: #FFFFFF;
+
+--border: var(--color-olive-200);
+--input: var(--color-olive-200);
+--ring: var(--color-olive-500);
+
+--chart-1: var(--color-olive-500);
+--chart-2: var(--color-olive-600);
+--chart-3: var(--color-terracotta-500);
+--chart-4: var(--color-gold-400);
+--chart-5: var(--color-olive-300);
+
+--sidebar: var(--color-cream-50);
+--sidebar-foreground: var(--color-olive-900);
+--sidebar-primary: var(--color-olive-500);
+--sidebar-primary-foreground: #FFFFFF;
+--sidebar-accent: var(--color-cream-200);
+--sidebar-accent-foreground: var(--color-olive-900);
+--sidebar-border: var(--color-olive-200);
+--sidebar-ring: var(--color-olive-500);
 }
 
 /* MODERN DARK PREMIUM THEME */
@@ -220,6 +254,90 @@
   }
 }
 
+/* Custom Component Classes from Vite Project */
+@layer components {
+
+  /* Premium Button Styles */
+  .btn-premium {
+    @apply relative overflow-hidden rounded-2xl px-6 py-3.5 font-medium transition-all duration-300;
+    @apply bg-linear-to-r from-olive-500 to-olive-600 text-white;
+    @apply shadow-sm hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  .btn-premium::before {
+    content: '';
+    @apply absolute inset-0 bg-linear-to-r from-white/20 to-transparent opacity-0 transition-opacity duration-300;
+  }
+
+  .btn-premium:hover::before {
+    @apply opacity-100;
+  }
+
+  .btn-terracotta {
+    @apply relative overflow-hidden rounded-2xl px-6 py-3.5 font-medium transition-all duration-300;
+    @apply bg-linear-to-r from-terracotta-400 to-terracotta-500 text-white;
+    @apply shadow-sm hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  .btn-glass {
+    @apply relative overflow-hidden rounded-2xl px-6 py-3.5 font-medium transition-all duration-300;
+    @apply bg-white/80 backdrop-blur-xl border border-white/50;
+    @apply text-olive-700 hover:bg-white hover:shadow-sm;
+  }
+
+  /* Premium Card Styles */
+  .card-premium {
+    @apply bg-white rounded-3xl shadow-sm transition-all duration-300;
+    @apply hover:shadow-md hover:-translate-y-1;
+  }
+
+  .card-glass {
+    @apply bg-white/70 backdrop-blur-xl rounded-3xl border border-white/60;
+    @apply shadow-sm transition-all duration-300;
+  }
+
+  /* Product Card */
+  .product-card {
+    @apply bg-white rounded-3xl overflow-hidden shadow-sm transition-all duration-500;
+    @apply hover:shadow-md hover:-translate-y-2;
+  }
+
+  .product-card-image {
+    @apply relative overflow-hidden bg-linear-to-b from-cream-100 to-cream-50;
+  }
+
+  /* Input Styles */
+  .input-premium {
+    @apply w-full px-5 py-4 rounded-2xl bg-cream-100 border-2 border-transparent;
+    @apply text-foreground placeholder:text-muted-foreground/60;
+    @apply focus:outline-none focus:border-olive-400 focus:bg-white;
+    @apply transition-all duration-300;
+  }
+
+  /* Chip Styles */
+  .chip {
+    @apply inline-flex items-center px-4 py-2 rounded-full text-sm font-medium;
+    @apply bg-cream-200 text-olive-700 transition-all duration-300;
+    @apply hover:bg-olive-100 hover:text-olive-800;
+  }
+
+  .chip-active {
+    @apply bg-olive-500 text-white;
+    @apply hover:bg-olive-600 hover:text-white;
+  }
+
+  /* Badge Styles */
+  .badge-premium {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
+    @apply bg-terracotta-100 text-terracotta-700;
+  }
+
+  /* Divider */
+  .divider-premium {
+    @apply h-px bg-linear-to-r from-transparent via-cream-300 to-transparent;
+  }
+}
+
 /* Custom Utility Classes */
 @layer utilities {
 
@@ -233,186 +351,8 @@
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2362A22E' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
-  .bg-spice-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23D4A643' fill-opacity='0.08'%3E%3Cpath d='M20 20c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm40 0c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zM20 60c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z'/%3E%3C/g%3E%3C/svg%3E");
+  /* Doodle Background Pattern */
+  .doodle-bg {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%237A8A52' stroke-width='0.5' stroke-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
-
-  /* VedicBro Spice Pattern Override */
-  [data-theme="vedicbro"] .bg-spice-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23D0FB1F' fill-opacity='0.08'%3E%3Cpath d='M20 20c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm40 0c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zM20 60c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z'/%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  .bg-leaf-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23556B2F' fill-opacity='0.06'%3E%3Cpath d='M50 25c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm-25 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm50 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25z'/%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  /* VedicBro Leaf Pattern Override */
-  [data-theme="vedicbro"] .bg-leaf-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%2362A22E' fill-opacity='0.06'%3E%3Cpath d='M50 25c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm-25 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25zm50 0c-8 0-15 10-15 25s7 25 15 25 15-10 15-25-7-25-15-25z'/%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  /* Text Gradient */
-  .text-gradient {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--color-copper) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Gradient Backgrounds */
-  .gradient-olive {
-    background: linear-gradient(135deg, #556B2F 0%, #6B8B3D 100%);
-  }
-
-  .gradient-gold {
-    background: linear-gradient(135deg, #B8860B 0%, #D4A643 100%);
-  }
-
-  .gradient-warm {
-    background: linear-gradient(180deg, #FAF8F5 0%, #F5F0E8 100%);
-  }
-
-  /* Decorative Line */
-  .decorative-line {
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--primary) 0%, var(--color-copper) 100%);
-    border-radius: 2px;
-  }
-
-  /* Hover Effects */
-  .hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Product Image Hover */
-  .product-image-hover {
-    transition: transform 0.4s ease;
-  }
-
-  .product-image-hover:hover {
-    transform: scale(1.02) rotate(1deg);
-  }
-}
-
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease forwards;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-slide-in-left {
-  animation: slideInLeft 0.6s ease forwards;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.6s ease forwards;
-}
-
-/* Stagger Animation Delays */
-.delay-100 {
-  animation-delay: 100ms;
-}
-
-.delay-200 {
-  animation-delay: 200ms;
-}
-
-.delay-300 {
-  animation-delay: 300ms;
-}
-
-.delay-400 {
-  animation-delay: 400ms;
-}
-
-.delay-500 {
-  animation-delay: 500ms;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--muted);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-olive-light);
-}
-
-/* Selection */
-::selection {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
-/* Focus Styles */
-:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
 }
