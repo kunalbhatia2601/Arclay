@@ -29,7 +29,7 @@ jobs:
             cd /root/apps/Arclay
             
             echo "📥 Pulling latest changes..."
-            git pull origin main
+            git reset --hard 621cddbb18821a3d7fe6001d3ac883ee86f1bb13
             
             echo "📦 Installing dependencies... via pnpm"
             pnpm install
