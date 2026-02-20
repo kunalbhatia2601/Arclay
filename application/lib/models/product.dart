@@ -2,16 +2,10 @@ class Category {
   final String id;
   final String name;
 
-  Category({
-    required this.id,
-    required this.name,
-  });
+  Category({required this.id, required this.name});
 
   factory Category.fromJson(Map<String, dynamic> json) {
-    return Category(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return Category(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 }
 
@@ -19,10 +13,7 @@ class VariationType {
   final String name;
   final List<String> options;
 
-  VariationType({
-    required this.name,
-    required this.options,
-  });
+  VariationType({required this.name, required this.options});
 
   factory VariationType.fromJson(Map<String, dynamic> json) {
     return VariationType(
@@ -51,8 +42,8 @@ class ProductVariant {
     return ProductVariant(
       attributes: Map<String, String>.from(json['attributes'] ?? {}),
       regularPrice: (json['regularPrice'] ?? 0).toDouble(),
-      salePrice: json['salePrice'] != null 
-          ? (json['salePrice']).toDouble() 
+      salePrice: json['salePrice'] != null
+          ? (json['salePrice']).toDouble()
           : null,
       stock: json['stock'] ?? 0,
       sku: json['sku'] ?? '',
@@ -72,6 +63,7 @@ class Product {
   final String name;
   final List<String> images;
   final String description;
+  final String longDescription;
   final Category? category;
   final List<VariationType> variationTypes;
   final List<ProductVariant> variants;
@@ -83,6 +75,7 @@ class Product {
     required this.name,
     required this.images,
     required this.description,
+    this.longDescription = '',
     this.category,
     required this.variationTypes,
     required this.variants,
@@ -96,15 +89,20 @@ class Product {
       name: json['name'] ?? '',
       images: List<String>.from(json['images'] ?? []),
       description: json['description'] ?? '',
-      category: json['category'] != null 
+      longDescription: json['long_description'] ?? '',
+      category: json['category'] != null
           ? Category.fromJson(json['category'])
           : null,
-      variationTypes: (json['variationTypes'] as List?)
-          ?.map((e) => VariationType.fromJson(e))
-          .toList() ?? [],
-      variants: (json['variants'] as List?)
-          ?.map((e) => ProductVariant.fromJson(e))
-          .toList() ?? [],
+      variationTypes:
+          (json['variationTypes'] as List?)
+              ?.map((e) => VariationType.fromJson(e))
+              .toList() ??
+          [],
+      variants:
+          (json['variants'] as List?)
+              ?.map((e) => ProductVariant.fromJson(e))
+              .toList() ??
+          [],
       isActive: json['isActive'] ?? true,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
@@ -121,9 +119,10 @@ class Product {
   // Get price range if variants have different prices
   String get priceRange {
     if (variants.isEmpty) return '₹0';
-    
-    final prices = variants.map((v) => v.effectivePrice).toSet().toList()..sort();
-    
+
+    final prices = variants.map((v) => v.effectivePrice).toSet().toList()
+      ..sort();
+
     if (prices.length == 1) {
       return '₹${prices.first.toStringAsFixed(0)}';
     } else {

@@ -5,6 +5,8 @@ import '../../config/constants.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import '../cart/cart_screen.dart';
+import '../orders/orders_screen.dart';
+import '../address/address_list_screen.dart';
 import 'home_tab.dart';
 import 'products_tab.dart';
 
@@ -31,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
       HomeTab(onTabChange: (index) => setState(() => _currentIndex = index)),
       const ProductsTab(),
       const CartScreen(),
-      const OrdersTab(),
+      const OrdersScreen(),
       const ProfileTab(),
     ];
   }
@@ -102,19 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-// Orders Tab (Placeholder)
-class OrdersTab extends StatelessWidget {
-  const OrdersTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Orders')),
-      body: const Center(child: Text('Orders Screen - Coming Soon')),
     );
   }
 }
@@ -193,7 +182,9 @@ class ProfileTab extends StatelessWidget {
             title: const Text('Addresses'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Navigate to addresses
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AddressListScreen()),
+              );
             },
           ),
           const Divider(),

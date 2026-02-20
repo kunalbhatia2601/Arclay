@@ -1,5 +1,6 @@
 import '../config/constants.dart';
 import '../models/product.dart';
+import '../models/review.dart';
 import 'api_service.dart';
 
 class ProductsResponse {
@@ -34,6 +35,18 @@ class ProductsResponse {
       pages: json['pagination']?['pages'] ?? 1,
     );
   }
+}
+
+class ProductDetailResponse {
+  final Product product;
+  final List<Review> reviews;
+  final List<Product> relatedProducts;
+
+  ProductDetailResponse({
+    required this.product,
+    required this.reviews,
+    required this.relatedProducts,
+  });
 }
 
 class ProductsService {
@@ -95,8 +108,8 @@ class ProductsService {
     );
   }
 
-  // Get product by ID
-  Future<ApiResponse<Product>> getProductById(String id) async {
+  // Get product by ID — returns product, reviews, and related products
+  Future<ApiResponse<ProductDetailResponse>> getProductById(String id) async {
     final response = await _apiService.get<Map<String, dynamic>>(
       '${AppConstants.productsEndpoint}/$id',
       fromJson: (json) => json as Map<String, dynamic>,
@@ -104,9 +117,24 @@ class ProductsService {
 
     if (response.success && response.data != null) {
       final product = Product.fromJson(response.data!['product']);
+      final reviews =
+          (response.data!['reviews'] as List?)
+              ?.map((e) => Review.fromJson(e))
+              .toList() ??
+          [];
+      final relatedProducts =
+          (response.data!['relatedProducts'] as List?)
+              ?.map((e) => Product.fromJson(e))
+              .toList() ??
+          [];
+
       return ApiResponse(
         success: true,
-        data: product,
+        data: ProductDetailResponse(
+          product: product,
+          reviews: reviews,
+          relatedProducts: relatedProducts,
+        ),
         message: response.message,
         statusCode: response.statusCode,
       );

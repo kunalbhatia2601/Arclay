@@ -1,6 +1,6 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'https://ecomsite-kunal.netlify.app';
+  static const String baseUrl = 'https://arclay.kunalbhatia.dev';
   static const String apiBasePath = '';
 
   // API Endpoints
@@ -19,6 +19,7 @@ class AppConstants {
   static const String razorpayVerifyEndpoint = '/api/payment/razorpay/verify';
   static const String stripeCreateEndpoint =
       '/api/payment/stripe/create-intent';
+  static const String couponsValidateEndpoint = '/api/coupons/validate';
 
   // App Info
   static const String appName = 'Essvora';
