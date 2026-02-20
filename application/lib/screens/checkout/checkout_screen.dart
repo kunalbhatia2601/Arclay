@@ -621,10 +621,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacing16),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -638,10 +638,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Subtotal', style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  'Subtotal',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppTheme.textPrimary),
+                ),
                 Text(
                   '₹${widget.cart.total.toStringAsFixed(0)}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppTheme.textPrimary),
                 ),
               ],
             ),
@@ -649,7 +656,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Shipping', style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  'Shipping',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppTheme.textPrimary),
+                ),
                 Text(
                   'Free',
                   style: Theme.of(
@@ -658,7 +670,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ],
             ),
-            const Divider(height: AppTheme.spacing16),
+            const Divider(
+              height: AppTheme.spacing16,
+              color: AppTheme.dividerColor,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -666,6 +681,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   'Total',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
                 Text(

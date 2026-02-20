@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'config/theme.dart';
 import 'config/constants.dart';
 import 'services/auth_service.dart';
 import 'services/api_service.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/auth/login_screen.dart';
+
+// Global theme notifier
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +26,11 @@ void main() async {
   await ApiService().init();
   await AuthService().init();
 
+  // Load saved theme preference
+  final prefs = await SharedPreferences.getInstance();
+  final isDark = prefs.getBool('is_dark_mode') ?? false;
+  themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+
   runApp(const MyApp());
 }
 
@@ -30,11 +39,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConstants.appName,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.buildTheme(),
-      home: const SplashScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.buildTheme(),
+          darkTheme: AppTheme.buildDarkTheme(),
+          themeMode: mode,
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }
@@ -82,15 +98,12 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ESSVORA Logo/Text
-              // ESSVORA Logo
-              // Image.asset('assets/icons/essvora_light.jpg', height: 150),
               Text(
                 AppConstants.appName,
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: AppTheme.spacing16),
               Text(

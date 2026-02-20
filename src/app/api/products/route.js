@@ -62,7 +62,7 @@ export async function GET(req) {
                 .sort(sortOption)
                 .populate("category", "name")
                 .lean(),
-            Category.find({ isActive: true }).select("name").lean(),
+            Category.find({ isActive: true }).select("name image").lean(),
         ]);
 
         // Helper to get effective price from product (first variant's price)

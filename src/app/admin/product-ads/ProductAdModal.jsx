@@ -325,9 +325,9 @@ export default function ProductAdModal({ isOpen, onClose, onSuccess, editingAd =
                                 onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                             >
-                                <option value="hero">Hero (Top)</option>
-                                <option value="banner">Banner (After Hero)</option>
-                                <option value="popup">Popup</option>
+                                <option value="hero">Application</option>
+                                <option value="banner">Banner</option>
+                                {/* <option value="popup">Popup</option> */}
                             </select>
                         </div>
                         <div>

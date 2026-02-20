@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:badges/badges.dart' as badges;
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../services/auth_service.dart';
@@ -7,6 +6,9 @@ import '../auth/login_screen.dart';
 import '../cart/cart_screen.dart';
 import '../orders/orders_screen.dart';
 import '../address/address_list_screen.dart';
+import '../search/search_screen.dart';
+import '../settings/settings_screen.dart';
+import '../help/help_support_screen.dart';
 import 'home_tab.dart';
 import 'products_tab.dart';
 
@@ -21,22 +23,34 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late int _currentIndex;
-  late final List<Widget> _screens;
+  String? _selectedCategoryId;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialTabIndex;
-
-    // Initialize screens with callbacks
-    _screens = [
-      HomeTab(onTabChange: (index) => setState(() => _currentIndex = index)),
-      const ProductsTab(),
-      const CartScreen(),
-      const OrdersScreen(),
-      const ProfileTab(),
-    ];
   }
+
+  void _onCategorySelected(String categoryId) {
+    setState(() {
+      _selectedCategoryId = categoryId;
+      _currentIndex = 1; // Switch to Products tab
+    });
+  }
+
+  List<Widget> get _screens => [
+    HomeTab(
+      onTabChange: (index) => setState(() => _currentIndex = index),
+      onCategoryTap: _onCategorySelected,
+    ),
+    ProductsTab(
+      key: ValueKey('products_$_selectedCategoryId'),
+      initialCategory: _currentIndex == 1 ? _selectedCategoryId : null,
+    ),
+    const CartScreen(),
+    const OrdersScreen(),
+    const ProfileTab(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -55,26 +69,30 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // Navigate to search screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Search coming soon!')),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
             },
           ),
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
             onPressed: () {
-              // Switch to cart tab
               setState(() => _currentIndex = 2);
             },
           ),
           const SizedBox(width: AppTheme.spacing8),
         ],
       ),
-      body: _screens[_currentIndex],
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          if (index != 1) {
+            // Clear category filter when switching away from products
+            _selectedCategoryId = null;
+          }
+          setState(() => _currentIndex = index);
+        },
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
@@ -193,7 +211,9 @@ class ProfileTab extends StatelessWidget {
             title: const Text('Settings'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Navigate to settings
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
           ),
           const Divider(),
@@ -202,7 +222,9 @@ class ProfileTab extends StatelessWidget {
             title: const Text('Help & Support'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Navigate to help
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
+              );
             },
           ),
           const Divider(),

@@ -185,7 +185,10 @@ export default function ProductAdsPage() {
                                         {/* Position */}
                                         <td className="px-6 py-4 hidden md:table-cell">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionBadge(ad.position)}`}>
-                                                {ad.position.charAt(0).toUpperCase() + ad.position.slice(1)}
+                                                {ad.position.toLowerCase() == 'hero'
+                                                    ? "Application"
+                                                    : ad.position.charAt(0).toUpperCase() + ad.position.slice(1)
+                                                }
                                             </span>
                                         </td>
 
