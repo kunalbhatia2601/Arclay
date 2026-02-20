@@ -195,11 +195,27 @@ class _HomeTabState extends State<HomeTab> {
                                   width: 2,
                                 ),
                               ),
-                              child: const Icon(
-                                Icons.category_outlined,
-                                color: AppTheme.primaryColor,
-                                size: 32,
-                              ),
+                              child:
+                                  category.image != null &&
+                                      category.image!.isNotEmpty
+                                  ? ClipOval(
+                                      child: CachedNetworkImage(
+                                        imageUrl: category.image!,
+                                        width: 70,
+                                        height: 70,
+                                        fit: BoxFit.cover,
+                                        errorWidget: (_, __, ___) => const Icon(
+                                          Icons.category_outlined,
+                                          color: AppTheme.primaryColor,
+                                          size: 32,
+                                        ),
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.category_outlined,
+                                      color: AppTheme.primaryColor,
+                                      size: 32,
+                                    ),
                             ),
                             const SizedBox(height: AppTheme.spacing4),
                             Text(

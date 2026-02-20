@@ -60,9 +60,9 @@ export async function GET(req) {
         let [products, categories] = await Promise.all([
             Product.find(query)
                 .sort(sortOption)
-                .populate("category", "name")
+                .populate("category", "name image")
                 .lean(),
-            Category.find({ isActive: true }).select("name image").lean(),
+            Category.find({ isActive: true }),
         ]);
 
         // Helper to get effective price from product (first variant's price)
