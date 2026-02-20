@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import '../../config/theme.dart';
 
 class PolicyDetailScreen extends StatelessWidget {
@@ -11,6 +12,10 @@ class PolicyDetailScreen extends StatelessWidget {
     required this.content,
   });
 
+  bool get _isHtml =>
+      content.contains('<') &&
+      (content.contains('</') || content.contains('/>'));
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,14 +25,26 @@ class PolicyDetailScreen extends StatelessWidget {
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacing16),
-            child: _buildContent(context),
+            child: _isHtml
+                ? _buildHtmlContent(context)
+                : _buildMarkdownContent(context),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildHtmlContent(BuildContext context) {
+    return HtmlWidget(
+      content,
+      textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        color: AppTheme.textSecondary,
+        height: 1.6,
+      ),
+    );
+  }
+
+  Widget _buildMarkdownContent(BuildContext context) {
     final lines = content.split('\n');
     final widgets = <Widget>[];
 
@@ -77,32 +94,6 @@ class PolicyDetailScreen extends StatelessWidget {
             ),
           ),
         );
-      } else if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-        // Simple table row — render as styled text
-        final cells = trimmed
-            .split('|')
-            .where((c) => c.trim().isNotEmpty && !c.contains('---'))
-            .map((c) => c.trim())
-            .toList();
-        if (cells.isNotEmpty && !trimmed.contains('---')) {
-          widgets.add(
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                children: cells.map((cell) {
-                  return Expanded(
-                    child: Text(
-                      cell,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          );
-        }
       } else if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
         widgets.add(
           Padding(
@@ -113,20 +104,6 @@ class PolicyDetailScreen extends StatelessWidget {
                 context,
               ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-          ),
-        );
-      } else if (trimmed.startsWith('1. ') ||
-          trimmed.startsWith('2. ') ||
-          trimmed.startsWith('3. ') ||
-          trimmed.startsWith('4. ') ||
-          trimmed.startsWith('5. ') ||
-          trimmed.startsWith('6. ') ||
-          trimmed.startsWith('7. ') ||
-          trimmed.startsWith('8. ')) {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.only(left: 4, top: 2, bottom: 2),
-            child: _buildInlineFormatted(context, trimmed),
           ),
         );
       } else {
@@ -146,7 +123,6 @@ class PolicyDetailScreen extends StatelessWidget {
   }
 
   Widget _buildInlineFormatted(BuildContext context, String text) {
-    // Simple bold parsing for **text**
     final spans = <TextSpan>[];
     final regex = RegExp(r'\*\*(.+?)\*\*');
     int lastEnd = 0;

@@ -19,6 +19,7 @@ const navItems = [
     { href: "/admin/reviews", label: "Reviews", icon: "⭐" },
     { href: "/admin/carts", label: "User Carts", icon: "🛒" },
     { href: "/admin/users", label: "Users", icon: "👥" },
+    { href: "/admin/app-config", label: "Application", icon: "📱" },
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
 ];
 

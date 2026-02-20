@@ -22,6 +22,7 @@ class AppConstants {
   static const String couponsValidateEndpoint = '/api/coupons/validate';
   static const String couponsEndpoint = '/api/coupons';
   static const String settingsEndpoint = '/api/settings';
+  static const String appConfigEndpoint = '/api/app-config';
 
   // App Info
   static const String appName = 'Essvora';
