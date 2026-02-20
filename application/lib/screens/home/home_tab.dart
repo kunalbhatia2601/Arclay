@@ -337,6 +337,23 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ),
 
+          // Copyright
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppTheme.spacing24,
+                horizontal: AppTheme.spacing16,
+              ),
+              child: Text(
+                '© ${DateTime.now().year} ${AppConstants.appName}. All rights reserved.',
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+              ),
+            ),
+          ),
+
           const SliverPadding(
             padding: EdgeInsets.only(bottom: AppTheme.spacing24),
           ),

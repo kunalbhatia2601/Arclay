@@ -1382,7 +1382,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacing16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),

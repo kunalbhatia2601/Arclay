@@ -20,6 +20,8 @@ class AppConstants {
   static const String stripeCreateEndpoint =
       '/api/payment/stripe/create-intent';
   static const String couponsValidateEndpoint = '/api/coupons/validate';
+  static const String couponsEndpoint = '/api/coupons';
+  static const String settingsEndpoint = '/api/settings';
 
   // App Info
   static const String appName = 'Essvora';

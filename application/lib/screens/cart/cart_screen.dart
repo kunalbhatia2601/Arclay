@@ -235,7 +235,7 @@ class _CartScreenState extends State<CartScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacing16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -253,9 +253,7 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 Text(
                   'Subtotal (${_cart!.itemCount} items)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.textPrimary,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
                   '₹${_cart!.total.toStringAsFixed(0)}',

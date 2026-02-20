@@ -238,6 +238,15 @@ class ProfileTab extends StatelessWidget {
               side: const BorderSide(color: AppTheme.accentColor, width: 1.5),
             ),
           ),
+          const SizedBox(height: AppTheme.spacing48),
+          Text(
+            '© ${DateTime.now().year} ${AppConstants.appName}. All rights reserved.',
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: AppTheme.spacing16),
         ],
       ),
     );
