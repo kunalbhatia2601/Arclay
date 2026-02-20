@@ -255,9 +255,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         subtitle: Text(
           value,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: color,
+            decoration: type != 'live_chat' ? TextDecoration.underline : null,
+            decorationColor: color,
+          ),
         ),
         trailing: type == 'live_chat'
             ? null
