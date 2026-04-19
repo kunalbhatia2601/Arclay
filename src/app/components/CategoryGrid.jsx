@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import CategoryCard from "./CategoryCard";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MOCK_CATEGORIES } from "@/data/mockProducts";
 
 export default function CategoryGrid() {
     const [categories, setCategories] = useState([
@@ -14,7 +13,6 @@ export default function CategoryGrid() {
             productCount: 45,
             image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=2670&auto=format&fit=crop'
         },
-        ...MOCK_CATEGORIES
     ]);
     const [loading, setLoading] = useState(false);
 

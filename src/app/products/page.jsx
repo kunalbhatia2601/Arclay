@@ -6,17 +6,16 @@ import { ProductCardSkeleton } from "@/app/components/ProductSkeleton";
 import ProductCard from "@/app/components/ProductCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, SlidersHorizontal, Grid3X3, LayoutList, ChevronDown, X } from "lucide-react";
-import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/data/mockProducts";
 
 function ProductsPageContent() {
     const searchParams = useSearchParams();
     const initialCategory = searchParams.get("category") || "";
     const initialSearch = searchParams.get("search") || "";
 
-    const [products, setProducts] = useState(MOCK_PRODUCTS.slice(0, 12));
-    const [categories, setCategories] = useState(MOCK_CATEGORIES);
-    const [loading, setLoading] = useState(false); 
-    const [pagination, setPagination] = useState({ page: 1, pages: Math.ceil(MOCK_PRODUCTS.length / 12), total: MOCK_PRODUCTS.length });
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
     const [search, setSearch] = useState(initialSearch);
     const [selectedCategory, setSelectedCategory] = useState(initialCategory);
@@ -36,8 +35,7 @@ function ProductsPageContent() {
     }, [searchParams]);
 
     const fetchProducts = useCallback(async (page = 1) => {
-        // Only set loading if we don't have products or it's a pagination/filter change
-        if (products.length === 0) setLoading(true); 
+        setLoading(true);
         try {
             const params = new URLSearchParams({ page, limit: 12, sort });
             if (search) params.set("search", search);
@@ -47,22 +45,17 @@ function ProductsPageContent() {
 
             const res = await fetch(`/api/products?${params}`);
             const data = await res.json();
-            if (data.success && data.products?.length > 0) {
-                setProducts(data.products);
+            if (data.success) {
+                setProducts(data.products || []);
                 setCategories(data.categories || []);
-                setPagination(data.pagination);
+                setPagination(data.pagination || { page: 1, pages: 1, total: 0 });
             } else {
-                // FALLBACK TO COMPREHENSIVE MOCK DATA
-                let filtered = [...MOCK_PRODUCTS];
-                if (selectedCategory) filtered = filtered.filter(p => (p.category?._id || p.category) === selectedCategory);
-                if (search) filtered = filtered.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()));
-
-                setProducts(filtered.slice(0, 12));
-                setCategories(MOCK_CATEGORIES);
-                setPagination({ page: 1, pages: Math.ceil(filtered.length / 12), total: filtered.length });
+                setProducts([]);
+                setPagination({ page: 1, pages: 1, total: 0 });
             }
         } catch (error) {
             console.error("Failed to fetch products:", error);
+            setProducts([]);
         } finally {
             setLoading(false);
         }
@@ -209,13 +202,13 @@ function ProductsPageContent() {
                                             }`}
                                         >
                                             <span className="relative z-10">{cat.name}</span>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full transition-colors relative z-10 ${
+                                            {/* <span className={`text-[10px] px-2 py-0.5 rounded-full transition-colors relative z-10 ${
                                                 (selectedCategory === cat._id) || (selectedCategory === "" && cat._id === "")
                                                     ? "bg-[#869661] text-white"
                                                     : "bg-[#F3EFE8] text-[#767B71] group-hover:bg-[#ECE8E0]"
                                             }`}>
                                                 {cat.productCount || 0}
-                                            </span>
+                                            </span> */}
                                             {/* Liquid Active Background */}
                                             {((selectedCategory === cat._id) || (selectedCategory === "" && cat._id === "")) && (
                                                 <motion.div

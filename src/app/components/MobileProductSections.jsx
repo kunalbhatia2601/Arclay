@@ -6,7 +6,6 @@ import { ArrowRight, Flame, Sparkles, Star, ChevronRight, Gift } from "lucide-re
 import Link from "next/link";
 import { getSiteName } from "@/config/brandContent";
 import ProductCard from "./ProductCard";
-import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/data/mockProducts";
 
 const siteName = getSiteName();
 const isSanatva = siteName.toLowerCase().includes("sanatva");
@@ -24,8 +23,6 @@ function CategoryPills() {
                 const data = await res.json();
                 if (data.success && data.categories?.length > 0) {
                     setCategories(data.categories);
-                } else {
-                    setCategories(MOCK_CATEGORIES);
                 }
             } catch {}
         };
@@ -244,39 +241,25 @@ function SpecialOffers() {
 }
 
 export default function MobileProductSections() {
-    const [featured, setFeatured] = useState(MOCK_PRODUCTS.filter(p => p.isFeatured).slice(0, 2));
-    const [bestSellers, setBestSellers] = useState(MOCK_PRODUCTS.slice(0, 2));
-    const [newArrivals, setNewArrivals] = useState(MOCK_PRODUCTS.slice().reverse().slice(0, 3));
-    const [loading, setLoading] = useState(false); // Instant load
+    const [featured, setFeatured] = useState([]);
+    const [bestSellers, setBestSellers] = useState([]);
+    const [newArrivals, setNewArrivals] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchAll = async () => {
-        // Silent fetch: Show mocks first, update only if data arrives
-        try {
-       const [fRes, bRes, nRes] = await Promise.all([
+            setLoading(true);
+            try {
+                const [fRes, bRes, nRes] = await Promise.all([
                     fetch("/api/products?limit=2"),
                     fetch("/api/products?isFeatured=true&limit=2"),
                     fetch("/api/products?sort=newest&limit=3")
                 ]);
                 const [fData, bData, nData] = await Promise.all([fRes.json(), bRes.json(), nRes.json()]);
-                
-                if (fData.success && fData.products?.length > 0) {
-                    setFeatured(fData.products);
-                } else {
-                    setFeatured(MOCK_PRODUCTS.slice(0, 2));
-                }
 
-                if (bData.success && bData.products?.length > 0) {
-                    setBestSellers(bData.products);
-                } else {
-                    setBestSellers(MOCK_PRODUCTS.filter(p => p.isFeatured).slice(0, 2));
-                }
-
-                if (nData.success && nData.products?.length > 0) {
-                    setNewArrivals(nData.products);
-                } else {
-                    setNewArrivals(MOCK_PRODUCTS.slice().reverse().slice(0, 3));
-                }
+                if (fData.success && Array.isArray(fData.products)) setFeatured(fData.products);
+                if (bData.success && Array.isArray(bData.products)) setBestSellers(bData.products);
+                if (nData.success && Array.isArray(nData.products)) setNewArrivals(nData.products);
             } catch (err) {
                 console.error(err);
             } finally {

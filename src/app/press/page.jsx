@@ -3,9 +3,11 @@
 import { motion } from "framer-motion";
 import { Megaphone, ExternalLink, Download, ArrowRight, Share2, Sparkles } from "lucide-react";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+
 const pressReleases = [
-    { date: "Oct 12, 2025", title: "GourmetLux Wins 'Artisanal Brand of the Year' at Global Food Summit", outlet: "Food & Wine Magazine" },
-    { date: "Aug 05, 2025", title: "Preserving Heritage: How GourmetLux is Reviving Traditional Vedic Recipes", outlet: "The Economic Times" },
+    { date: "Oct 12, 2025", title: `${SITE_NAME} Wins 'Artisanal Brand of the Year' at Global Food Summit`, outlet: "Food & Wine Magazine" },
+    { date: "Aug 05, 2025", title: `Preserving Heritage: How ${SITE_NAME} is Reviving Traditional Recipes`, outlet: "The Economic Times" },
     { date: "Jun 20, 2025", title: "Luxury Gifting Elevated: Our New Festive Collection Launch", outlet: "Vogue India" }
 ];
 
@@ -24,7 +26,7 @@ export default function PressPage() {
                         In The News
                     </div>
                     <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#2A2F25] mb-6">Media & Press Kit</h1>
-                    <p className="text-[#767B71] text-lg max-w-2xl mx-auto leading-relaxed">The GourmetLux story through the eyes of the world's most prestigious publications.</p>
+                    <p className="text-[#767B71] text-lg max-w-2xl mx-auto leading-relaxed">The {SITE_NAME} story through the eyes of the world&apos;s most prestigious publications.</p>
                 </motion.div>
 
                 {/* Press Releases Grid */}
@@ -94,8 +96,7 @@ export default function PressPage() {
                 {/* Press Contact */}
                 <div className="mt-24 text-center">
                     <h3 className="text-sm font-bold text-[#869661] uppercase tracking-[0.3em] mb-4">Press Inquiries</h3>
-                    <p className="text-[16px] text-[#2A2F25] font-bold">press@gourmetlux.com</p>
-                    <p className="text-xs text-[#767B71] mt-2">+91 98765 43210 ext. 801</p>
+                    <p className="text-[16px] text-[#2A2F25] font-bold">Reach out via our <a href="/contact" className="underline hover:text-[#869661]">contact page</a>.</p>
                 </div>
             </div>
         </div>

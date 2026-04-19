@@ -27,7 +27,7 @@ import {
     ExternalLink
 } from "lucide-react";
 
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "GourmetLux";
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
 
 const navItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },

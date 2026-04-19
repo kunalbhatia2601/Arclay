@@ -20,7 +20,7 @@ import {
     RefreshCw
 } from "lucide-react";
 
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "GourmetLux";
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
 
 // Helper function to get price display from variants
 const getProductPriceDisplay = (product) => {

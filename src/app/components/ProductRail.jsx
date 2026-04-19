@@ -5,36 +5,25 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "./ProductCard";
-import { MOCK_PRODUCTS } from "@/data/mockProducts";
 
 export default function ProductRail({ title, subtitle, icon, endpoint, viewAllLink, bgWhite = false }) {
-    const [products, setProducts] = useState(MOCK_PRODUCTS.slice(0, 8)); // Initial mock
-    const [loading, setLoading] = useState(false); // Instant show
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const setFallback = () => {
-                let mockData = [...MOCK_PRODUCTS];
-                if (endpoint.includes('isFeatured=true')) mockData = mockData.filter(p => p.isFeatured);
-                if (endpoint.includes('sort=newest')) mockData = mockData.slice().reverse();
-                setProducts(mockData.slice(0, 8));
-            };
-
+            setLoading(true);
             try {
                 const res = await fetch(endpoint);
-                if (!res.ok) {
-                    setFallback();
-                    return;
-                }
                 const data = await res.json();
-                if (data.success && data.products?.length > 0) {
+                if (data.success && Array.isArray(data.products)) {
                     setProducts(data.products);
                 } else {
-                    setFallback();
+                    setProducts([]);
                 }
             } catch (error) {
                 console.error(`Failed to fetch products for ${title}:`, error);
-                setFallback();
+                setProducts([]);
             } finally {
                 setLoading(false);
             }

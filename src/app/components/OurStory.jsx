@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+
 export default function OurStory() {
     return (
         <motion.section 
@@ -27,7 +29,7 @@ export default function OurStory() {
                         <div className="absolute top-0 right-0 w-[85%] h-[85%] rounded-3xl overflow-hidden bg-[#F3EFE8] shadow-2xl">
                             <img
                                 src="https://images.unsplash.com/photo-1607877742574-a7d9a7449af1?q=80&w=2574&auto=format&fit=crop"
-                                alt="GourmetLux Heritage"
+                                alt={`${SITE_NAME} Heritage`}
                                 className="w-full h-full object-cover"
                             />
                         </div>
@@ -72,7 +74,7 @@ export default function OurStory() {
 
                         <div className="space-y-4 text-[#767B71] text-[15px] leading-relaxed mb-8">
                             <p>
-                                GourmetLux began in a small kitchen in Mumbai, where our founder&apos;s grandmother would prepare pickles using recipes passed down through generations. What started as a family tradition soon became a passion to share these authentic flavors with the world.
+                                {SITE_NAME} began in a small kitchen, where our founder&apos;s grandmother would prepare recipes passed down through generations. What started as a family tradition soon became a passion to share these authentic flavors with the world.
                             </p>
                             <p>
                                 Today, we continue to honor those traditional methods while embracing modern food safety standards. Every batch is handcrafted with the same love and care that started it all.

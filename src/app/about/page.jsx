@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Sparkles, Heart, Shield, Star, ArrowRight } from "lucide-react";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+
 const ValueCard = ({ icon: Icon, title, description, delay }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -47,7 +49,7 @@ export default function AboutPage() {
                             Crafting Traditions,<br />Defining Luxury.
                         </h1>
                         <p className="text-lg lg:text-xl text-white/80 max-w-2xl mx-auto font-medium">
-                            GourmetLux is a celebration of artisanal mastery, bringing the finest Indian flavors to the global connoisseur.
+                            {SITE_NAME} is a celebration of artisanal mastery, bringing the finest Indian flavors to the global connoisseur.
                         </p>
                     </motion.div>
                 </div>
@@ -67,7 +69,7 @@ export default function AboutPage() {
                         </h2>
                         <div className="space-y-6 text-[#767B71] text-lg leading-relaxed">
                             <p>
-                                In a world of mass production, GourmetLux stands as a beacon of authenticity. We believe that true luxury lies in the patience of fermentation, the precision of spice-blending, and the integrity of ingredients.
+                                In a world of mass production, {SITE_NAME} stands as a beacon of authenticity. We believe that true luxury lies in the patience of fermentation, the precision of spice-blending, and the integrity of ingredients.
                             </p>
                             <p>
                                 Every jar we produce is a testament to our heritage, handcrafted by master artisans who have inherited these secrets across generations.
@@ -111,7 +113,7 @@ export default function AboutPage() {
             <section className="py-24 bg-[#F3EFE8]/40">
                 <div className="container mx-auto px-4 max-w-7xl">
                     <div className="text-center mb-16">
-                        <span className="text-[#869661] text-xs font-bold uppercase tracking-[0.2em]">The GourmetLux Way</span>
+                        <span className="text-[#869661] text-xs font-bold uppercase tracking-[0.2em]">The {SITE_NAME} Way</span>
                         <h2 className="font-serif text-4xl lg:text-5xl font-bold text-[#2A2F25] mt-4">Our Core Values</h2>
                     </div>
                     

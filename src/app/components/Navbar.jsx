@@ -22,10 +22,13 @@ import {
     ChevronRight,
     Bell
 } from "lucide-react";
-import { MOCK_CATEGORIES } from "@/data/mockProducts";
 import SearchOverlay from "./SearchOverlay";
 import NotificationDropdown from "./NotificationDropdown";
 import CartSidebar from "./CartSidebar";
+
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+const SITE_LOGO = process.env.NEXT_PUBLIC_SITE_LOGO || "";
+const SITE_DESCRIPTION = process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "";
 
 export default function Navbar() {
     const { user, isAuthenticated, isAdmin, logout, loading, cartCount } = useUser();
@@ -35,10 +38,11 @@ export default function Navbar() {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [showNavbar, setShowNavbar] = useState(true);
-    const [categories, setCategories] = useState(MOCK_CATEGORIES);
+    const [categories, setCategories] = useState([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [phoneContact, setPhoneContact] = useState(null);
     const userMenuRef = useRef(null);
     const pathname = usePathname();
 
@@ -70,6 +74,18 @@ export default function Navbar() {
             }
         };
         fetchCategories();
+
+        const fetchContacts = async () => {
+            try {
+                const res = await fetch("/api/app-config");
+                const data = await res.json();
+                const phone = (data?.config?.helpContacts || []).find(c => c.type === "call");
+                if (phone) setPhoneContact(phone);
+            } catch (error) {
+                console.error("Failed to fetch contacts:", error);
+            }
+        };
+        fetchContacts();
     }, []);
 
     useEffect(() => {
@@ -106,7 +122,7 @@ export default function Navbar() {
     const mobileNavItems = [
         { href: "/", icon: Home, label: "Home" },
         { href: "/products", icon: Search, label: "Shop" },
-        { href: "/wishlist", icon: Heart, label: "Wishlist" },
+        // { href: "/wishlist", icon: Heart, label: "Wishlist" },
         { href: "/account", icon: User, label: "Profile" }
     ];
 
@@ -118,17 +134,21 @@ export default function Navbar() {
                     <div className="hidden lg:block w-full bg-[#2A2F25] text-white text-[12px] py-1.5 font-medium border-b border-white/5">
                         <div className="container mx-auto px-6 xl:px-8 flex justify-between items-center max-w-7xl">
                             <div className="flex gap-6 items-center">
+                                {phoneContact && (
+                                    <>
+                                        <a href={`tel:${phoneContact.value}`} className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+                                            <Phone className="w-3.5 h-3.5" /> {phoneContact.value}
+                                        </a>
+                                        <span className="w-px h-3 bg-white/20" />
+                                    </>
+                                )}
                                 <span className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-                                    <Phone className="w-3.5 h-3.5" /> +91 98765 43210
-                                </span>
-                                <span className="w-px h-3 bg-white/20" />
-                                <span className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-                                    <Truck className="w-3.5 h-3.5" /> Free shipping on orders above ₹500
+                                    <Truck className="w-3.5 h-3.5" /> Free shipping on select orders
                                 </span>
                             </div>
                             <div className="flex gap-5 items-center">
                                 <Link href="/blog" className="opacity-70 hover:opacity-100 transition-opacity">Blog</Link>
-                                <Link href="/help" className="opacity-70 hover:opacity-100 transition-opacity">Help</Link>
+                                <Link href="/contact" className="opacity-70 hover:opacity-100 transition-opacity">Help</Link>
                                 <Link href="/orders" className="opacity-70 hover:opacity-100 transition-opacity">Track Order</Link>
                             </div>
                         </div>
@@ -144,16 +164,26 @@ export default function Navbar() {
                             
                             {/* Logo Area */}
                             <Link href="/" className="flex items-center gap-1 sm:gap-3 shrink-0 max-w-[45%]">
-                                <div className="w-8 h-8 sm:w-11 sm:h-11 bg-[#7A8B56] rounded-lg sm:rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#7A8B56]/20">
-                                    <Sparkles className="w-4 h-4 sm:w-6 sm:h-6" strokeWidth={1.5} />
-                                </div>
+                                {SITE_LOGO ? (
+                                    <img
+                                        src={`/${SITE_LOGO}`}
+                                        alt={SITE_NAME}
+                                        className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl object-contain shrink-0"
+                                    />
+                                ) : (
+                                    <div className="w-8 h-8 sm:w-11 sm:h-11 bg-[#7A8B56] rounded-lg sm:rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#7A8B56]/20">
+                                        <Sparkles className="w-4 h-4 sm:w-6 sm:h-6" strokeWidth={1.5} />
+                                    </div>
+                                )}
                                 <div className="flex flex-col min-w-0">
                                     <span className="font-serif text-[14px] xs:text-[16px] sm:text-[26px] font-bold tracking-tight text-[#2A2F25] leading-none truncate">
-                                        GourmetLux
+                                        {SITE_NAME}
                                     </span>
-                                    <span className="hidden sm:block text-[9px] sm:text-[11px] font-semibold tracking-wide text-[#7A8B56] mt-0.5 text-nowrap">
-                                        Artisanal Pickles & Preserves
-                                    </span>
+                                    {SITE_DESCRIPTION && (
+                                        <span className="hidden sm:block text-[9px] sm:text-[11px] font-semibold tracking-wide text-[#7A8B56] mt-0.5 text-nowrap truncate">
+                                            {SITE_DESCRIPTION}
+                                        </span>
+                                    )}
                                 </div>
                             </Link>
 
@@ -197,12 +227,9 @@ export default function Navbar() {
                                     <div className="absolute left-0 top-full pt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                                         <div className="bg-white border border-border shadow-xl rounded-2xl py-3 overflow-hidden">
                                             <Link href="/about" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors text-nowrap">About Us</Link>
-                                            <Link href="/about/story" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors text-nowrap">Our Story</Link>
-                                            <Link href="/blog" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Blog & Recipes</Link>
-                                            <Link href="/careers" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Careers</Link>
-                                            <Link href="/press" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Press</Link>
+                                            <Link href="/blog" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Blog</Link>
+                                            <Link href="/contact" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Contact</Link>
                                             <Link href="/faqs" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors border-t border-border/40 mt-1">FAQs</Link>
-                                            <Link href="/wholesale" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Wholesale</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -210,7 +237,7 @@ export default function Navbar() {
                             <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[#869661]/5 backdrop-blur-md rounded-full border border-[#869661]/10 relative shrink min-w-0">
                                 {[
                                     { icon: Search, onClick: () => setIsSearchOpen(true), label: "Search" },
-                                    { icon: Bell, onClick: () => setIsNotificationsOpen(!isNotificationsOpen), label: "Notifications", hasBadge: true, count: 2 },
+                                    // { icon: Bell, onClick: () => setIsNotificationsOpen(!isNotificationsOpen), label: "Notifications", hasBadge: true, count: 0 },
                                     { icon: ShoppingBag, onClick: () => setIsCartOpen(true), label: "Cart", hasBadge: true, count: cartCount },
                                     { icon: User, href: isAuthenticated ? "/account" : "/login", label: "Profile", loading: loading, hiddenClass: "hidden sm:flex" }
                                 ].map((action, idx) => (
@@ -270,8 +297,14 @@ export default function Navbar() {
                         >
                             <div className="p-6 flex justify-between items-center border-b border-[#ECE8E0]/50">
                                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-[#869661] rounded-lg flex items-center justify-center text-white font-serif font-bold italic">G</div>
-                                    <span className="font-serif text-xl font-bold tracking-tight text-[#2A2F25]">GourmetLux</span>
+                                    {SITE_LOGO ? (
+                                        <img src={`/${SITE_LOGO}`} alt={SITE_NAME} className="w-8 h-8 rounded-lg object-contain" />
+                                    ) : (
+                                        <div className="w-8 h-8 bg-[#869661] rounded-lg flex items-center justify-center text-white font-serif font-bold italic">
+                                            {SITE_NAME.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <span className="font-serif text-xl font-bold tracking-tight text-[#2A2F25]">{SITE_NAME}</span>
                                 </Link>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-[#2A2F25] hover:bg-[#F3EFE8] rounded-full transition-colors">
                                     <ChevronRight className="w-6 h-6 rotate-90" />

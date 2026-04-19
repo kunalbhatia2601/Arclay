@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { Sparkles, Users, Heart, Coffee, ArrowRight, Briefcase } from "lucide-react";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+
 const values = [
     { icon: Users, title: "Artisanal Community", desc: "We are a family of creators, preservationists, and food lovers dedicated to heritage." },
     { icon: Heart, title: "Passion for Purity", desc: "We believe in 'Vedic' standards—no compromises on natural ingredients and traditional methods." },
@@ -30,7 +32,7 @@ export default function CareersPage() {
                         Join Our Tribe
                     </div>
                     <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#2A2F25] mb-6">Crafting the Future of Tradition</h1>
-                    <p className="text-[#767B71] text-lg max-w-2xl mx-auto leading-relaxed">At GourmetLux, we don't just make pickles; we preserve legacies. Join us in bringing artisanal excellence to the global stage.</p>
+                    <p className="text-[#767B71] text-lg max-w-2xl mx-auto leading-relaxed">At {SITE_NAME}, we don&apos;t just make pickles; we preserve legacies. Join us in bringing artisanal excellence to the global stage.</p>
                 </motion.div>
 
                 {/* Values */}

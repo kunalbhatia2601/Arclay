@@ -5,15 +5,39 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Sparkles, Phone, Mail, Truck, Shield, RotateCcw, Award, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+const SITE_LOGO = process.env.NEXT_PUBLIC_SITE_LOGO || "";
+const SITE_DESCRIPTION = process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "";
+
 export default function Footer() {
     const pathname = usePathname();
     const [showFooter, setShowFooter] = useState(true);
     const [email, setEmail] = useState("");
+    const [contacts, setContacts] = useState({ phone: null, email: null });
+    const [legalPolicies, setLegalPolicies] = useState([]);
 
     useEffect(() => {
         const isAuthPage = pathname.includes("login") || pathname.includes("signup") || pathname.includes("admin");
         setShowFooter(!isAuthPage);
     }, [pathname]);
+
+    useEffect(() => {
+        const fetchContacts = async () => {
+            try {
+                const res = await fetch("/api/app-config");
+                const data = await res.json();
+                const list = data?.config?.helpContacts || [];
+                setContacts({
+                    phone: list.find(c => c.type === "call") || null,
+                    email: list.find(c => c.type === "email") || null,
+                });
+                setLegalPolicies(data?.config?.legalPolicies || []);
+            } catch (err) {
+                console.error("Failed to fetch contacts:", err);
+            }
+        };
+        fetchContacts();
+    }, []);
 
     if (!showFooter) return null;
 
@@ -88,32 +112,48 @@ export default function Footer() {
                         {/* Brand Column */}
                         <div className="lg:col-span-4">
                             <Link href="/" className="flex items-center gap-4 mb-8 group">
-                                <div className="w-12 h-12 bg-[#869661] rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#869661]/20 group-hover:rotate-6 transition-transform">
-                                    <Sparkles className="w-6 h-6 text-white" />
-                                </div>
+                                {SITE_LOGO ? (
+                                    <img
+                                        src={`/${SITE_LOGO}`}
+                                        alt={SITE_NAME}
+                                        className="w-12 h-12 rounded-2xl object-contain shrink-0 bg-white/5"
+                                    />
+                                ) : (
+                                    <div className="w-12 h-12 bg-[#869661] rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#869661]/20 group-hover:rotate-6 transition-transform">
+                                        <Sparkles className="w-6 h-6 text-white" />
+                                    </div>
+                                )}
                                 <div className="flex flex-col">
-                                    <span className="font-serif text-[32px] font-bold text-white leading-none">GourmetLux</span>
-                                    <span className="text-[11px] font-bold tracking-[0.2em] text-[#869661] mt-1 uppercase">Artisanal Excellence</span>
+                                    <span className="font-serif text-[32px] font-bold text-white leading-none">{SITE_NAME}</span>
+                                    {SITE_DESCRIPTION && (
+                                        <span className="text-[11px] font-bold tracking-[0.2em] text-[#869661] mt-1 uppercase truncate max-w-[280px]">
+                                            {SITE_DESCRIPTION}
+                                        </span>
+                                    )}
                                 </div>
                             </Link>
 
                             <p className="text-white/50 text-[15px] leading-relaxed max-w-sm mb-10">
-                                Honoring centuries of Indian culinary heritage with meticulously handcrafted pickles, preserves, and artisanal delicacies.
+                                {SITE_DESCRIPTION || `Discover products you'll love, delivered with care.`}
                             </p>
 
                             <div className="space-y-6">
-                                <div className="flex items-center gap-4 text-[14px] text-white/60 hover:text-[#869661] transition-colors cursor-pointer group">
-                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#869661]/10">
-                                        <Phone className="w-4 h-4" />
-                                    </div>
-                                    +91 98765 43210
-                                </div>
-                                <div className="flex items-center gap-4 text-[14px] text-white/60 hover:text-[#869661] transition-colors cursor-pointer group">
-                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#869661]/10">
-                                        <Mail className="w-4 h-4" />
-                                    </div>
-                                    hello@gourmetlux.com
-                                </div>
+                                {contacts.phone && (
+                                    <a href={`tel:${contacts.phone.value}`} className="flex items-center gap-4 text-[14px] text-white/60 hover:text-[#869661] transition-colors group">
+                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#869661]/10">
+                                            <Phone className="w-4 h-4" />
+                                        </div>
+                                        {contacts.phone.value}
+                                    </a>
+                                )}
+                                {contacts.email && (
+                                    <a href={`mailto:${contacts.email.value}`} className="flex items-center gap-4 text-[14px] text-white/60 hover:text-[#869661] transition-colors group">
+                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#869661]/10">
+                                            <Mail className="w-4 h-4" />
+                                        </div>
+                                        {contacts.email.value}
+                                    </a>
+                                )}
                             </div>
                         </div>
 
@@ -129,31 +169,44 @@ export default function Footer() {
                             </div>
 
                             <div>
-                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Our Story</h4>
+                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Company</h4>
                                 <ul className="space-y-4">
                                     <li><Link href="/about" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">About Us</Link></li>
-                                    <li><Link href="/about/story" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">The Process</Link></li>
-                                    <li><Link href="/blog" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">Artisanal Blog</Link></li>
-                                    <li><Link href="/careers" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">Careers</Link></li>
+                                    <li><Link href="/blog" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">Blog</Link></li>
+                                    <li><Link href="/contact" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">Contact</Link></li>
                                 </ul>
                             </div>
 
                             <div>
-                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Concierge</h4>
+                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Support</h4>
                                 <ul className="space-y-4">
-                                    <li><Link href="/contact" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">Contact Us</Link></li>
                                     <li><Link href="/faqs" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">FAQs</Link></li>
                                     <li><Link href="/orders" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">Track Order</Link></li>
-                                    <li><Link href="/wholesale" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">Wholesale</Link></li>
+                                    <li><Link href="/account" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">My Account</Link></li>
                                 </ul>
                             </div>
 
                             <div>
-                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Legacy</h4>
+                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Legal</h4>
                                 <ul className="space-y-4">
-                                    {["Privacy Policy", "Terms of Service", "Refund Policy", "Cookie Policy"].map(item => (
-                                        <li key={item}><Link href="/policy" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">{item}</Link></li>
-                                    ))}
+                                    {legalPolicies.length > 0 ? (
+                                        legalPolicies.map(p => (
+                                            <li key={p._id || p.slug}>
+                                                <Link
+                                                    href={`/policy/${p.slug}`}
+                                                    className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block"
+                                                >
+                                                    {p.title}
+                                                </Link>
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li>
+                                            <Link href="/policy" className="text-white/40 hover:text-[#869661] text-[14px] transition-all hover:translate-x-1 inline-block">
+                                                Policies
+                                            </Link>
+                                        </li>
+                                    )}
                                 </ul>
                             </div>
                         </div>
@@ -164,11 +217,13 @@ export default function Footer() {
                         {/* Copyright Section */}
                         <div className="flex flex-col gap-2 order-2 md:order-1 items-center md:items-start">
                              <p className="text-white/60 text-[13px]">
-                                © {new Date().getFullYear()} GourmetLux Collection. All rights reserved.
+                                © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
                             </p>
-                            <p className="text-white/40 text-[11px] font-medium tracking-wide">
-                                Crafting Tradition, Serving Excellence since 2010.
-                            </p>
+                            {SITE_DESCRIPTION && (
+                                <p className="text-white/40 text-[11px] font-medium tracking-wide">
+                                    {SITE_DESCRIPTION}
+                                </p>
+                            )}
                         </div>
                         
                         {/* Social & Certs Section */}

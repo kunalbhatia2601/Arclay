@@ -5,11 +5,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart, ArrowRight } from "lucide-react";
 import ProductCard from "@/app/components/ProductCard";
-import { MOCK_PRODUCTS } from "@/data/mockProducts";
 
 export default function WishlistPage() {
-    // Simulate wishlist items (using mock data for now since we don't have a linked backend model yet)
-    const [wishlistItems] = useState(MOCK_PRODUCTS.slice(0, 4));
+    const [wishlistItems] = useState([]);
 
     return (
         <div className="min-h-screen bg-[#FEFBF6] pb-24">

@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Sparkles, Calendar, Users, MapPin, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+
 const TimelineItem = ({ year, title, description, delay }) => (
     <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -36,7 +38,7 @@ export default function StoryPage() {
                                 A Legacy of <br /> Artisanal <span className="italic text-[#869661]">Soul.</span>
                             </h1>
                             <p className="text-lg text-[#767B71] leading-relaxed mb-8">
-                                GourmetLux began in a small family kitchen in 2010. Our founder, driven by a passion for the slow-food movement, set out to rediscover the depth and complexity of Indian condiments that were being lost to industrialization.
+                                {SITE_NAME} began in a small family kitchen. Our founder, driven by a passion for the slow-food movement, set out to rediscover the depth and complexity of Indian condiments that were being lost to industrialization.
                             </p>
                             <div className="flex flex-wrap gap-8">
                                 <div className="flex flex-col">
@@ -119,7 +121,7 @@ export default function StoryPage() {
                         <TimelineItem 
                             year="2024"
                             title="A New Chapter"
-                            description="Launching our digital flagsip, bringing the GourmetLux experience directly to your doorstep."
+                            description={`Launching our digital flagship, bringing the ${SITE_NAME} experience directly to your doorstep.`}
                             delay={0.4}
                         />
                     </div>
@@ -133,7 +135,7 @@ export default function StoryPage() {
                         <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200" alt="Founder" />
                     </div>
                     <p className="font-serif text-2xl lg:text-3xl font-bold text-[#2A2F25] italic leading-relaxed mb-8">
-                        &quot;Flavor is an emotion. When you open a jar of GourmetLux, you&apos;re not just tasting a pickle; you&apos;re tasting a decade of dedication and a thousand years of history.&quot;
+                        &quot;Flavor is an emotion. When you open a jar of {SITE_NAME}, you&apos;re not just tasting a pickle; you&apos;re tasting a decade of dedication and a thousand years of history.&quot;
                     </p>
                     <div className="flex flex-col items-center">
                         <span className="font-bold text-[#2A2F25] text-lg">Vikram Singh</span>

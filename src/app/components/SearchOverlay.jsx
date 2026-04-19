@@ -5,15 +5,31 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, TrendingUp, Clock, ArrowRight, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MOCK_PRODUCTS } from "@/data/mockProducts";
 
 export default function SearchOverlay({ isOpen, onClose }) {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
+    const [bestSellers, setBestSellers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const inputRef = useRef(null);
     const router = useRouter();
     const debounceRef = useRef(null);
+
+    useEffect(() => {
+        if (!isOpen || bestSellers.length > 0) return;
+        const fetchBestSellers = async () => {
+            try {
+                const res = await fetch("/api/products?isFeatured=true&limit=3");
+                const data = await res.json();
+                if (data.success && Array.isArray(data.products)) {
+                    setBestSellers(data.products);
+                }
+            } catch (err) {
+                console.error("Failed to fetch best sellers:", err);
+            }
+        };
+        fetchBestSellers();
+    }, [isOpen, bestSellers.length]);
 
     const popularSearches = [
         "Mango Pickle",
@@ -52,27 +68,14 @@ export default function SearchOverlay({ isOpen, onClose }) {
         try {
             const res = await fetch(`/api/products?search=${encodeURIComponent(searchQuery)}&limit=8`);
             const data = await res.json();
-            if (data.success && data.products?.length > 0) {
+            if (data.success && Array.isArray(data.products)) {
                 setResults(data.products);
             } else {
-                // Fallback to mock products
-                const q = searchQuery.toLowerCase();
-                const filtered = MOCK_PRODUCTS.filter(p =>
-                    p.name.toLowerCase().includes(q) ||
-                    (p.description && p.description.toLowerCase().includes(q)) ||
-                    (p.category?.name && p.category.name.toLowerCase().includes(q))
-                ).slice(0, 8);
-                setResults(filtered);
+                setResults([]);
             }
-        } catch {
-            // Fallback to mock products on error
-            const q = searchQuery.toLowerCase();
-            const filtered = MOCK_PRODUCTS.filter(p =>
-                p.name.toLowerCase().includes(q) ||
-                (p.description && p.description.toLowerCase().includes(q)) ||
-                (p.category?.name && p.category.name.toLowerCase().includes(q))
-            ).slice(0, 8);
-            setResults(filtered);
+        } catch (err) {
+            console.error("Search failed:", err);
+            setResults([]);
         } finally {
             setIsLoading(false);
         }
@@ -230,13 +233,14 @@ export default function SearchOverlay({ isOpen, onClose }) {
                                     </div>
                                 </div>
 
+                                {bestSellers.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-5">
                                         <Clock className="w-4 h-4 text-[#D86B4B]" />
                                         <h3 className="text-xs uppercase tracking-widest font-bold text-[#767B71]">Best Sellers</h3>
                                     </div>
                                     <div className="space-y-3">
-                                        {MOCK_PRODUCTS.slice(0, 3).map((item) => (
+                                        {bestSellers.slice(0, 3).map((item) => (
                                             <Link 
                                                 key={item._id}
                                                 href={`/products/${item._id}`}
@@ -261,6 +265,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
                                         ))}
                                     </div>
                                 </div>
+                                )}
                             </div>
                         )}
                     </div>

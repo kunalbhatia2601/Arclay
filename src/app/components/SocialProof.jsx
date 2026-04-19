@@ -172,7 +172,7 @@ export default function SocialProof() {
                                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
                                  </svg>
                              </div>
-                             <p className="text-[#D86B4B] font-bold text-sm tracking-wide">@gourmetlux</p>
+                             <p className="text-[#D86B4B] font-bold text-sm tracking-wide">@{siteName.toLowerCase().replace(/\s+/g, '')}</p>
                          </div>
                         <h2 className="font-serif text-[32px] md:text-4xl font-bold text-[#2A2F25]">
                             Follow Our Journey

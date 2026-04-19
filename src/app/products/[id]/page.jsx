@@ -8,7 +8,6 @@ import ProductCard from "@/app/components/ProductCard";
 import { toast } from "react-toastify";
 import { Heart, Share2, ShoppingBag, Star, Truck, Shield, RotateCcw, ChevronRight, Minus, Plus, Flame, ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MOCK_PRODUCTS } from "@/data/mockProducts";
 import { ProductDetailSkeleton } from "@/app/components/ProductSkeleton";
 
 const AccordionItem = ({ title, isOpen, onClick, children }) => (
@@ -42,13 +41,12 @@ export default function ProductDetailPage({ params }) {
     const { id } = use(params);
     const router = useRouter();
     const { isAuthenticated } = useUser();
-    const mockProduct = MOCK_PRODUCTS.find(p => p._id === id) || MOCK_PRODUCTS[0];
-    const [product, setProduct] = useState(mockProduct);
+    const [product, setProduct] = useState(null);
     const [reviews, setReviews] = useState([]);
-    const [newArrivals, setNewArrivals] = useState(MOCK_PRODUCTS.slice().reverse().slice(0, 3));
-    const [loading, setLoading] = useState(!mockProduct); 
+    const [newArrivals, setNewArrivals] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [relatedProducts, setRelatedProducts] = useState(MOCK_PRODUCTS.filter(p => p._id !== mockProduct?._id).slice(0, 4));
+    const [relatedProducts, setRelatedProducts] = useState([]);
     const [addingToCart, setAddingToCart] = useState(false);
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedOptions, setSelectedOptions] = useState({});
@@ -82,24 +80,13 @@ export default function ProductDetailPage({ params }) {
         }, 800);
     };
 
-    // Optimization: Initialize from mock instantly
-    useEffect(() => {
-        if (mockProduct) {
-            const initialOptions = {};
-            mockProduct.variationTypes?.forEach((type) => {
-                if (type.options?.length > 0) initialOptions[type.name] = type.options[0];
-            });
-            setSelectedOptions(initialOptions);
-            setLoading(false);
-        }
-    }, [id]);
-
     useEffect(() => {
         const fetchAll = async () => {
+            setLoading(true);
             try {
                 const res = await fetch(`/api/products/${id}`);
                 const data = await res.json();
-                if (data.success) {
+                if (data.success && data.product) {
                     setProduct(data.product);
                     setReviews(data.reviews || []);
                     setRelatedProducts(data.relatedProducts || []);
@@ -109,12 +96,11 @@ export default function ProductDetailPage({ params }) {
                     });
                     setSelectedOptions(initialOptions);
                 } else {
-                    const fallbackProduct = MOCK_PRODUCTS.find(p => p._id === id) || MOCK_PRODUCTS[0];
-                    setProduct(fallbackProduct);
-                    setRelatedProducts(MOCK_PRODUCTS.filter(p => p._id !== fallbackProduct._id).slice(0, 4));
+                    setError("Product not found");
                 }
             } catch (error) {
                 console.error("Failed to fetch product:", error);
+                setError("Failed to load product");
             } finally {
                 setLoading(false);
             }

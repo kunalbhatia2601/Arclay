@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { Globe, Building2, PackageCheck, Zap, ArrowRight, ShieldCheck } from "lucide-react";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+
 const benefits = [
     { icon: Globe, title: "Global Reach", desc: "Specialized logistics for international bulk shipments with door-to-door tracking." },
     { icon: Building2, title: "Premium Gifting", desc: "Custom branding and luxury packaging for corporate hospitality and events." },
@@ -26,7 +28,7 @@ export default function WholesalePage() {
                             B2B & Partners
                         </div>
                         <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#2A2F25] leading-tight">Artisanal Excellence at Scale</h1>
-                        <p className="text-[#767B71] text-lg leading-relaxed">Join our network of luxury hotels, premium retailers, and corporate partners who choose GourmetLux for handcrafted purity and heritage taste.</p>
+                        <p className="text-[#767B71] text-lg leading-relaxed">Join our network of luxury hotels, premium retailers, and corporate partners who choose {SITE_NAME} for handcrafted purity and heritage taste.</p>
                         
                         <div className="flex flex-wrap gap-4 pt-4">
                             <div className="flex items-center gap-3">

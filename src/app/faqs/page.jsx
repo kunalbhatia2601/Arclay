@@ -3,11 +3,13 @@
 import { motion } from "framer-motion";
 import { HelpCircle, ChevronRight, MessageSquare, PhoneCall } from "lucide-react";
 
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
+
 const faqs = [
     {
         category: "Product & Quality",
         questions: [
-            { q: "Are your products 100% natural?", a: "Yes, all GourmetLux products are handcrafted using traditional methods with no artificial preservatives, colors, or flavors. We use only the finest artisanal spices and cold-pressed oils." },
+            { q: "Are your products 100% natural?", a: `Yes, all ${SITE_NAME} products are handcrafted using traditional methods with no artificial preservatives, colors, or flavors. We use only the finest artisanal spices and cold-pressed oils.` },
             { q: "What is the shelf life of your pickles?", a: "Most of our pickles have a shelf life of 12-18 months. Since we use traditional preservation techniques, they actually develop more depth of flavor over time. Please keep them in a cool, dry place." },
             { q: "Are your products organic?", a: "We source our ingredients from certified organic farms whenever possible. Our process is rooted in 'Vedic' purity, ensuring the highest nutritional value." }
         ]
