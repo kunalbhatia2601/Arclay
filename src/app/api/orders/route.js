@@ -5,8 +5,11 @@ import Product from "@/models/Product";
 import Settings from "@/models/Settings";
 import User from "@/models/User";
 import Coupon from "@/models/Coupon";
-import { withProtection } from "@/lib/auth";
+import { getSettings, withProtection } from "@/lib/auth";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
+import { calculateShippingFee } from "@/lib/shiprocket";
+import { claimCouponUsage, releaseCouponUsage, validateCouponForCart } from "@/lib/coupons";
+import { findVariantIndex, releaseStock, reserveAll } from "@/lib/stock";
 
 // GET user's orders
 async function getHandler(req) {
@@ -78,7 +81,9 @@ async function getHandler(req) {
 // POST create new order
 async function postHandler(req) {
     try {
-        const { shippingAddress, paymentMethod, notes, couponCode, shippingFee = 0 } = await req.json();
+        // shippingFee is deliberately NOT read from the request body: it is
+        // recalculated server-side from Settings below.
+        const { shippingAddress, paymentMethod, notes, couponCode } = await req.json();
 
         if (!shippingAddress || !paymentMethod) {
             return Response.json(
@@ -120,6 +125,8 @@ async function postHandler(req) {
 
         // Validate cart items and calculate total
         const orderItems = [];
+        const couponItems = [];
+        const reservations = [];
         let subtotal = 0;
 
         for (const cartItem of cart.items) {
@@ -130,12 +137,9 @@ async function postHandler(req) {
                 );
             }
 
-            // Find matching variant
-            const variant = cartItem.product.variants.find(v => {
-                const vAttrs = Object.fromEntries(v.attributes);
-                const cartAttrs = Object.fromEntries(cartItem.variantAttributes);
-                return JSON.stringify(vAttrs) === JSON.stringify(cartAttrs);
-            });
+            // Find matching variant (attribute order independent)
+            const variantIndex = findVariantIndex(cartItem.product, cartItem.variantAttributes);
+            const variant = variantIndex >= 0 ? cartItem.product.variants[variantIndex] : null;
 
             if (!variant) {
                 return Response.json(
@@ -144,6 +148,8 @@ async function postHandler(req) {
                 );
             }
 
+            // Pre-check for a fast, friendly error. The authoritative check is the
+            // atomic reservation below.
             if (variant.stock < cartItem.quantity) {
                 return Response.json(
                     { success: false, message: `Insufficient stock for ${cartItem.product.name}` },
@@ -152,8 +158,7 @@ async function postHandler(req) {
             }
 
             const price = variant.salePrice || variant.regularPrice;
-            const itemTotal = price * cartItem.quantity;
-            subtotal += itemTotal;
+            subtotal += price * cartItem.quantity;
 
             orderItems.push({
                 product: cartItem.product._id,
@@ -166,14 +171,22 @@ async function postHandler(req) {
                 priceAtOrder: price
             });
 
-            // Only reduce stock for COD, defer for online payments
-            if (paymentMethod === 'cod') {
-                variant.stock -= cartItem.quantity;
-                await cartItem.product.save();
-            }
+            // Same lines, but with the product document attached so coupon
+            // product/category restrictions can be evaluated.
+            couponItems.push({
+                product: cartItem.product,
+                quantity: cartItem.quantity,
+                priceAtOrder: price
+            });
+
+            reservations.push({
+                productId: cartItem.product._id,
+                variantIndex,
+                quantity: cartItem.quantity
+            });
         }
 
-        // Process coupon if provided
+        // Process coupon if provided — validated fully server-side.
         let discountAmount = 0;
         let coupon = null;
         let appliedCouponCode = '';
@@ -182,52 +195,106 @@ async function postHandler(req) {
             coupon = await Coupon.findOne({
                 code: couponCode.toUpperCase(),
                 isActive: true
+            }).populate('applicableCategories applicableProducts applicableUsers');
+
+            if (!coupon) {
+                return Response.json(
+                    { success: false, message: "Invalid or inactive coupon code" },
+                    { status: 400 }
+                );
+            }
+
+            const validation = await validateCouponForCart({
+                coupon,
+                userId: req.user._id,
+                cartItems: couponItems,
+                cartTotal: subtotal
             });
 
-            if (coupon) {
-                // Basic validations (full validation done client-side, but double-check)
-                const now = new Date();
-                const isValid =
-                    (!coupon.validFrom || now >= coupon.validFrom) &&
-                    (!coupon.validUntil || now <= coupon.validUntil) &&
-                    (coupon.maxUsage === null || coupon.usageCount < coupon.maxUsage);
+            if (!validation.valid) {
+                return Response.json(
+                    { success: false, message: validation.message },
+                    { status: 400 }
+                );
+            }
 
-                if (isValid && subtotal >= coupon.minPurchase) {
-                    // Calculate discount
-                    discountAmount = coupon.calculateDiscount(orderItems, subtotal);
-                    appliedCouponCode = coupon.code;
-                }
+            discountAmount = coupon.calculateDiscount(couponItems, subtotal);
+            appliedCouponCode = coupon.code;
+        }
+
+        const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+
+        // Shipping fee is computed from Settings, never trusted from the client.
+        const settings = await getSettings();
+        const shippingResult = await calculateShippingFee(
+            settings,
+            discountedSubtotal,
+            shippingAddress.pincode
+        );
+        const shippingFee = Math.max(0, Number(shippingResult?.fee) || 0);
+
+        const totalAmount = discountedSubtotal + shippingFee;
+
+        const isCod = paymentMethod === 'cod';
+
+        // Claim coupon usage before creating the order so a race cannot push
+        // usageCount past maxUsage. For online payments the claim happens on
+        // successful verification instead, so abandoned checkouts do not consume it.
+        let couponClaimed = false;
+        if (coupon && discountAmount > 0 && isCod) {
+            couponClaimed = await claimCouponUsage(coupon._id);
+            if (!couponClaimed) {
+                return Response.json(
+                    { success: false, message: "This coupon has reached its usage limit" },
+                    { status: 400 }
+                );
             }
         }
 
-        const totalAmount = Math.max(0, subtotal - discountAmount) + (shippingFee || 0);
+        // Reserve stock atomically for COD. Online payments reserve at verification.
+        if (isCod) {
+            const reserved = await reserveAll(reservations);
+            if (!reserved.ok) {
+                if (couponClaimed) await releaseCouponUsage(coupon._id);
+                return Response.json(
+                    { success: false, message: "Insufficient stock for one or more items" },
+                    { status: 400 }
+                );
+            }
+        }
 
         // Create order
-        const order = await Order.create({
-            user: req.user._id,
-            items: orderItems,
-            shippingAddress,
-            paymentMethod,
-            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
-            orderStatus: paymentMethod === 'cod' ? 'confirmed' : 'pending',
-            subtotal,
-            discountAmount,
-            coupon: coupon?._id || null,
-            couponCode: appliedCouponCode,
-            totalAmount,
-            shippingFee: shippingFee || 0,
-            notes: notes || ''
-        });
-
-        // Increment coupon usage count if coupon was applied
-        if (coupon && discountAmount > 0) {
-            await Coupon.findByIdAndUpdate(coupon._id, {
-                $inc: { usageCount: 1 }
+        let order;
+        try {
+            order = await Order.create({
+                user: req.user._id,
+                items: orderItems,
+                shippingAddress,
+                paymentMethod,
+                paymentStatus: 'pending',
+                orderStatus: isCod ? 'confirmed' : 'pending',
+                subtotal,
+                discountAmount,
+                coupon: coupon?._id || null,
+                couponCode: appliedCouponCode,
+                totalAmount,
+                shippingFee,
+                notes: notes || ''
             });
+        } catch (createError) {
+            // Undo everything already committed so a failed insert cannot strand
+            // reserved stock or a consumed coupon use.
+            if (isCod) {
+                for (const r of reservations) {
+                    await releaseStock(r.productId, r.variantIndex, r.quantity);
+                }
+            }
+            if (couponClaimed) await releaseCouponUsage(coupon._id);
+            throw createError;
         }
 
         // Only clear cart for COD, defer for online payments
-        if (paymentMethod === 'cod') {
+        if (isCod) {
             cart.items = [];
             cart.emails_sent_count = 0;
             cart.last_email_sent_at = null;
@@ -240,9 +307,8 @@ async function postHandler(req) {
             .lean();
 
         // Send order confirmation email for COD orders
-        if (paymentMethod === 'cod') {
+        if (isCod) {
             try {
-                const settings = await Settings.getSettings();
                 if (settings.mail?.isEnabled && settings.mail?.email && settings.mail?.password && settings.mail?.host) {
                     const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'ESSVORA';
                     await sendOrderConfirmationEmail(populatedOrder, req.user.email, settings.mail, siteName);

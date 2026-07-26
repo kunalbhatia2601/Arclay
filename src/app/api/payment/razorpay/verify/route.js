@@ -7,6 +7,8 @@ import User from "@/models/User";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
 import { withProtection } from "@/lib/auth";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
+import { claimCouponUsage } from "@/lib/coupons";
+import { findVariantIndex, reserveStock } from "@/lib/stock";
 
 async function postHandler(req) {
     try {
@@ -39,6 +41,16 @@ async function postHandler(req) {
             );
         }
 
+        // Idempotency guard: a replayed verification must not deduct stock or
+        // consume coupon usage a second time.
+        if (order.paymentStatus === 'completed') {
+            return Response.json({
+                success: true,
+                message: "Payment already verified",
+                order
+            });
+        }
+
         // Get settings for key secret
         const settings = await Settings.getSettings();
 
@@ -61,24 +73,30 @@ async function postHandler(req) {
             );
         }
 
-        // Payment is successful - now deduct stock and clear cart
+        // Payment is successful - now deduct stock and clear cart.
+        // Stock is decremented atomically; any line that cannot be fulfilled is
+        // recorded rather than silently skipped, because the customer has paid.
+        const shortfalls = [];
 
-        // Deduct stock for each item
         for (const orderItem of order.items) {
             const product = await Product.findById(orderItem.product._id);
-            if (product) {
-                // Find matching variant
-                const variant = product.variants.find(v => {
-                    const vAttrs = Object.fromEntries(v.attributes);
-                    const orderAttrs = Object.fromEntries(orderItem.variant.attributes);
-                    return JSON.stringify(vAttrs) === JSON.stringify(orderAttrs);
-                });
 
-                if (variant && variant.stock >= orderItem.quantity) {
-                    variant.stock -= orderItem.quantity;
-                    await product.save();
-                }
+            if (!product) {
+                shortfalls.push('unknown product');
+                continue;
             }
+
+            const variantIndex = findVariantIndex(product, orderItem.variant.attributes);
+            const reserved = await reserveStock(product._id, variantIndex, orderItem.quantity);
+
+            if (!reserved) {
+                shortfalls.push(`${product.name} x${orderItem.quantity}`);
+            }
+        }
+
+        // Consume coupon usage only now that the payment has actually landed.
+        if (order.coupon && order.discountAmount > 0) {
+            await claimCouponUsage(order.coupon);
         }
 
         // Clear user's cart
@@ -90,7 +108,23 @@ async function postHandler(req) {
         // Update order
         order.paymentStatus = 'completed';
         order.paymentId = razorpayPaymentId;
-        order.orderStatus = 'confirmed';
+
+        if (shortfalls.length > 0) {
+            // Payment succeeded but stock ran out. Hold the order for manual
+            // review instead of confirming something that cannot ship.
+            order.orderStatus = 'pending';
+            order.notes = [order.notes, `STOCK SHORTFALL: ${shortfalls.join(', ')}`]
+                .filter(Boolean)
+                .join(' | ')
+                .slice(0, 500);
+            console.error(
+                `Order ${order._id} paid but out of stock:`,
+                shortfalls.join(', ')
+            );
+        } else {
+            order.orderStatus = 'confirmed';
+        }
+
         await order.save();
 
         // Send order confirmation email

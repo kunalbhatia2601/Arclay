@@ -191,7 +191,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
                     {/* Fixed Action Row at Bottom */}
                     <div className="flex items-center gap-2 mt-auto pt-3 border-t border-[#ECE8E0]/60">
-                        {localQuantity === 0 ? (
+                       {/*} {localQuantity === 0 ? (
                             <button
                                 onClick={handleAddToCart}
                                 disabled={addingToCart || !inStock}
@@ -216,7 +216,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                                     <Plus className="w-4 h-4" />
                                 </button>
                             </div>
-                        )}
+                        )} */}
                         
                         <button
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -325,7 +325,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             </Link>
 
             {/* Fixed Action Row at Bottom */}
-            <div className="flex items-center gap-2 mt-auto pt-2.5 px-0.5 border-t border-[#ECE8E0]/40">
+            {/* <div className="flex items-center gap-2 mt-auto pt-2.5 px-0.5 border-t border-[#ECE8E0]/40">
                 {localQuantity === 0 ? (
                     <button
                         onClick={handleAddToCart}
@@ -352,7 +352,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                         </button>
                     </div>
                 )}
-            </div>
+            </div> */}
         </div>
     );
 }

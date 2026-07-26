@@ -51,7 +51,9 @@ async function getHandler(req) {
                     _id: item.product._id,
                     name: item.product.name,
                     images: item.product.images,
-                    isActive: item.product.isActive
+                    isActive: item.product.isActive,
+                    // Needed so category-restricted coupons resolve at checkout
+                    category: item.product.category
                 },
                 variant: {
                     attributes: attributesToObject(item.variantAttributes),
