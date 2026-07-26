@@ -31,10 +31,22 @@ const OrderItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const OrderSchema = new mongoose.Schema({
+    // Absent for POS walk-in sales, which have no account behind them.
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        default: null
+    },
+    source: {
+        type: String,
+        enum: ['web', 'pos'],
+        default: 'web'
+    },
+    // Counter customer behind a POS sale, matched on phone number
+    customer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Customer',
+        default: null
     },
     items: {
         type: [OrderItemSchema],
@@ -90,8 +102,9 @@ const OrderSchema = new mongoose.Schema({
         }
     },
     paymentMethod: {
+        // cash/card/upi are counter payments taken through the POS
         type: String,
-        enum: ['razorpay', 'stripe', 'cod'],
+        enum: ['razorpay', 'stripe', 'cod', 'cash', 'card', 'upi'],
         required: true
     },
     paymentStatus: {
@@ -188,6 +201,7 @@ const OrderSchema = new mongoose.Schema({
 
 // Indexes for faster queries
 OrderSchema.index({ user: 1, createdAt: -1 });
+OrderSchema.index({ source: 1, createdAt: -1 });
 OrderSchema.index({ orderStatus: 1 });
 OrderSchema.index({ paymentStatus: 1 });
 

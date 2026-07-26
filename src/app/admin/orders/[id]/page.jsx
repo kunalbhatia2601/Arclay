@@ -180,19 +180,36 @@ export default function AdminOrderDetail() {
 
             {/* Customer Info */}
             <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-                <h2 className="font-serif text-xl font-bold mb-4">Customer Information</h2>
+                <div className="flex items-center gap-3 mb-4">
+                    <h2 className="font-serif text-xl font-bold">Customer Information</h2>
+                    {order.source === 'pos' && (
+                        <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+                            Counter Sale
+                        </span>
+                    )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <p className="text-sm text-muted-foreground">Name</p>
-                        <p className="font-medium">{order.user?.name}</p>
+                        <p className="font-medium">
+                            {order.user?.name || order.shippingAddress?.fullName || 'Walk-in Customer'}
+                        </p>
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground">Email</p>
-                        <p className="font-medium">{order.user?.email}</p>
+                        <p className="font-medium">{order.user?.email || 'N/A'}</p>
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground">Phone</p>
-                        <p className="font-medium">{order.user?.phone || 'N/A'}</p>
+                        <p className="font-medium">
+                            {order.user?.phone || order.shippingAddress?.phone || 'N/A'}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground">Account</p>
+                        <p className="font-medium">
+                            {order.user ? 'Registered user' : 'Walk-in (no account)'}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -250,10 +267,11 @@ export default function AdminOrderDetail() {
                 </div>
             </div>
 
-            {/* Shipping Management */}
+            {/* Shipping Management — counter sales never ship */}
+            {order.source !== 'pos' && (
             <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
                 <h2 className="font-serif text-xl font-bold mb-4">📦 Shipping</h2>
-                
+
                 {order.shipping?.awbCode ? (
                     // Shipment exists - show tracking info
                     <div className="space-y-4">
@@ -359,19 +377,23 @@ export default function AdminOrderDetail() {
                     </div>
                 )}
             </div>
+            )}
 
-            {/* Shipping Address */}
-            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-                <h2 className="font-serif text-xl font-bold mb-4">Shipping Address</h2>
-                <div className="space-y-2">
-                    <p className="font-medium">{order.shippingAddress.fullName}</p>
-                    <p>{order.shippingAddress.addressLine1}</p>
-                    {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
-                    <p>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
-                    <p>{order.shippingAddress.country}</p>
-                    <p className="mt-2">Phone: {order.shippingAddress.phone}</p>
+            {/* Shipping Address — a counter sale is handed over in person, so
+                there is no address worth showing */}
+            {order.source !== 'pos' && (
+                <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                    <h2 className="font-serif text-xl font-bold mb-4">Shipping Address</h2>
+                    <div className="space-y-2">
+                        <p className="font-medium">{order.shippingAddress.fullName}</p>
+                        <p>{order.shippingAddress.addressLine1}</p>
+                        {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
+                        <p>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
+                        <p>{order.shippingAddress.country}</p>
+                        <p className="mt-2">Phone: {order.shippingAddress.phone}</p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Payment & Status */}
             <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">

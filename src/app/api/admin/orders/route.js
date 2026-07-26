@@ -2,7 +2,9 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import Product from "@/models/Product"; // Import to register schema
 import User from "@/models/User"; // Import to register schema
+import Customer from "@/models/Customer";
 import { withAdminProtection } from "@/lib/auth";
+import { releaseStock, reserveAll } from "@/lib/stock";
 
 // GET all orders (admin)
 async function getHandler(req) {
@@ -30,6 +32,8 @@ async function getHandler(req) {
         const matchStage = {
             $or: [
                 { paymentMethod: 'cod' },
+                // Counter sales are paid before the order exists
+                { source: 'pos' },
                 {
                     paymentMethod: { $in: ['razorpay', 'stripe'] },
                     paymentStatus: { $ne: 'pending' }
@@ -115,6 +119,9 @@ async function getHandler(req) {
                         phone: '$userInfo.phone'
                     },
                     items: 1,
+                    source: 1,
+                    subtotal: 1,
+                    shippingFee: 1,
                     shippingAddress: 1,
                     paymentMethod: 1,
                     paymentStatus: 1,
@@ -153,88 +160,173 @@ async function getHandler(req) {
 
 export const GET = withAdminProtection(getHandler);
 
+const POS_PAYMENT_METHODS = ['cash', 'card', 'upi'];
+
 // POST - Create order from POS
 async function postHandler(req) {
     try {
         const body = await req.json();
-        const { items, customerInfo, paymentMethod, paymentStatus, orderStatus, notes } = body;
+        const { items, customerInfo, paymentMethod, notes, discountAmount = 0 } = body;
 
-        if (!items || items.length === 0) {
+        if (!Array.isArray(items) || items.length === 0) {
             return Response.json(
                 { success: false, message: "Order must have at least one item" },
                 { status: 400 }
             );
         }
 
+        const method = POS_PAYMENT_METHODS.includes(paymentMethod) ? paymentMethod : 'cash';
+
         await connectDB();
 
-        // For POS, we don't require a user login
-        // Create a guest user or use a placeholder
-        let guestUser;
-        try {
-            // Try to find user by phone, or create a guest user
-            const User = (await import("@/models/User")).default;
-            guestUser = await User.findOne({ phone: customerInfo?.phone });
+        // Prices are resolved from the database, never taken from the client.
+        const orderItems = [];
+        const reservations = [];
+        let subtotal = 0;
 
-            if (!guestUser && customerInfo?.phone) {
-                // Create a guest user
-                guestUser = await User.create({
-                    name: customerInfo?.name || "POS Customer",
-                    email: `pos_${Date.now()}@example.com`,
-                    phone: customerInfo?.phone || "0000000000",
-                    isGuest: true,
-                });
+        for (const item of items) {
+            const quantity = parseInt(item.quantity, 10);
+
+            if (!item.product || !(quantity > 0)) {
+                return Response.json(
+                    { success: false, message: "Every item needs a product and a positive quantity" },
+                    { status: 400 }
+                );
             }
-        } catch (userErr) {
-            console.error("User lookup error:", userErr);
-            // Continue without user - use null
-            guestUser = null;
+
+            const product = await Product.findById(item.product);
+            if (!product) {
+                return Response.json(
+                    { success: false, message: "One of the products no longer exists" },
+                    { status: 400 }
+                );
+            }
+
+            // Resolve the variant by barcode when given, otherwise by index.
+            let variantIndex = -1;
+            if (item.barcode) {
+                variantIndex = product.variants.findIndex((v) => v.barcode === item.barcode);
+            }
+            if (variantIndex < 0 && Number.isInteger(item.variantIndex)) {
+                variantIndex = item.variantIndex;
+            }
+            if (variantIndex < 0) variantIndex = 0;
+
+            const variant = product.variants[variantIndex];
+            if (!variant) {
+                return Response.json(
+                    { success: false, message: `No matching variant for ${product.name}` },
+                    { status: 400 }
+                );
+            }
+
+            if (variant.stock < quantity) {
+                return Response.json(
+                    {
+                        success: false,
+                        message: `Insufficient stock for ${product.name} (${variant.stock} left)`,
+                    },
+                    { status: 400 }
+                );
+            }
+
+            const price = variant.salePrice || variant.regularPrice;
+            subtotal += price * quantity;
+
+            orderItems.push({
+                product: product._id,
+                variant: {
+                    attributes: variant.attributes,
+                    price,
+                    sku: variant.sku,
+                },
+                quantity,
+                priceAtOrder: price,
+            });
+
+            reservations.push({ productId: product._id, variantIndex, quantity });
         }
 
-        // Calculate totals
-        let subtotal = 0;
-        const orderItems = items.map(item => {
-            const price = item.price || 0;
-            subtotal += price * item.quantity;
-            return {
-                product: item.product,
-                name: item.name,
-                price,
-                quantity: item.quantity,
-                variant: item.variant || null,
-            };
-        });
+        const discount = Math.min(Math.max(0, Number(discountAmount) || 0), subtotal);
+        const totalAmount = subtotal - discount;
 
-        const total = subtotal;
+        const phone = customerInfo?.phone?.trim() || "";
+        const name = customerInfo?.name?.trim() || "";
 
-        // Create order
-        const order = await Order.create({
-            user: guestUser?._id || null,
-            items: orderItems,
-            shippingAddress: {
-                fullName: customerInfo?.name || "POS Customer",
-                phone: customerInfo?.phone || "0000000000",
-                addressLine1: "POS Sale",
-                addressLine2: "",
-                city: "N/A",
-                state: "N/A",
-                pincode: "000000",
-                country: "India",
-            },
-            subtotal: subtotal,
-            shippingFee: 0,
-            discountAmount: 0,
-            totalAmount: total,
-            paymentMethod: paymentMethod || "cash",
-            paymentStatus: paymentStatus || "paid",
-            orderStatus: orderStatus || "confirmed",
-            notes: notes || "POS Walk-in Sale",
-        });
+        // Counter sales hand over goods immediately, so stock comes off now.
+        const reserved = await reserveAll(reservations);
+        if (!reserved.ok) {
+            return Response.json(
+                { success: false, message: "Insufficient stock for one or more items" },
+                { status: 400 }
+            );
+        }
+
+        let order;
+        try {
+            order = await Order.create({
+                user: null,
+                source: 'pos',
+                items: orderItems,
+                shippingAddress: {
+                    fullName: name || "Walk-in Customer",
+                    phone: phone || "0000000000",
+                    addressLine1: "POS Sale",
+                    addressLine2: "",
+                    city: "N/A",
+                    state: "N/A",
+                    pincode: "000000",
+                    country: "India",
+                },
+                subtotal,
+                shippingFee: 0,
+                discountAmount: discount,
+                totalAmount,
+                paymentMethod: method,
+                paymentStatus: 'completed',
+                orderStatus: 'delivered',
+                notes: notes || "POS Walk-in Sale",
+            });
+        } catch (createError) {
+            // Put the stock back so a failed insert cannot lose inventory.
+            for (const r of reservations) {
+                await releaseStock(r.productId, r.variantIndex, r.quantity);
+            }
+            throw createError;
+        }
+
+        // Remember the walk-in customer so the next visit only needs their phone.
+        // Done after the order exists so a failed sale never inflates their totals.
+        if (phone) {
+            try {
+                const customer = await Customer.findOneAndUpdate(
+                    { phone },
+                    {
+                        $setOnInsert: { phone },
+                        // Only overwrite a stored name when a new one was typed
+                        ...(name ? { $set: { name } } : {}),
+                        $inc: { totalOrders: 1, totalSpent: totalAmount },
+                        $currentDate: { lastOrderAt: true },
+                    },
+                    { new: true, upsert: true }
+                );
+
+                order.customer = customer._id;
+                await order.save();
+            } catch (customerError) {
+                // The sale itself is done; never fail it over the address book.
+                console.error("Failed to record POS customer:", customerError);
+            }
+        }
+
+        const populatedOrder = await Order.findById(order._id)
+            .populate('items.product', 'name images')
+            .lean();
 
         return Response.json({
             success: true,
             message: "Order created successfully",
-            order,
+            order: populatedOrder,
         });
     } catch (error) {
         console.error("Create POS order error:", error);

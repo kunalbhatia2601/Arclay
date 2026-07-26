@@ -97,6 +97,11 @@ export default function AdminOrders() {
         }
     };
 
+    // POS orders have no user account, so fall back to the name captured at the
+    // counter and stored on the order itself.
+    const getCustomerName = (order) =>
+        order.user?.name || order.shippingAddress?.fullName || "Walk-in Customer";
+
     const formatDate = (date) => {
         return new Date(date).toLocaleDateString('en-IN', {
             day: 'numeric',
@@ -230,15 +235,20 @@ export default function AdminOrders() {
                                                 <td className="px-8 py-6">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded-xl bg-[#869661]/10 flex items-center justify-center text-[#4A5D23] font-black group-hover:bg-[#869661] group-hover:text-white transition-all">
-                                                            {order.user?.name?.[0].toUpperCase()}
+                                                            {getCustomerName(order)?.[0]?.toUpperCase() || "?"}
                                                         </div>
                                                         <div className="max-w-[150px]">
                                                             <div className="font-serif text-[16px] font-bold text-[#2A2F25] truncate leading-tight mb-0.5">
-                                                                {order.user?.name}
+                                                                {getCustomerName(order)}
                                                             </div>
                                                             <div className="text-[12px] text-[#767B71] truncate font-medium">
-                                                                {order.user?.email}
+                                                                {order.user?.email || order.shippingAddress?.phone || "—"}
                                                             </div>
+                                                            {order.source === "pos" && (
+                                                                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-[#4A5D23]/10 text-[#4A5D23] rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                                                    Counter Sale
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
