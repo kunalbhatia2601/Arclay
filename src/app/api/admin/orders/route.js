@@ -72,18 +72,25 @@ async function getHandler(req) {
 
         // Add search conditions if search term exists
         if (search) {
-            const searchLower = search.toLowerCase();
+            // User input goes into a $regex, so metacharacters must be neutralised.
+            const safeSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
             pipeline.push({
                 $match: {
                     $or: [
                         // Match partial order ID (last 8 characters shown in UI)
-                        { orderIdStr: { $regex: search, $options: 'i' } },
+                        { orderIdStr: { $regex: safeSearch, $options: 'i' } },
                         // Match user email
-                        { 'userInfo.email': { $regex: search, $options: 'i' } },
+                        { 'userInfo.email': { $regex: safeSearch, $options: 'i' } },
                         // Match user name
-                        { 'userInfo.name': { $regex: search, $options: 'i' } },
+                        { 'userInfo.name': { $regex: safeSearch, $options: 'i' } },
                         // Match user phone
-                        { 'userInfo.phone': { $regex: search, $options: 'i' } }
+                        { 'userInfo.phone': { $regex: safeSearch, $options: 'i' } },
+                        // POS orders have no user account: the customer's details
+                        // live on the order itself.
+                        { 'shippingAddress.fullName': { $regex: safeSearch, $options: 'i' } },
+                        { 'shippingAddress.phone': { $regex: safeSearch, $options: 'i' } },
+                        { couponCode: { $regex: safeSearch, $options: 'i' } }
                     ]
                 }
             });

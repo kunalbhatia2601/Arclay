@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { Printer } from "lucide-react";
+import Receipt, { RECEIPT_PRINT_CSS } from "@/app/components/Receipt";
 
 const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
@@ -34,11 +36,37 @@ export default function AdminOrderDetail() {
     const [loadingCouriers, setLoadingCouriers] = useState(false);
     const [creatingShipment, setCreatingShipment] = useState(false);
 
+    // Store details for the printed bill header
+    const [storeInfo, setStoreInfo] = useState({});
+
     useEffect(() => {
         if (params.id) {
             fetchOrder();
         }
     }, [params.id]);
+
+    useEffect(() => {
+        const loadStore = async () => {
+            try {
+                const res = await fetch("/api/admin/settings", { credentials: "include" });
+                const data = await res.json();
+                if (data.success) {
+                    const w = data.settings?.shipping?.warehouse || {};
+                    setStoreInfo({
+                        name: w.name || process.env.NEXT_PUBLIC_SITE_NAME || "Store",
+                        address: w.address || "",
+                        city: w.city || "",
+                        state: w.state || "",
+                        pincode: w.pincode || "",
+                        phone: w.phone || "",
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load store info:", err);
+            }
+        };
+        loadStore();
+    }, []);
 
     const fetchOrder = async () => {
         try {
@@ -160,8 +188,10 @@ export default function AdminOrderDetail() {
 
     return (
         <div className="space-y-8">
+            <style>{RECEIPT_PRINT_CSS}</style>
+
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between print:hidden">
                 <div>
                     <h1 className="font-serif text-3xl font-bold text-foreground">
                         Order #{order._id.slice(-8)}
@@ -170,12 +200,23 @@ export default function AdminOrderDetail() {
                         Placed on {new Date(order.createdAt).toLocaleString('en-IN')}
                     </p>
                 </div>
-                <Link
-                    href="/admin/orders"
-                    className="text-primary hover:underline"
-                >
-                    ← Back to Orders
-                </Link>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => window.print()}
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium flex items-center gap-2"
+                    >
+                        <Printer className="w-4 h-4" />
+                        Print Bill
+                    </button>
+                    <Link href="/admin/orders" className="text-primary hover:underline">
+                        ← Back to Orders
+                    </Link>
+                </div>
+            </div>
+
+            {/* Rendered off-screen; the print stylesheet makes only this visible */}
+            <div className="hidden print:block">
+                <Receipt order={order} store={storeInfo} />
             </div>
 
             {/* Customer Info */}
