@@ -28,6 +28,8 @@ export default function EditProductPage({ params }) {
         category: "",
         isActive: true,
         barcode: "",
+        taxRate: "",
+        hsn: "",
     });
 
     useEffect(() => {
@@ -77,6 +79,8 @@ export default function EditProductPage({ params }) {
                     category: p.category?._id || p.category || "",
                     isActive: p.isActive,
                     barcode: p.barcode || "",
+                    taxRate: p.taxRate ?? "",
+                    hsn: p.hsn || "",
                 });
             } else {
                 setError("Product not found");
@@ -233,6 +237,8 @@ export default function EditProductPage({ params }) {
                         name: t.name.trim(),
                         options: t.options.filter(o => o.trim())
                     })),
+                taxRate: parseFloat(formData.taxRate) || 0,
+                hsn: formData.hsn || "",
                 variants: validVariants.map(v => ({
                     attributes: v.attributes,
                     regularPrice: parseFloat(v.regularPrice),
@@ -346,6 +352,42 @@ export default function EditProductPage({ params }) {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-2">
+                                    GST Rate (%)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    value={formData.taxRate}
+                                    onChange={(e) => setFormData({ ...formData, taxRate: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="e.g., 5, 12, 18"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Used on POS bills when tax is enabled in Settings
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-2">
+                                    HSN / SAC Code
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.hsn}
+                                    onChange={(e) => setFormData({ ...formData, hsn: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+                                    placeholder="e.g., 20079990"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Printed on tax invoices
+                                </p>
+                            </div>
                         </div>
 
                         <div>

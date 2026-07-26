@@ -40,7 +40,7 @@ async function putHandler(req, { params }) {
     try {
         const { id } = await params;
         const body = await req.json();
-        const { name, images, description, variationTypes, variants, category, isActive, isFeatured, long_description, barcode } = body;
+        const { name, images, description, variationTypes, variants, category, isActive, isFeatured, long_description, barcode, taxRate, hsn } = body;
 
         await connectDB();
 
@@ -68,6 +68,8 @@ async function putHandler(req, { params }) {
         if (isFeatured !== undefined) product.isFeatured = isFeatured;
         if (long_description !== undefined) product.long_description = long_description;
         if (barcode !== undefined) product.barcode = barcode;
+        if (taxRate !== undefined) product.taxRate = Math.min(100, Math.max(0, Number(taxRate) || 0));
+        if (hsn !== undefined) product.hsn = hsn;
 
         await product.save();
 

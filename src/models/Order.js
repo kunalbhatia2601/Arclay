@@ -27,8 +27,71 @@ const OrderItemSchema = new mongoose.Schema({
     priceAtOrder: {
         type: Number,
         required: true
+    },
+    // Name captured at sale time so a renamed product does not rewrite history
+    name: {
+        type: String,
+        default: ''
+    },
+    // Discount applied to this line only, before any bill-wide discount
+    lineDiscount: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    // GST snapshot for this line
+    taxRate: {
+        type: Number,
+        default: 0
+    },
+    taxAmount: {
+        type: Number,
+        default: 0
+    },
+    hsn: {
+        type: String,
+        default: ''
+    },
+    // Units sent back through a return
+    returnedQuantity: {
+        type: Number,
+        default: 0,
+        min: 0
     }
 }, { _id: false });
+
+const RefundSchema = new mongoose.Schema({
+    amount: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    reason: {
+        type: String,
+        trim: true,
+        maxlength: 300,
+        default: ''
+    },
+    // Which lines came back, and how many of each
+    items: [{
+        itemIndex: { type: Number, required: true },
+        quantity: { type: Number, required: true, min: 1 },
+        _id: false
+    }],
+    restocked: {
+        type: Boolean,
+        default: true
+    },
+    processedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+}, { _id: true });
 
 const OrderSchema = new mongoose.Schema({
     // Absent for POS walk-in sales, which have no account behind them.
@@ -109,7 +172,7 @@ const OrderSchema = new mongoose.Schema({
     },
     paymentStatus: {
         type: String,
-        enum: ['pending', 'completed', 'failed', 'refunded'],
+        enum: ['pending', 'completed', 'failed', 'refunded', 'partially_refunded'],
         default: 'pending'
     },
     paymentId: {
@@ -118,7 +181,7 @@ const OrderSchema = new mongoose.Schema({
     },
     orderStatus: {
         type: String,
-        enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+        enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'partially_returned'],
         default: 'pending'
     },
     totalAmount: {
@@ -141,6 +204,36 @@ const OrderSchema = new mongoose.Schema({
         default: ''
     },
     discountAmount: {
+        type: Number,
+        default: 0
+    },
+    // Sequential invoice serial, allocated once at sale time
+    billNumber: {
+        type: String,
+        default: ''
+    },
+    // GST totals. Counter sales are intra-state, so tax splits evenly into
+    // CGST and SGST; taxBreakup keeps the per-slab rows a tax invoice needs.
+    taxAmount: {
+        type: Number,
+        default: 0
+    },
+    taxBreakup: [{
+        rate: { type: Number, required: true },
+        taxable: { type: Number, required: true },
+        tax: { type: Number, required: true },
+        _id: false
+    }],
+    // Sum of per-line discounts, kept apart from the bill-wide discountAmount
+    lineDiscountTotal: {
+        type: Number,
+        default: 0
+    },
+    refunds: {
+        type: [RefundSchema],
+        default: []
+    },
+    refundedAmount: {
         type: Number,
         default: 0
     },

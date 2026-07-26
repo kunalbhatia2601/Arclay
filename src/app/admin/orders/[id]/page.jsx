@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import { Printer } from "lucide-react";
 import Receipt, { RECEIPT_PRINT_CSS } from "@/app/components/Receipt";
+import RefundPanel from "@/app/components/RefundPanel";
 
 const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
@@ -307,6 +308,9 @@ export default function AdminOrderDetail() {
                     </div>
                 </div>
             </div>
+
+            {/* Returns & refunds */}
+            <RefundPanel order={order} onRefunded={setOrder} />
 
             {/* Shipping Management — counter sales never ship */}
             {order.source !== 'pos' && (

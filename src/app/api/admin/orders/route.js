@@ -3,8 +3,13 @@ import Order from "@/models/Order";
 import Product from "@/models/Product"; // Import to register schema
 import User from "@/models/User"; // Import to register schema
 import Customer from "@/models/Customer";
-import { withAdminProtection } from "@/lib/auth";
+import Coupon from "@/models/Coupon";
+import { getSettings, withAdminProtection } from "@/lib/auth";
 import { releaseStock, reserveAll } from "@/lib/stock";
+import { computeBill } from "@/lib/billing";
+import { nextBillNumber } from "@/lib/counters";
+import { resolveCartLines, toCouponItems } from "@/lib/posCart";
+import { claimCouponUsage, releaseCouponUsage, validateCouponForCart } from "@/lib/coupons";
 
 // GET all orders (admin)
 async function getHandler(req) {
@@ -173,7 +178,15 @@ const POS_PAYMENT_METHODS = ['cash', 'card', 'upi'];
 async function postHandler(req) {
     try {
         const body = await req.json();
-        const { items, customerInfo, paymentMethod, notes, discountAmount = 0 } = body;
+        const {
+            items,
+            customerInfo,
+            paymentMethod,
+            notes,
+            discountType = 'flat',
+            discountValue = 0,
+            couponCode = '',
+        } = body;
 
         if (!Array.isArray(items) || items.length === 0) {
             return Response.json(
@@ -186,83 +199,100 @@ async function postHandler(req) {
 
         await connectDB();
 
-        // Prices are resolved from the database, never taken from the client.
-        const orderItems = [];
-        const reservations = [];
-        let subtotal = 0;
-
-        for (const item of items) {
-            const quantity = parseInt(item.quantity, 10);
-
-            if (!item.product || !(quantity > 0)) {
-                return Response.json(
-                    { success: false, message: "Every item needs a product and a positive quantity" },
-                    { status: 400 }
-                );
-            }
-
-            const product = await Product.findById(item.product);
-            if (!product) {
-                return Response.json(
-                    { success: false, message: "One of the products no longer exists" },
-                    { status: 400 }
-                );
-            }
-
-            // Resolve the variant by barcode when given, otherwise by index.
-            let variantIndex = -1;
-            if (item.barcode) {
-                variantIndex = product.variants.findIndex((v) => v.barcode === item.barcode);
-            }
-            if (variantIndex < 0 && Number.isInteger(item.variantIndex)) {
-                variantIndex = item.variantIndex;
-            }
-            if (variantIndex < 0) variantIndex = 0;
-
-            const variant = product.variants[variantIndex];
-            if (!variant) {
-                return Response.json(
-                    { success: false, message: `No matching variant for ${product.name}` },
-                    { status: 400 }
-                );
-            }
-
-            if (variant.stock < quantity) {
-                return Response.json(
-                    {
-                        success: false,
-                        message: `Insufficient stock for ${product.name} (${variant.stock} left)`,
-                    },
-                    { status: 400 }
-                );
-            }
-
-            const price = variant.salePrice || variant.regularPrice;
-            subtotal += price * quantity;
-
-            orderItems.push({
-                product: product._id,
-                variant: {
-                    attributes: variant.attributes,
-                    price,
-                    sku: variant.sku,
-                },
-                quantity,
-                priceAtOrder: price,
-            });
-
-            reservations.push({ productId: product._id, variantIndex, quantity });
+        // Prices, tax rates and stock all come from the database.
+        const resolved = await resolveCartLines(items);
+        if (!resolved.ok) {
+            return Response.json({ success: false, message: resolved.message }, { status: 400 });
         }
+        const { lines, reservations } = resolved;
 
-        const discount = Math.min(Math.max(0, Number(discountAmount) || 0), subtotal);
-        const totalAmount = subtotal - discount;
+        const settings = await getSettings();
+        const taxEnabled = !!settings.store?.taxEnabled;
+        const priceIncludesTax = settings.store?.priceIncludesTax !== false;
 
         const phone = customerInfo?.phone?.trim() || "";
         const name = customerInfo?.name?.trim() || "";
 
+        // A returning customer is matched up front so coupon per-user limits can
+        // be checked against their history.
+        let customer = phone ? await Customer.findOne({ phone }) : null;
+
+        // Coupon, validated server-side against the same engine the web uses
+        let coupon = null;
+        let couponDiscount = 0;
+
+        if (couponCode) {
+            coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true })
+                .populate('applicableCategories applicableProducts applicableUsers');
+
+            if (!coupon) {
+                return Response.json(
+                    { success: false, message: "Invalid or inactive coupon code" },
+                    { status: 400 }
+                );
+            }
+
+            const couponItems = toCouponItems(lines);
+            const cartTotal = couponItems.reduce((s, i) => s + i.priceAtOrder * i.quantity, 0);
+
+            const validation = await validateCouponForCart({
+                coupon,
+                customerId: customer?._id,
+                cartItems: couponItems,
+                cartTotal,
+            });
+
+            if (!validation.valid) {
+                return Response.json(
+                    { success: false, message: validation.message },
+                    { status: 400 }
+                );
+            }
+
+            couponDiscount = coupon.calculateDiscount(couponItems, cartTotal);
+        }
+
+        // Same pure function the POS screen used to quote the customer.
+        const bill = computeBill(lines, {
+            discountType,
+            discountValue,
+            couponDiscount,
+            taxEnabled,
+            priceIncludesTax,
+        });
+
+        const orderItems = bill.lines.map((line, i) => ({
+            product: lines[i].product._id,
+            variant: {
+                attributes: lines[i].variant.attributes,
+                price: lines[i].price,
+                sku: lines[i].variant.sku,
+            },
+            quantity: line.quantity,
+            priceAtOrder: lines[i].price,
+            name: lines[i].name,
+            lineDiscount: line.lineDiscount,
+            taxRate: line.taxRate,
+            taxAmount: line.taxAmount,
+            hsn: lines[i].hsn,
+        }));
+
+        // Claim coupon usage before the sale so a race cannot exceed maxUsage.
+        let couponClaimed = false;
+        if (coupon && couponDiscount > 0) {
+            couponClaimed = await claimCouponUsage(coupon._id);
+            if (!couponClaimed) {
+                return Response.json(
+                    { success: false, message: "This coupon has reached its usage limit" },
+                    { status: 400 }
+                );
+            }
+        }
+
         // Counter sales hand over goods immediately, so stock comes off now.
         const reserved = await reserveAll(reservations);
         if (!reserved.ok) {
+            if (couponClaimed) await releaseCouponUsage(coupon._id);
             return Response.json(
                 { success: false, message: "Insufficient stock for one or more items" },
                 { status: 400 }
@@ -270,10 +300,14 @@ async function postHandler(req) {
         }
 
         let order;
+        let billNumber = '';
         try {
+            billNumber = await nextBillNumber(settings.store?.invoicePrefix || 'INV');
+
             order = await Order.create({
                 user: null,
                 source: 'pos',
+                billNumber,
                 items: orderItems,
                 shippingAddress: {
                     fullName: name || "Walk-in Customer",
@@ -285,20 +319,27 @@ async function postHandler(req) {
                     pincode: "000000",
                     country: "India",
                 },
-                subtotal,
+                subtotal: bill.subtotal,
                 shippingFee: 0,
-                discountAmount: discount,
-                totalAmount,
+                lineDiscountTotal: bill.lineDiscountTotal,
+                discountAmount: bill.billDiscount + bill.couponDiscount,
+                coupon: coupon?._id || null,
+                couponCode: couponDiscount > 0 ? coupon.code : '',
+                taxAmount: bill.taxAmount,
+                taxBreakup: bill.taxBreakup,
+                totalAmount: bill.total,
                 paymentMethod: method,
                 paymentStatus: 'completed',
                 orderStatus: 'delivered',
                 notes: notes || "POS Walk-in Sale",
             });
         } catch (createError) {
-            // Put the stock back so a failed insert cannot lose inventory.
+            // Undo everything already committed so a failed insert cannot strand
+            // reserved stock or a consumed coupon use.
             for (const r of reservations) {
                 await releaseStock(r.productId, r.variantIndex, r.quantity);
             }
+            if (couponClaimed) await releaseCouponUsage(coupon._id);
             throw createError;
         }
 
@@ -306,13 +347,13 @@ async function postHandler(req) {
         // Done after the order exists so a failed sale never inflates their totals.
         if (phone) {
             try {
-                const customer = await Customer.findOneAndUpdate(
+                customer = await Customer.findOneAndUpdate(
                     { phone },
                     {
                         $setOnInsert: { phone },
                         // Only overwrite a stored name when a new one was typed
                         ...(name ? { $set: { name } } : {}),
-                        $inc: { totalOrders: 1, totalSpent: totalAmount },
+                        $inc: { totalOrders: 1, totalSpent: bill.total },
                         $currentDate: { lastOrderAt: true },
                     },
                     { new: true, upsert: true }

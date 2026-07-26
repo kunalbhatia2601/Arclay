@@ -9,6 +9,35 @@ const SettingsSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // Storefront identity used on printed bills and tax invoices
+    store: {
+        legalName: {
+            type: String,
+            default: ''
+        },
+        gstin: {
+            type: String,
+            default: ''
+        },
+        taxEnabled: {
+            type: Boolean,
+            default: false
+        },
+        // Indian retail usually prints tax-inclusive MRP; when false, tax is
+        // added on top of the listed price instead.
+        priceIncludesTax: {
+            type: Boolean,
+            default: true
+        },
+        invoicePrefix: {
+            type: String,
+            default: 'INV'
+        },
+        billFooter: {
+            type: String,
+            default: 'Thank you! Visit again.'
+        }
+    },
     payment: {
         razorpay: {
             keyId: {

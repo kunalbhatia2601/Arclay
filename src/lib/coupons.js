@@ -4,13 +4,14 @@ import Order from '@/models/Order';
 // Only orders that actually consumed the coupon count against usage limits.
 // Unpaid online orders are excluded so an abandoned checkout does not burn a
 // customer's allowance.
-function consumedCouponQuery(userId, couponId) {
+function consumedCouponQuery(buyer, couponId) {
     return {
-        user: userId,
+        ...buyer,
         coupon: couponId,
         orderStatus: { $ne: 'cancelled' },
         $or: [
             { paymentMethod: 'cod' },
+            { source: 'pos', paymentStatus: 'completed' },
             { paymentMethod: { $in: ['razorpay', 'stripe'] }, paymentStatus: 'completed' },
         ],
     };
@@ -26,12 +27,19 @@ function idOf(value) {
  * populated `product` (with `category`), a `quantity`, and a unit price via
  * `priceAtOrder` or `variant.price`.
  *
+ * The buyer is either a registered `userId` (web checkout) or a `customerId`
+ * (POS counter customer). Per-user limits apply to whichever is given; a
+ * walk-in with no phone on file gets no per-user restriction, because there is
+ * nobody to attribute past usage to.
+ *
  * Returns { valid: true } or { valid: false, message }.
  */
-export async function validateCouponForCart({ coupon, userId, cartItems, cartTotal }) {
+export async function validateCouponForCart({ coupon, userId, customerId, cartItems, cartTotal }) {
     if (!coupon || !coupon.isActive) {
         return { valid: false, message: 'Invalid or inactive coupon code' };
     }
+
+    const buyer = userId ? { user: userId } : customerId ? { customer: customerId } : null;
 
     const now = new Date();
     if (coupon.validFrom && now < coupon.validFrom) {
@@ -45,12 +53,12 @@ export async function validateCouponForCart({ coupon, userId, cartItems, cartTot
         return { valid: false, message: 'This coupon has reached its usage limit' };
     }
 
-    if (coupon.perUserLimit) {
-        const used = await Order.countDocuments(consumedCouponQuery(userId, coupon._id));
+    if (coupon.perUserLimit && buyer) {
+        const used = await Order.countDocuments(consumedCouponQuery(buyer, coupon._id));
         if (used >= coupon.perUserLimit) {
             return {
                 valid: false,
-                message: `You have already used this coupon ${coupon.perUserLimit} time(s)`,
+                message: `This coupon has already been used ${coupon.perUserLimit} time(s)`,
             };
         }
     }
@@ -59,12 +67,13 @@ export async function validateCouponForCart({ coupon, userId, cartItems, cartTot
         return { valid: false, message: `Minimum purchase of ₹${coupon.minPurchase} required` };
     }
 
-    if (coupon.firstPurchaseOnly) {
+    if (coupon.firstPurchaseOnly && buyer) {
         const previousOrders = await Order.countDocuments({
-            user: userId,
+            ...buyer,
             orderStatus: { $ne: 'cancelled' },
             $or: [
                 { paymentMethod: 'cod' },
+                { source: 'pos', paymentStatus: 'completed' },
                 { paymentMethod: { $in: ['razorpay', 'stripe'] }, paymentStatus: 'completed' },
             ],
         });
@@ -111,6 +120,10 @@ export async function validateCouponForCart({ coupon, userId, cartItems, cartTot
     }
 
     if (coupon.applicableUsers?.length > 0) {
+        // Restricted to named accounts, which a walk-in customer cannot satisfy
+        if (!userId) {
+            return { valid: false, message: 'This coupon is limited to specific accounts' };
+        }
         const userIdStr = userId.toString();
         const applicable = coupon.applicableUsers.some((u) => idOf(u) === userIdStr);
         if (!applicable) {

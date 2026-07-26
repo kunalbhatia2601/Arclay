@@ -148,6 +148,97 @@ export default function AdminSettings() {
                 </div>
             </div>
 
+            {/* Store & Billing */}
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="font-serif text-xl font-bold">Store &amp; Billing</h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Printed on every counter bill and tax invoice
+                        </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={settings?.store?.taxEnabled || false}
+                            onChange={(e) => updateSetting('store.taxEnabled', e.target.checked)}
+                            className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Legal Name</label>
+                            <input
+                                type="text"
+                                value={settings?.store?.legalName || ''}
+                                onChange={(e) => updateSetting('store.legalName', e.target.value)}
+                                placeholder="Name as registered"
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">GSTIN</label>
+                            <input
+                                type="text"
+                                value={settings?.store?.gstin || ''}
+                                onChange={(e) => updateSetting('store.gstin', e.target.value.toUpperCase())}
+                                placeholder="22AAAAA0000A1Z5"
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background font-mono"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                With a GSTIN and tax enabled, bills print as a TAX INVOICE
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Invoice Prefix</label>
+                            <input
+                                type="text"
+                                value={settings?.store?.invoicePrefix || ''}
+                                onChange={(e) => updateSetting('store.invoicePrefix', e.target.value)}
+                                placeholder="INV"
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background font-mono"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Bill numbers look like INV/2026-27/0001 and restart each financial year
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Bill Footer</label>
+                            <input
+                                type="text"
+                                value={settings?.store?.billFooter || ''}
+                                onChange={(e) => updateSetting('store.billFooter', e.target.value)}
+                                placeholder="Thank you! Visit again."
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
+                        <div>
+                            <h3 className="font-medium">Prices Include Tax</h3>
+                            <p className="text-sm text-muted-foreground">
+                                On: listed price is the MRP and GST is worked backwards out of it.
+                                Off: GST is added on top at checkout.
+                            </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={settings?.store?.priceIncludesTax !== false}
+                                onChange={(e) => updateSetting('store.priceIncludesTax', e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             {/* Razorpay Settings */}
             <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
                 <div className="flex items-center justify-between mb-4">

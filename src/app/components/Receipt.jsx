@@ -38,59 +38,87 @@ function variantText(attributes) {
     return Object.values(attributes).join(" / ");
 }
 
+const Rule = ({ solid }) => (
+    <div style={{ borderTop: `1px ${solid ? "solid" : "dashed"} #000`, margin: "2mm 0" }} />
+);
+
+const Row = ({ label, value, bold, size }) => (
+    <div
+        style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "2mm",
+            fontWeight: bold ? 700 : 400,
+            fontSize: size,
+        }}
+    >
+        <span>{label}</span>
+        <span>{value}</span>
+    </div>
+);
+
 export default function Receipt({ order, store = {}, tendered = null }) {
     if (!order) return null;
 
-    const billNo = String(order._id || "").slice(-8).toUpperCase();
+    const billNo = order.billNumber || `#${String(order._id || "").slice(-8).toUpperCase()}`;
     const placedAt = order.createdAt ? new Date(order.createdAt) : new Date();
     const change = tendered != null ? Number(tendered) - Number(order.totalAmount || 0) : null;
 
     const addressLine = [store.city, store.state, store.pincode].filter(Boolean).join(", ");
+    const taxBreakup = order.taxBreakup || [];
+    const hasTax = Number(order.taxAmount) > 0 && taxBreakup.length > 0;
+    const isTaxInvoice = hasTax && !!store.gstin;
+
+    const grossSubtotal =
+        Number(order.subtotal || 0) + Number(order.lineDiscountTotal || 0);
+    const totalDiscount =
+        Number(order.discountAmount || 0) + Number(order.lineDiscountTotal || 0);
 
     return (
         <div
             id="receipt-sheet"
             className="bg-white text-black mx-auto"
-            style={{ width: "80mm", padding: "4mm", fontFamily: "ui-monospace, monospace", fontSize: "10px" }}
+            style={{
+                width: "80mm",
+                padding: "4mm",
+                fontFamily: "ui-monospace, monospace",
+                fontSize: "10px",
+                lineHeight: 1.35,
+            }}
         >
             {/* Header */}
-            <div className="text-center" style={{ marginBottom: "3mm" }}>
+            <div className="text-center" style={{ marginBottom: "2mm" }}>
                 <p style={{ fontSize: "14px", fontWeight: 700, letterSpacing: "0.5px" }}>
-                    {store.name || "Store"}
+                    {store.legalName || store.name || "Store"}
                 </p>
                 {store.address && <p>{store.address}</p>}
                 {addressLine && <p>{addressLine}</p>}
                 {store.phone && <p>Ph: {store.phone}</p>}
+                {store.gstin && <p>GSTIN: {store.gstin}</p>}
+                <p style={{ marginTop: "1.5mm", fontWeight: 700, letterSpacing: "1px" }}>
+                    {isTaxInvoice ? "TAX INVOICE" : "RECEIPT"}
+                </p>
             </div>
 
-            <div style={{ borderTop: "1px dashed #000", margin: "2mm 0" }} />
+            <Rule />
 
             {/* Bill meta */}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Bill No</span>
-                <span style={{ fontWeight: 700 }}>#{billNo}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Date</span>
-                <span>
-                    {placedAt.toLocaleDateString("en-IN")}{" "}
-                    {placedAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                </span>
-            </div>
+            <Row label="Bill No" value={billNo} bold />
+            <Row
+                label="Date"
+                value={`${placedAt.toLocaleDateString("en-IN")} ${placedAt.toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                })}`}
+            />
             {order.shippingAddress?.fullName && (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>Customer</span>
-                    <span>{order.shippingAddress.fullName}</span>
-                </div>
+                <Row label="Customer" value={order.shippingAddress.fullName} />
             )}
             {order.shippingAddress?.phone && order.shippingAddress.phone !== "0000000000" && (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>Phone</span>
-                    <span>{order.shippingAddress.phone}</span>
-                </div>
+                <Row label="Phone" value={order.shippingAddress.phone} />
             )}
 
-            <div style={{ borderTop: "1px dashed #000", margin: "2mm 0" }} />
+            <Rule />
 
             {/* Items */}
             <table
@@ -112,15 +140,36 @@ export default function Receipt({ order, store = {}, tendered = null }) {
                 <tbody>
                     {(order.items || []).map((item, index) => {
                         const rate = item.priceAtOrder ?? item.variant?.price ?? 0;
-                        const name = item.product?.name || item.name || "Item";
+                        const name = item.name || item.product?.name || "Item";
                         const vt = variantText(item.variant?.attributes);
+                        const returned = item.returnedQuantity || 0;
 
                         return (
                             <tr key={index} style={{ verticalAlign: "top" }}>
-                                <td style={{ paddingTop: "1mm", paddingRight: "2mm", wordBreak: "break-word" }}>
+                                <td
+                                    style={{
+                                        paddingTop: "1mm",
+                                        paddingRight: "2mm",
+                                        wordBreak: "break-word",
+                                    }}
+                                >
                                     {name}
-                                    {vt && (
-                                        <span style={{ display: "block", fontSize: "9px" }}>{vt}</span>
+                                    {vt && <span style={{ display: "block", fontSize: "9px" }}>{vt}</span>}
+                                    {item.hsn && (
+                                        <span style={{ display: "block", fontSize: "9px" }}>
+                                            HSN {item.hsn}
+                                            {item.taxRate ? ` · GST ${item.taxRate}%` : ""}
+                                        </span>
+                                    )}
+                                    {item.lineDiscount > 0 && (
+                                        <span style={{ display: "block", fontSize: "9px" }}>
+                                            Less {money(item.lineDiscount)}
+                                        </span>
+                                    )}
+                                    {returned > 0 && (
+                                        <span style={{ display: "block", fontSize: "9px" }}>
+                                            Returned {returned}
+                                        </span>
                                     )}
                                 </td>
                                 <td style={{ textAlign: "center", paddingTop: "1mm", paddingLeft: "1mm" }}>
@@ -130,7 +179,9 @@ export default function Receipt({ order, store = {}, tendered = null }) {
                                     {Number(rate).toLocaleString("en-IN")}
                                 </td>
                                 <td style={{ textAlign: "right", paddingTop: "1mm", paddingLeft: "1mm" }}>
-                                    {Number(rate * item.quantity).toLocaleString("en-IN")}
+                                    {Number(rate * item.quantity - (item.lineDiscount || 0)).toLocaleString(
+                                        "en-IN"
+                                    )}
                                 </td>
                             </tr>
                         );
@@ -138,57 +189,68 @@ export default function Receipt({ order, store = {}, tendered = null }) {
                 </tbody>
             </table>
 
-            <div style={{ borderTop: "1px dashed #000", margin: "2mm 0" }} />
+            <Rule />
 
             {/* Totals */}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Subtotal</span>
-                <span>{money(order.subtotal)}</span>
-            </div>
-            {order.discountAmount > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>Discount{order.couponCode ? ` (${order.couponCode})` : ""}</span>
-                    <span>-{money(order.discountAmount)}</span>
-                </div>
+            <Row label="Subtotal" value={money(grossSubtotal)} />
+            {totalDiscount > 0 && (
+                <Row
+                    label={`Discount${order.couponCode ? ` (${order.couponCode})` : ""}`}
+                    value={`-${money(totalDiscount)}`}
+                />
             )}
-            {order.shippingFee > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>Shipping</span>
-                    <span>{money(order.shippingFee)}</span>
-                </div>
+            {order.shippingFee > 0 && <Row label="Shipping" value={money(order.shippingFee)} />}
+
+            {/* GST breakup — CGST/SGST split for an intra-state counter sale */}
+            {hasTax && (
+                <>
+                    <Rule />
+                    {taxBreakup.map((slab) => (
+                        <div key={slab.rate}>
+                            <Row
+                                label={`Taxable @ ${slab.rate}%`}
+                                value={money(slab.taxable)}
+                            />
+                            <Row
+                                label={`CGST ${slab.rate / 2}%`}
+                                value={money(slab.tax / 2)}
+                            />
+                            <Row
+                                label={`SGST ${slab.rate / 2}%`}
+                                value={money(slab.tax / 2)}
+                            />
+                        </div>
+                    ))}
+                    <Row label="Total GST" value={money(order.taxAmount)} bold />
+                </>
             )}
 
-            <div style={{ borderTop: "1px solid #000", margin: "1.5mm 0" }} />
+            <Rule solid />
 
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                }}
-            >
-                <span>TOTAL</span>
-                <span>{money(order.totalAmount)}</span>
-            </div>
+            <Row label="TOTAL" value={money(order.totalAmount)} bold size="13px" />
 
-            <div style={{ borderTop: "1px dashed #000", margin: "2mm 0" }} />
+            <Rule />
 
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Paid by</span>
-                <span>{PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}</span>
-            </div>
+            <Row
+                label="Paid by"
+                value={PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}
+            />
 
             {change != null && change >= 0 && (
                 <>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>Cash received</span>
-                        <span>{money(tendered)}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-                        <span>Change</span>
-                        <span>{money(change)}</span>
-                    </div>
+                    <Row label="Cash received" value={money(tendered)} />
+                    <Row label="Change" value={money(change)} bold />
+                </>
+            )}
+
+            {order.refundedAmount > 0 && (
+                <>
+                    <Rule />
+                    <Row label="Refunded" value={`-${money(order.refundedAmount)}`} bold />
+                    <Row
+                        label="Net paid"
+                        value={money(Number(order.totalAmount) - Number(order.refundedAmount))}
+                    />
                 </>
             )}
 
@@ -201,7 +263,12 @@ export default function Receipt({ order, store = {}, tendered = null }) {
                 }}
             >
                 <p>Total items: {(order.items || []).reduce((s, i) => s + i.quantity, 0)}</p>
-                <p style={{ marginTop: "1.5mm", fontWeight: 700 }}>Thank you! Visit again.</p>
+                {hasTax && !store.gstin && (
+                    <p style={{ fontSize: "9px" }}>Prices inclusive of applicable taxes</p>
+                )}
+                <p style={{ marginTop: "1.5mm", fontWeight: 700 }}>
+                    {store.billFooter || "Thank you! Visit again."}
+                </p>
             </div>
         </div>
     );

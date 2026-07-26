@@ -13,6 +13,14 @@ async function getHandler(req) {
         const safeSettings = {
             isDemo: settings.isDemo,
             isMaintenance: settings.isMaintenance,
+            store: {
+                legalName: settings.store?.legalName || '',
+                gstin: settings.store?.gstin || '',
+                taxEnabled: settings.store?.taxEnabled || false,
+                priceIncludesTax: settings.store?.priceIncludesTax !== false,
+                invoicePrefix: settings.store?.invoicePrefix || 'INV',
+                billFooter: settings.store?.billFooter || 'Thank you! Visit again.',
+            },
             payment: {
                 razorpay: {
                     keyId: settings.payment.razorpay.keyId,
@@ -113,6 +121,23 @@ async function putHandler(req) {
 
         if (typeof updates.isMaintenance === 'boolean') {
             settings.isMaintenance = updates.isMaintenance;
+        }
+
+        // Store identity / GST
+        if (updates.store) {
+            if (!settings.store) settings.store = {};
+
+            for (const field of ['legalName', 'gstin', 'invoicePrefix', 'billFooter']) {
+                if (updates.store[field] !== undefined) {
+                    settings.store[field] = updates.store[field];
+                }
+            }
+            if (typeof updates.store.taxEnabled === 'boolean') {
+                settings.store.taxEnabled = updates.store.taxEnabled;
+            }
+            if (typeof updates.store.priceIncludesTax === 'boolean') {
+                settings.store.priceIncludesTax = updates.store.priceIncludesTax;
+            }
         }
 
         // Update payment settings

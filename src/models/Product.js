@@ -118,6 +118,20 @@ const ProductSchema = new mongoose.Schema({
         type: String,
         trim: true,
         default: ''
+    },
+    // GST percentage applied to this product. Whether the listed price already
+    // contains it is a store-wide setting (Settings.store.priceIncludesTax).
+    taxRate: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0
+    },
+    // HSN/SAC code, required on a GST tax invoice
+    hsn: {
+        type: String,
+        trim: true,
+        default: ''
     }
 }, {
     timestamps: true
