@@ -19,7 +19,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Filter,
-    Boxes
+    Boxes,
+    Printer
 } from "lucide-react";
 
 // Debounce hook
@@ -363,6 +364,13 @@ export default function ProductsPage() {
                                                         title="Edit Details"
                                                     >
                                                         <Pencil className="w-5 h-5" />
+                                                    </Link>
+                                                    <Link
+                                                        href={`/admin/products/${product._id}/labels`}
+                                                        className="p-2.5 text-[#767B71] hover:text-[#869661] hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-[#ECE8E0]"
+                                                        title="Print Barcode Labels"
+                                                    >
+                                                        <Printer className="w-5 h-5" />
                                                     </Link>
                                                     <button
                                                         onClick={() => handleDelete(product._id)}

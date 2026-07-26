@@ -2,6 +2,7 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
 import { withAdmin } from "@/lib/auth";
+import { assignVariantBarcodes } from "@/lib/variantBarcodes";
 
 // GET all products
 async function getHandler(req) {
@@ -86,12 +87,15 @@ async function postHandler(req) {
 
         await connectDB();
 
+        // Every variant gets a printable barcode; blanks are auto-generated.
+        const variantsWithBarcodes = await assignVariantBarcodes(variants);
+
         const product = await Product.create({
             name,
             images: images || [],
             description: description || "",
             variationTypes: variationTypes || [],
-            variants: variants,
+            variants: variantsWithBarcodes,
             category,
             isActive: isActive !== false,
             barcode: barcode || "",

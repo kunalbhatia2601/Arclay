@@ -2,6 +2,7 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
 import { withAdmin } from "@/lib/auth";
+import { assignVariantBarcodes } from "@/lib/variantBarcodes";
 
 // GET single product
 async function getHandler(req, { params }) {
@@ -56,7 +57,12 @@ async function putHandler(req, { params }) {
         if (images !== undefined) product.images = images;
         if (description !== undefined) product.description = description;
         if (variationTypes !== undefined) product.variationTypes = variationTypes;
-        if (variants !== undefined) product.variants = variants;
+        if (variants !== undefined) {
+            // Keeps existing barcodes intact and fills any newly added variant.
+            product.variants = await assignVariantBarcodes(variants, {
+                excludeProductId: product._id,
+            });
+        }
         if (category !== undefined) product.category = category;
         if (isActive !== undefined) product.isActive = isActive;
         if (isFeatured !== undefined) product.isFeatured = isFeatured;

@@ -71,7 +71,8 @@ export default function EditProductPage({ params }) {
                         regularPrice: v.regularPrice?.toString() || "",
                         salePrice: v.salePrice?.toString() || "",
                         stock: v.stock?.toString() || "0",
-                        sku: v.sku || ""
+                        sku: v.sku || "",
+                        barcode: v.barcode || ""
                     })),
                     category: p.category?._id || p.category || "",
                     isActive: p.isActive,
@@ -181,7 +182,8 @@ export default function EditProductPage({ params }) {
                 regularPrice: "",
                 salePrice: "",
                 stock: "",
-                sku: ""
+                sku: "",
+                barcode: ""
             };
         });
 
@@ -236,7 +238,8 @@ export default function EditProductPage({ params }) {
                     regularPrice: parseFloat(v.regularPrice),
                     salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
                     stock: parseInt(v.stock) || 0,
-                    sku: v.sku || ""
+                    sku: v.sku || "",
+                    barcode: (v.barcode || "").trim()
                 })),
             };
 
@@ -280,12 +283,22 @@ export default function EditProductPage({ params }) {
                 >
                     ← Back to Products
                 </Link>
-                <h1 className="font-serif text-3xl font-bold text-foreground">
-                    Edit Product
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                    Update product details
-                </p>
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h1 className="font-serif text-3xl font-bold text-foreground">
+                            Edit Product
+                        </h1>
+                        <p className="text-muted-foreground mt-1">
+                            Update product details
+                        </p>
+                    </div>
+                    <Link
+                        href={`/admin/products/${id}/labels`}
+                        className="shrink-0 px-5 py-2.5 rounded-full border border-border text-foreground hover:bg-muted transition-colors text-sm font-medium"
+                    >
+                        Print Labels
+                    </Link>
+                </div>
             </div>
 
             {/* Form */}
@@ -509,7 +522,7 @@ export default function EditProductPage({ params }) {
                                     type="button"
                                     onClick={() => setFormData({
                                         ...formData,
-                                        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "" }]
+                                        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "", barcode: "" }]
                                     })}
                                     className="mt-3 text-sm text-primary hover:underline"
                                 >
@@ -579,6 +592,16 @@ export default function EditProductPage({ params }) {
                                                     onChange={(e) => handleVariantChange(index, "sku", e.target.value)}
                                                     className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                                                     placeholder="PRD-001"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Barcode</label>
+                                                <input
+                                                    type="text"
+                                                    value={variant.barcode || ""}
+                                                    onChange={(e) => handleVariantChange(index, "barcode", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono"
+                                                    placeholder="auto-generated"
                                                 />
                                             </div>
                                         </div>

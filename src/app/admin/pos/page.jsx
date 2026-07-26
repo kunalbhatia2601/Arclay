@@ -18,6 +18,8 @@ export default function POSPage() {
     const [paymentMethod, setPaymentMethod] = useState("cash");
     const [processing, setProcessing] = useState(false);
     const searchInputRef = useRef(null);
+    const scanBuffer = useRef({ value: "", lastKeyTime: 0 });
+    const handleBarcodeScanRef = useRef(() => {});
 
     // Fetch products
     useEffect(() => {
@@ -49,27 +51,71 @@ export default function POSPage() {
         fetchProducts(value);
     };
 
-    // Add to cart
-    const addToCart = (product, variant = null) => {
-        const existingIndex = cart.findIndex(
-            (item) => item.product._id === product._id &&
-            JSON.stringify(item.variant?.attributes) === JSON.stringify(variant?.attributes)
-        );
+    // USB/Bluetooth scanners act as keyboards: they emit the whole code in a
+    // burst and finish with Enter. Keystrokes slower than SCAN_GAP_MS are
+    // treated as human typing and ignored, so normal input is unaffected.
+    useEffect(() => {
+        const SCAN_GAP_MS = 60;
+        const MIN_CODE_LENGTH = 6;
 
-        if (existingIndex >= 0) {
-            const newCart = [...cart];
-            newCart[existingIndex].quantity += 1;
-            setCart(newCart);
-        } else {
-            setCart([
-                ...cart,
-                {
-                    product,
-                    variant,
-                    quantity: 1,
-                },
-            ]);
-        }
+        const handleKeyDown = (e) => {
+            const now = Date.now();
+            const buffer = scanBuffer.current;
+
+            if (now - buffer.lastKeyTime > SCAN_GAP_MS) {
+                buffer.value = "";
+            }
+            buffer.lastKeyTime = now;
+
+            if (e.key === "Enter") {
+                const code = buffer.value;
+                buffer.value = "";
+                if (code.length >= MIN_CODE_LENGTH) {
+                    e.preventDefault();
+                    handleBarcodeScanRef.current(code);
+                }
+                return;
+            }
+
+            if (e.key.length === 1) {
+                buffer.value += e.key;
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, []);
+
+    // Stable key for a variant, independent of attribute ordering
+    const variantKey = (variant) => {
+        const attrs = variant?.attributes || {};
+        return Object.keys(attrs)
+            .sort()
+            .map((k) => `${k}=${attrs[k]}`)
+            .join("|");
+    };
+
+    // Add to cart. Uses a functional update so rapid scanner input cannot drop
+    // lines by racing against a stale `cart` closure.
+    const addToCart = (product, variant = null, quantity = 1) => {
+        setCart((prev) => {
+            const existingIndex = prev.findIndex(
+                (item) =>
+                    item.product._id === product._id &&
+                    variantKey(item.variant) === variantKey(variant)
+            );
+
+            if (existingIndex >= 0) {
+                const newCart = [...prev];
+                newCart[existingIndex] = {
+                    ...newCart[existingIndex],
+                    quantity: newCart[existingIndex].quantity + quantity,
+                };
+                return newCart;
+            }
+
+            return [...prev, { product, variant, quantity }];
+        });
     };
 
     // Update quantity
@@ -174,20 +220,36 @@ export default function POSPage() {
         }
     };
 
-    // Handle barcode scan
+    // Handle barcode scan — resolves to the exact variant the label belongs to
     const handleBarcodeScan = async (barcode) => {
+        const code = String(barcode || "").trim();
+        if (!code) return;
+
         setShowScanner(false);
-        // Search for product with this barcode
-        const res = await fetch(`/api/products?search=${barcode}&limit=1`);
-        const data = await res.json();
-        if (data.success && data.products?.length > 0) {
-            const product = data.products[0];
-            addToCart(product, product.variants?.[0]);
-            toast.success(`Added: ${product.name}`);
-        } else {
-            toast.error("Product not found for this barcode");
+
+        try {
+            const res = await fetch(
+                `/api/admin/products/barcode?code=${encodeURIComponent(code)}`,
+                { credentials: "include" }
+            );
+            const data = await res.json();
+
+            if (!data.success) {
+                toast.error(data.message || "Product not found for this barcode");
+                return;
+            }
+
+            const variantName = getVariantName(data.variant);
+            addToCart(data.product, data.variant);
+            toast.success(`Added: ${data.product.name}${variantName ? ` (${variantName})` : ""}`);
+        } catch (err) {
+            console.error("Barcode scan error:", err);
+            toast.error("Barcode lookup failed");
         }
     };
+
+    // Keeps the always-on key listener pointed at the latest handler
+    handleBarcodeScanRef.current = handleBarcodeScan;
 
     // Get product price
     const getProductPrice = (product, variant) => {

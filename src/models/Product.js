@@ -41,6 +41,13 @@ const VariantSchema = new mongoose.Schema({
         type: String,
         trim: true,
         default: ''
+    },
+    // Scannable code printed on the shelf/product label. Assigned per variant
+    // because each variant carries its own price.
+    barcode: {
+        type: String,
+        trim: true,
+        default: ''
     }
 }, { _id: false });
 
@@ -119,6 +126,9 @@ const ProductSchema = new mongoose.Schema({
 // Index for faster queries
 ProductSchema.index({ name: 'text', description: 'text' });
 ProductSchema.index({ category: 1, isActive: 1 });
+// POS barcode lookups hit these on every scan.
+ProductSchema.index({ 'variants.barcode': 1 });
+ProductSchema.index({ barcode: 1 });
 
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);
 

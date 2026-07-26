@@ -139,7 +139,8 @@ export default function NewProductPage() {
                 regularPrice: "",
                 salePrice: "",
                 stock: "",
-                sku: ""
+                sku: "",
+                barcode: ""
             };
         });
 
@@ -194,7 +195,8 @@ export default function NewProductPage() {
                     regularPrice: parseFloat(v.regularPrice),
                     salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
                     stock: parseInt(v.stock) || 0,
-                    sku: v.sku || ""
+                    sku: v.sku || "",
+                    barcode: (v.barcode || "").trim()
                 })),
             };
 
@@ -208,7 +210,9 @@ export default function NewProductPage() {
             const data = await res.json();
 
             if (data.success) {
-                router.push("/admin/products");
+                // Barcodes are assigned server-side on create, so send the admin
+                // straight to the printable label sheet.
+                router.push(`/admin/products/${data.product._id}/labels`);
             } else {
                 setError(data.message || "Failed to create product");
             }
@@ -459,7 +463,7 @@ export default function NewProductPage() {
                                     type="button"
                                     onClick={() => setFormData({
                                         ...formData,
-                                        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "" }]
+                                        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "", barcode: "" }]
                                     })}
                                     className="mt-3 text-sm text-primary hover:underline"
                                 >
@@ -529,6 +533,16 @@ export default function NewProductPage() {
                                                     onChange={(e) => handleVariantChange(index, "sku", e.target.value)}
                                                     className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                                                     placeholder="PRD-001"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Barcode</label>
+                                                <input
+                                                    type="text"
+                                                    value={variant.barcode || ""}
+                                                    onChange={(e) => handleVariantChange(index, "barcode", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono"
+                                                    placeholder="auto-generated"
                                                 />
                                             </div>
                                         </div>
