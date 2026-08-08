@@ -9,6 +9,7 @@ import { withProtection } from "@/lib/auth";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
 import { claimCouponUsage } from "@/lib/coupons";
 import { findVariantIndex, reserveStock } from "@/lib/stock";
+import { recordSales } from "@/lib/sales";
 
 async function postHandler(req) {
     try {
@@ -77,6 +78,7 @@ async function postHandler(req) {
         // Stock is decremented atomically; any line that cannot be fulfilled is
         // recorded rather than silently skipped, because the customer has paid.
         const shortfalls = [];
+        const fulfilled = [];
 
         for (const orderItem of order.items) {
             const product = await Product.findById(orderItem.product._id);
@@ -91,8 +93,13 @@ async function postHandler(req) {
 
             if (!reserved) {
                 shortfalls.push(`${product.name} x${orderItem.quantity}`);
+            } else {
+                fulfilled.push({ productId: product._id, quantity: orderItem.quantity });
             }
         }
+
+        // Only lines that actually came out of stock count as sales.
+        await recordSales(fulfilled);
 
         // Consume coupon usage only now that the payment has actually landed.
         if (order.coupon && order.discountAmount > 0) {

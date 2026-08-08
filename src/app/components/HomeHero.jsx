@@ -51,7 +51,7 @@ export default function HomeHero() {
 
     if (!loaded || banners.length === 0) {
         return (
-            <section className="relative w-full overflow-hidden bg-[#FEFBF6] py-3 container mx-auto px-4 max-w-7xl">
+            <section className="relative w-full overflow-hidden bg-[var(--c-bg)] py-3 container mx-auto px-4 max-w-7xl">
                 <div className="relative w-full h-[50vh] min-h-[420px] sm:min-h-[500px] lg:h-[75vh] lg:min-h-[640px] rounded-[2.5rem] overflow-hidden bg-[#F0EFED] animate-pulse" />
             </section>
         );
@@ -61,7 +61,7 @@ export default function HomeHero() {
     const primaryLink = active?.linkUrl || "/products";
 
     return (
-        <section className="relative w-full overflow-hidden bg-[#FEFBF6] py-3 container mx-auto px-4 max-w-7xl">
+        <section className="relative w-full overflow-hidden bg-[var(--c-bg)] py-3 container mx-auto px-4 max-w-7xl">
             <div className="relative w-full h-[50vh] min-h-[420px] sm:min-h-[500px] lg:h-[75vh] lg:min-h-[640px] rounded-[2.5rem] overflow-hidden shadow-sm bg-[#F0EFED]">
 
                 <AnimatePresence mode="wait">
@@ -101,7 +101,7 @@ export default function HomeHero() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2, duration: 0.6 }}
                     >
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 bg-[#D86B4B] text-white">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 bg-[var(--c-accent)] text-white">
                             <Sparkles className="w-3 h-3" strokeWidth={3} />
                             Featured
                         </div>
@@ -118,7 +118,7 @@ export default function HomeHero() {
 
                         <div className="flex flex-row flex-wrap gap-3 sm:gap-4">
                             <button
-                                className="bg-[#869661] hover:bg-[#71824F] text-white rounded-xl px-6 sm:px-10 py-3.5 sm:py-4 text-[13px] sm:text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-[#869661]/20"
+                                className="bg-[var(--c-primary)] hover:bg-[var(--c-primary-dark)] text-white rounded-xl px-6 sm:px-10 py-3.5 sm:py-4 text-[13px] sm:text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-[var(--c-primary)]/20"
                                 onClick={() => router.push(primaryLink)}
                             >
                                 Shop Now

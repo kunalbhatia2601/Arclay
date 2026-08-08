@@ -58,10 +58,31 @@ export const metadata = {
 };
 
 import ClientTransition from "./components/ClientTransition";
+import { getThemeTokens, tokensToCss } from "@/lib/theme";
+import { getDefaultCardPreset } from "@/lib/cardPresetServer";
+import CardPresetProvider from "./components/CardPresetProvider";
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Design tokens are rendered server-side into a :root block so the correct
+  // palette is present in the first paint — no flash of default colours.
+  // Fetched here so every product card on the site — including pages the
+  // builder does not own — honours the admin's default card style.
+  const [{ tokens, customCss }, cardPreset] = await Promise.all([
+    getThemeTokens(),
+    getDefaultCardPreset(),
+  ]);
+
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* React hoists and dedupes <style> by `href`, managing its attributes
+          itself — an `id` here would be dropped on the client and trip a
+          hydration mismatch. `precedence` keeps it ordered ahead of the
+          stylesheets so components can override the tokens. */}
+      <style
+        href="theme-tokens"
+        precedence="high"
+        dangerouslySetInnerHTML={{ __html: tokensToCss(tokens, customCss) }}
+      />
       <body
         className={`${playfair.variable} ${inter.variable} ${geistMono.variable} ${kumbhSans.variable} antialiased overflow-x-hidden`}
       >
@@ -73,6 +94,7 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
         >
           <UserProvider>
+            <CardPresetProvider preset={cardPreset}>
             <Navbar />
             <ClientTransition>
               {children}
@@ -92,6 +114,7 @@ export default function RootLayout({ children }) {
                 </filter>
               </defs>
             </svg>
+            </CardPresetProvider>
           </UserProvider>
         </ThemeProvider>
       </body>

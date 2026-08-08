@@ -10,6 +10,7 @@ import { sendOrderConfirmationEmail } from "@/lib/mailer";
 import { calculateShippingFee } from "@/lib/shiprocket";
 import { claimCouponUsage, releaseCouponUsage, validateCouponForCart } from "@/lib/coupons";
 import { findVariantIndex, releaseStock, reserveAll } from "@/lib/stock";
+import { recordSales } from "@/lib/sales";
 
 // GET user's orders
 async function getHandler(req) {
@@ -261,6 +262,7 @@ async function postHandler(req) {
                     { status: 400 }
                 );
             }
+            await recordSales(reservations);
         }
 
         // Create order
@@ -288,6 +290,7 @@ async function postHandler(req) {
                 for (const r of reservations) {
                     await releaseStock(r.productId, r.variantIndex, r.quantity);
                 }
+                await recordSales(reservations, { reverse: true });
             }
             if (couponClaimed) await releaseCouponUsage(coupon._id);
             throw createError;

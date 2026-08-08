@@ -4,6 +4,7 @@ import Product from "@/models/Product";
 import Customer from "@/models/Customer";
 import { withAdminProtection } from "@/lib/auth";
 import { findVariantIndex, releaseStock } from "@/lib/stock";
+import { recordSales } from "@/lib/sales";
 import { round2 } from "@/lib/billing";
 
 // POST - return items from an order and refund the money
@@ -105,6 +106,13 @@ async function postHandler(req, { params }) {
                 }
             }
         }
+
+        // Returned units stop counting as sales, so bestseller ranking reflects
+        // what customers actually kept.
+        await recordSales(
+            accepted.map(({ line, quantity }) => ({ productId: line.product, quantity })),
+            { reverse: true }
+        );
 
         for (const { index, quantity } of accepted) {
             order.items[index].returnedQuantity =

@@ -43,11 +43,11 @@ export function MetaSpecsTable({ fields, title = "Specifications" }) {
     return (
         <div>
             {title && (
-                <h3 className="text-[13px] font-bold uppercase tracking-widest text-[#2A2F25] mb-4">
+                <h3 className="text-[13px] font-bold uppercase tracking-widest text-[var(--c-text)] mb-4">
                     {title}
                 </h3>
             )}
-            <dl className="divide-y divide-[#ECE8E0] border-y border-[#ECE8E0]">
+            <dl className="divide-y divide-[var(--c-border)] border-y border-[var(--c-border)]">
                 {rows.map((field) => {
                     const display = formatValue(field, field.value);
                     if (display === null) return null;
@@ -57,8 +57,8 @@ export function MetaSpecsTable({ fields, title = "Specifications" }) {
                             key={field.key}
                             className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-4 py-3"
                         >
-                            <dt className="text-[13px] text-[#767B71]">{field.label}</dt>
-                            <dd className="text-[14px] font-medium text-[#2A2F25] break-words">
+                            <dt className="text-[13px] text-[var(--c-text-muted)]">{field.label}</dt>
+                            <dd className="text-[14px] font-medium text-[var(--c-text)] break-words">
                                 {field.type === "color" ? (
                                     <span className="inline-flex items-center gap-2">
                                         <span
@@ -72,7 +72,7 @@ export function MetaSpecsTable({ fields, title = "Specifications" }) {
                                         href={display}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[#869661] hover:underline break-all"
+                                        className="text-[var(--c-primary)] hover:underline break-all"
                                     >
                                         {display}
                                     </a>
@@ -106,8 +106,8 @@ export function MetaBadges({ fields }) {
                             key={field.key}
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold ${
                                 field.value
-                                    ? "bg-[#F0F4EC] text-[#3A4B29]"
-                                    : "bg-[#F3EFE8] text-[#767B71]"
+                                    ? "bg-[var(--c-accent-soft)] text-[#3A4B29]"
+                                    : "bg-[var(--c-surface-alt)] text-[var(--c-text-muted)]"
                             }`}
                         >
                             {field.value
@@ -121,9 +121,9 @@ export function MetaBadges({ fields }) {
                 return (
                     <span
                         key={field.key}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3EFE8] text-[12px] text-[#2A2F25]"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--c-surface-alt)] text-[12px] text-[var(--c-text)]"
                     >
-                        <span className="text-[#767B71]">{field.label}</span>
+                        <span className="text-[var(--c-text-muted)]">{field.label}</span>
                         <span className="font-semibold">{display}</span>
                     </span>
                 );
@@ -138,14 +138,14 @@ export function MetaInline({ fields }) {
     if (inline.length === 0) return null;
 
     return (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#767B71]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[var(--c-text-muted)]">
             {inline.map((field) => {
                 const display = formatValue(field, field.value);
                 if (display === null) return null;
                 return (
                     <span key={field.key}>
                         {field.label}:{" "}
-                        <span className="font-semibold text-[#2A2F25]">{display}</span>
+                        <span className="font-semibold text-[var(--c-text)]">{display}</span>
                     </span>
                 );
             })}
@@ -183,7 +183,7 @@ export function MetaGroupBody({ fields }) {
                 if (field.type === "textarea" || field.type === "richtext") {
                     return (
                         <div key={field.key}>
-                            <dt className="text-[12px] font-bold uppercase tracking-wider text-[#767B71] mb-1">
+                            <dt className="text-[12px] font-bold uppercase tracking-wider text-[var(--c-text-muted)] mb-1">
                                 {field.label}
                             </dt>
                             <dd className="text-[15px] leading-relaxed text-[#555] whitespace-pre-line">
@@ -195,8 +195,8 @@ export function MetaGroupBody({ fields }) {
 
                 return (
                     <div key={field.key} className="flex justify-between gap-4">
-                        <dt className="text-[14px] text-[#767B71]">{field.label}</dt>
-                        <dd className="text-[14px] font-semibold text-[#2A2F25] text-right">
+                        <dt className="text-[14px] text-[var(--c-text-muted)]">{field.label}</dt>
+                        <dd className="text-[14px] font-semibold text-[var(--c-text)] text-right">
                             {display}
                         </dd>
                     </div>

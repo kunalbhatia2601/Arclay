@@ -1,98 +1,113 @@
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
+import { escapeRegex } from "@/lib/utils";
+import { buildMetaFilter } from "@/lib/meta";
 
+// Sort keys the storefront may ask for, mapped to real index-backed sorts.
+// Price and bestselling lean on the denormalized fields on Product.
+const SORT_MAP = {
+    newest: { createdAt: -1 },
+    oldest: { createdAt: 1 },
+    "price-low": { minPrice: 1 },
+    "price-high": { minPrice: -1 },
+    "name-asc": { name: 1 },
+    "name-desc": { name: -1 },
+    bestselling: { salesCount: -1, createdAt: -1 },
+    popular: { salesCount: -1, createdAt: -1 },
+};
 
 export async function GET(req) {
     try {
         await connectDB();
 
         const { searchParams } = new URL(req.url);
-        const page = parseInt(searchParams.get("page")) || 1;
-        const limit = parseInt(searchParams.get("limit")) || 12;
+        const page = Math.max(1, parseInt(searchParams.get("page")) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit")) || 12));
         const search = searchParams.get("search") || "";
         const category = searchParams.get("category");
         const minPrice = searchParams.get("minPrice");
         const maxPrice = searchParams.get("maxPrice");
         const isFeatured = searchParams.get("isFeatured");
+        const onSale = searchParams.get("onSale");
+        const inStock = searchParams.get("inStock");
         const sort = searchParams.get("sort") || "newest";
 
         // Build query - only active products
         const query = { isActive: true };
 
-        // Search filter
         if (search) {
+            const safe = escapeRegex(search);
             query.$or = [
-                { name: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
+                { name: { $regex: safe, $options: "i" } },
+                { description: { $regex: safe, $options: "i" } },
             ];
         }
 
-        // Category filter
         if (category) {
             query.category = category;
         }
 
-        // Featured filter
-        if (isFeatured === 'true') {
+        if (isFeatured === "true") {
             query.isFeatured = true;
         }
 
-        // Sort options
-        let sortOption = { createdAt: -1 }; // default: newest
-        switch (sort) {
-            case "oldest":
-                sortOption = { createdAt: 1 };
-                break;
-            case "price-low":
-            case "price-high":
-                // Will sort in memory based on first variant price
-                sortOption = { createdAt: -1 };
-                break;
-            case "name-asc":
-                sortOption = { name: 1 };
-                break;
-            case "name-desc":
-                sortOption = { name: -1 };
-                break;
+        if (onSale === "true") {
+            query.hasSale = true;
         }
 
-        let [products, categories] = await Promise.all([
+        if (inStock === "true") {
+            query.totalStock = { $gt: 0 };
+        }
+
+        // Price filtering runs against the denormalized range rather than
+        // pulling every variant into memory. A product matches when its
+        // cheapest variant falls inside the requested window.
+        const priceFilter = {};
+        if (minPrice !== null && minPrice !== "") {
+            const min = parseFloat(minPrice);
+            if (!Number.isNaN(min)) priceFilter.$gte = min;
+        }
+        if (maxPrice !== null && maxPrice !== "") {
+            const max = parseFloat(maxPrice);
+            if (!Number.isNaN(max)) priceFilter.$lte = max;
+        }
+        if (Object.keys(priceFilter).length) {
+            query.minPrice = priceFilter;
+        }
+
+        // Custom-field facets, sent as JSON: [{key, op, value}, ...]
+        const metaParam = searchParams.get("meta");
+        if (metaParam) {
+            try {
+                const metaFilter = buildMetaFilter(JSON.parse(metaParam));
+                if (metaFilter) Object.assign(query, metaFilter);
+            } catch {
+                // Malformed filter is ignored rather than failing the listing.
+            }
+        }
+
+        // Restricts the whole listing to a fixed set of ids, which is how a
+        // catalogue block becomes a curated collection.
+        const only = searchParams.get("only");
+        if (only) {
+            const ids = only.split(",").filter(Boolean).slice(0, 200);
+            if (ids.length) query._id = { $in: ids };
+        }
+
+        const sortOption = SORT_MAP[sort] || SORT_MAP.newest;
+        const skip = (page - 1) * limit;
+
+        const [products, total, categories] = await Promise.all([
             Product.find(query)
                 .sort(sortOption)
+                .skip(skip)
+                .limit(limit)
                 .populate("category", "name image")
                 .lean(),
+            Product.countDocuments(query),
             Category.find({ isActive: true }).select("name image").lean(),
         ]);
-
-        // Helper to get effective price from product (first variant's price)
-        const getProductPrice = (product) => {
-            const firstVariant = product.variants?.[0];
-            if (!firstVariant) return Infinity;
-            return firstVariant.salePrice || firstVariant.regularPrice;
-        };
-
-        // Price filter in memory (since prices are in variants)
-        if (minPrice) {
-            const min = parseFloat(minPrice);
-            products = products.filter(p => getProductPrice(p) >= min);
-        }
-        if (maxPrice) {
-            const max = parseFloat(maxPrice);
-            products = products.filter(p => getProductPrice(p) <= max);
-        }
-
-        // Sort by price if requested
-        if (sort === "price-low") {
-            products.sort((a, b) => getProductPrice(a) - getProductPrice(b));
-        } else if (sort === "price-high") {
-            products.sort((a, b) => getProductPrice(b) - getProductPrice(a));
-        }
-
-        // Pagination
-        const total = products.length;
-        const skip = (page - 1) * limit;
-        products = products.slice(skip, skip + limit);
 
         return Response.json({
             success: true,

@@ -39,7 +39,7 @@ export default function ProductRail({ title, subtitle, icon, endpoint, viewAllLi
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className={`py-16 lg:py-20 ${bgWhite ? 'bg-white' : 'bg-[#FEFBF6]'}`}
+            className={`py-16 lg:py-20 ${bgWhite ? 'bg-white' : 'bg-[var(--c-bg)]'}`}
         >
             <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
                 {/* Header */}
@@ -47,18 +47,18 @@ export default function ProductRail({ title, subtitle, icon, endpoint, viewAllLi
                     <div>
                         {subtitle && (
                             <div className="flex items-center gap-2 mb-3">
-                                <span className="text-[#D86B4B] font-bold text-[10px] uppercase tracking-[0.2em]">{subtitle}</span>
-                                <div className="h-px w-8 bg-[#D86B4B]/20" />
+                                <span className="text-[var(--c-accent)] font-bold text-[10px] uppercase tracking-[0.2em]">{subtitle}</span>
+                                <div className="h-px w-8 bg-[var(--c-accent)]/20" />
                             </div>
                         )}
-                        <h2 className="font-serif text-[32px] lg:text-[42px] font-bold text-[#2A2F25] leading-none">
+                        <h2 className="font-serif text-[32px] lg:text-[42px] font-bold text-[var(--c-text)] leading-none">
                             {title}
                         </h2>
                     </div>
 
                     <Link
                         href={viewAllLink || '/products'}
-                        className="hidden lg:flex items-center gap-2 text-[#2A2F25] font-bold hover:text-[#869661] transition-all text-xs uppercase tracking-widest border-b border-[#2A2F25]/10 pb-1"
+                        className="hidden lg:flex items-center gap-2 text-[var(--c-text)] font-bold hover:text-[var(--c-primary)] transition-all text-xs uppercase tracking-widest border-b border-[var(--c-text)]/10 pb-1"
                     >
                         View All
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -69,7 +69,7 @@ export default function ProductRail({ title, subtitle, icon, endpoint, viewAllLi
                 {loading ? (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                         {[...Array(4)].map((_, i) => (
-                            <div key={i} className="aspect-[3/4] bg-[#F3EFE8] rounded-2xl animate-pulse" />
+                            <div key={i} className="aspect-[3/4] bg-[var(--c-surface-alt)] rounded-2xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
@@ -84,7 +84,7 @@ export default function ProductRail({ title, subtitle, icon, endpoint, viewAllLi
                 <div className="mt-8 lg:hidden flex justify-center">
                     <Link
                         href={viewAllLink || '/products'}
-                        className="flex items-center justify-center w-full py-3.5 rounded-xl border border-[#ECE8E0] text-[#2A2F25] font-semibold text-sm hover:bg-[#F3EFE8] transition-colors"
+                        className="flex items-center justify-center w-full py-3.5 rounded-xl border border-[var(--c-border)] text-[var(--c-text)] font-semibold text-sm hover:bg-[var(--c-surface-alt)] transition-colors"
                     >
                         View All
                         <ArrowRight className="w-4 h-4 ml-2" />

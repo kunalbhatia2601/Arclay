@@ -8,7 +8,7 @@ export default function PromoBanner() {
     const router = useRouter();
 
     return (
-        <section className="py-6 bg-[#FEFBF6]">
+        <section className="py-6 bg-[var(--c-bg)]">
             <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -24,12 +24,12 @@ export default function PromoBanner() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                     
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#2A2F25]/80 via-[#2A2F25]/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--c-text)]/80 via-[var(--c-text)]/40 to-transparent" />
                     
                     <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-14 lg:px-20">
                         <div className="flex items-center gap-2 mb-4">
-                            <Gift className="w-4 h-4 text-[#D86B4B]" />
-                            <span className="text-[#D86B4B] text-[12px] font-semibold uppercase tracking-wider">
+                            <Gift className="w-4 h-4 text-[var(--c-accent)]" />
+                            <span className="text-[var(--c-accent)] text-[12px] font-semibold uppercase tracking-wider">
                                 Festive Special
                             </span>
                         </div>
@@ -42,7 +42,7 @@ export default function PromoBanner() {
                             Up to 40% off on curated gift hampers and premium collections.
                         </p>
                         
-                        <button className="inline-flex items-center justify-center w-fit bg-[#869661] hover:bg-[#71824F] text-white px-7 py-3 rounded-xl text-sm font-semibold transition-colors gap-2">
+                        <button className="inline-flex items-center justify-center w-fit bg-[var(--c-primary)] hover:bg-[var(--c-primary-dark)] text-white px-7 py-3 rounded-xl text-sm font-semibold transition-colors gap-2">
                             Explore Offers
                             <ArrowRight className="w-4 h-4" />
                         </button>

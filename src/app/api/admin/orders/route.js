@@ -6,6 +6,7 @@ import Customer from "@/models/Customer";
 import Coupon from "@/models/Coupon";
 import { getSettings, withAdminProtection } from "@/lib/auth";
 import { releaseStock, reserveAll } from "@/lib/stock";
+import { recordSales } from "@/lib/sales";
 import { computeBill } from "@/lib/billing";
 import { nextBillNumber } from "@/lib/counters";
 import { resolveCartLines, toCouponItems } from "@/lib/posCart";
@@ -298,6 +299,7 @@ async function postHandler(req) {
                 { status: 400 }
             );
         }
+        await recordSales(reservations);
 
         let order;
         let billNumber = '';
@@ -339,6 +341,7 @@ async function postHandler(req) {
             for (const r of reservations) {
                 await releaseStock(r.productId, r.variantIndex, r.quantity);
             }
+            await recordSales(reservations, { reverse: true });
             if (couponClaimed) await releaseCouponUsage(coupon._id);
             throw createError;
         }

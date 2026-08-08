@@ -55,9 +55,9 @@ export default function BlogPage() {
         : BLOG_POSTS.filter(post => post.category === activeCategory);
 
     return (
-        <div className="min-h-screen bg-[#FEFBF6]">
+        <div className="min-h-screen bg-[var(--c-bg)]">
             {/* Header Section */}
-            <div className="bg-[#2A2F25] text-white pt-32 pb-20 overflow-hidden relative">
+            <div className="bg-[var(--c-text)] text-white pt-32 pb-20 overflow-hidden relative">
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none">
                     <svg viewBox="0 0 400 400" className="w-full h-full">
@@ -77,7 +77,7 @@ export default function BlogPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-[#D86B4B] text-white text-[12px] font-bold uppercase tracking-widest mb-6">
+                        <span className="inline-block px-4 py-1.5 rounded-full bg-[var(--c-accent)] text-white text-[12px] font-bold uppercase tracking-widest mb-6">
                             The Gourmet Journal
                         </span>
                         <h1 className="font-serif text-[48px] lg:text-[64px] font-bold leading-[1.1] mb-6 max-w-3xl">
@@ -93,12 +93,12 @@ export default function BlogPage() {
             {/* Content Section */}
             <div className="container mx-auto px-4 xl:px-8 max-w-7xl -mt-10 mb-24 relative z-20">
                 {/* Category Filter */}
-                <div className="flex flex-wrap items-center gap-3 mb-16 p-2 bg-white rounded-[2.5rem] border border-[#ECE8E0] shadow-xl shadow-black/5 inline-flex w-auto mx-auto lg:mx-0">
+                <div className="flex flex-wrap items-center gap-3 mb-16 p-2 bg-white rounded-[2.5rem] border border-[var(--c-border)] shadow-xl shadow-black/5 inline-flex w-auto mx-auto lg:mx-0">
                     {CATEGORIES.map((cat) => (
                         <button
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
-                            className={`px-8 py-3.5 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === cat ? "bg-[#869661] text-white shadow-lg shadow-[#869661]/20" : "text-[#767B71] hover:bg-[#F3EFE8] hover:text-[#2A2F25]"}`}
+                            className={`px-8 py-3.5 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === cat ? "bg-[var(--c-primary)] text-white shadow-lg shadow-[var(--c-primary)]/20" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)] hover:text-[var(--c-text)]"}`}
                         >
                             {cat}
                         </button>
@@ -114,7 +114,7 @@ export default function BlogPage() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className={`group cursor-pointer ${post.featured ? 'lg:col-span-2 lg:grid lg:grid-cols-2 bg-white rounded-[2.5rem] overflow-hidden border border-[#ECE8E0] shadow-sm hover:shadow-xl transition-all duration-500' : ''}`}
+                            className={`group cursor-pointer ${post.featured ? 'lg:col-span-2 lg:grid lg:grid-cols-2 bg-white rounded-[2.5rem] overflow-hidden border border-[var(--c-border)] shadow-sm hover:shadow-xl transition-all duration-500' : ''}`}
                         >
                             <div className={`relative overflow-hidden ${post.featured ? 'h-full' : 'aspect-[4/3] rounded-[2.5rem] mb-6 shadow-sm shadow-black/5'}`}>
                                 <img 
@@ -123,29 +123,29 @@ export default function BlogPage() {
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                                 <div className="absolute top-6 left-6">
-                                    <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[11px] font-bold text-[#2A2F25] uppercase tracking-wider shadow-sm">
+                                    <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[11px] font-bold text-[var(--c-text)] uppercase tracking-wider shadow-sm">
                                         {post.category}
                                     </span>
                                 </div>
                             </div>
 
                             <div className={`${post.featured ? 'p-10 flex flex-col justify-center' : ''}`}>
-                                <div className="flex items-center gap-4 text-[#767B71] text-[13px] font-semibold mb-4">
+                                <div className="flex items-center gap-4 text-[var(--c-text-muted)] text-[13px] font-semibold mb-4">
                                     <span className="flex items-center gap-1.5">
                                         <Calendar className="w-3.5 h-3.5" /> {post.date}
                                     </span>
-                                    <span className="w-1 h-1 rounded-full bg-[#D86B4B]" />
+                                    <span className="w-1 h-1 rounded-full bg-[var(--c-accent)]" />
                                     <span className="flex items-center gap-1.5">
                                         <User className="w-3.5 h-3.5" /> by {post.author}
                                     </span>
                                 </div>
-                                <h2 className={`font-serif font-bold text-[#2A2F25] leading-tight group-hover:text-[#869661] transition-colors ${post.featured ? 'text-[32px] mb-4' : 'text-[22px] mb-3'}`}>
+                                <h2 className={`font-serif font-bold text-[var(--c-text)] leading-tight group-hover:text-[var(--c-primary)] transition-colors ${post.featured ? 'text-[32px] mb-4' : 'text-[22px] mb-3'}`}>
                                     {post.title}
                                 </h2>
-                                <p className="text-[#767B71] text-[15px] leading-relaxed mb-6 line-clamp-3">
+                                <p className="text-[var(--c-text-muted)] text-[15px] leading-relaxed mb-6 line-clamp-3">
                                     {post.excerpt}
                                 </p>
-                                <div className="flex items-center gap-2 text-[#D86B4B] font-bold text-sm group/link">
+                                <div className="flex items-center gap-2 text-[var(--c-accent)] font-bold text-sm group/link">
                                     <span className="tracking-wide">READ FULL STORY</span>
                                     <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
                                 </div>

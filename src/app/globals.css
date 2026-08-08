@@ -26,6 +26,34 @@
   --color-accent-500: #C8A96A;
   --color-accent-600: #b3924f;
 
+  /* Storefront design tokens.
+     Values come from the Theme document, injected as :root custom properties
+     by the root layout. Registering them here turns each one into a real
+     utility (bg-site-primary, text-site-muted, rounded-site-card, ...) so
+     components stop hardcoding hex. Prefixed `site-` to avoid colliding with
+     the shadcn tokens the admin UI uses. */
+  --color-site-primary: var(--c-primary);
+  --color-site-primary-dark: var(--c-primary-dark);
+  --color-site-accent: var(--c-accent);
+  --color-site-accent-soft: var(--c-accent-soft);
+  --color-site-bg: var(--c-bg);
+  --color-site-surface: var(--c-surface);
+  --color-site-surface-alt: var(--c-surface-alt);
+  --color-site-surface-warm: var(--c-surface-warm);
+  --color-site-border: var(--c-border);
+  --color-site-text: var(--c-text);
+  --color-site-muted: var(--c-text-muted);
+  --color-site-faint: var(--c-text-faint);
+  --color-site-on-primary: var(--c-text-on-primary);
+  --color-site-success: var(--c-success);
+  --color-site-success-soft: var(--c-success-soft);
+  --color-site-danger: var(--c-danger);
+  --color-site-star: var(--c-star);
+
+  --radius-site-card: var(--radius-card);
+  --radius-site-btn: var(--radius-btn);
+  --radius-site-hero: var(--radius-hero);
+
   --color-ring: var(--ring);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -155,5 +183,11 @@
 
   .glass-panel {
     @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-lg dark:bg-black/40 dark:border-white/10;
+  }
+
+  /* Shared input styling for admin forms. */
+  .input-admin {
+    @apply w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors;
   }
 }

@@ -3,6 +3,8 @@ import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
 import { withAdmin } from "@/lib/auth";
 import { assignVariantBarcodes } from "@/lib/variantBarcodes";
+import MetaFieldTemplate from "@/models/MetaFieldTemplate";
+import { mergeFieldDefinitions, normalizeFields, sanitizeMetaValues } from "@/lib/meta";
 
 // GET all products
 async function getHandler(req) {
@@ -69,7 +71,11 @@ async function getHandler(req) {
 // POST create product
 async function postHandler(req) {
     try {
-        const { name, images, description, variationTypes, variants, category, isActive, barcode, taxRate, hsn } = await req.json();
+        const {
+            name, images, description, variationTypes, variants, category,
+            isActive, barcode, taxRate, hsn,
+            metaTemplates, customMetaFields, meta
+        } = await req.json();
 
         if (!name || !category) {
             return Response.json(
@@ -90,6 +96,23 @@ async function postHandler(req) {
         // Every variant gets a printable barcode; blanks are auto-generated.
         const variantsWithBarcodes = await assignVariantBarcodes(variants);
 
+        // Metadata is validated against the field definitions it claims to
+        // use, so unknown or malformed keys never reach the document.
+        const templateIds = Array.isArray(metaTemplates) ? metaTemplates : [];
+        const ownFields = normalizeFields(customMetaFields || []);
+        const templates = templateIds.length
+            ? await MetaFieldTemplate.find({ _id: { $in: templateIds } }).lean()
+            : [];
+        const definitions = mergeFieldDefinitions(templates, ownFields);
+        const { meta: safeMeta, errors: metaErrors } = sanitizeMetaValues(meta || {}, definitions);
+
+        if (metaErrors.length) {
+            return Response.json(
+                { success: false, message: metaErrors[0], errors: metaErrors },
+                { status: 400 }
+            );
+        }
+
         const product = await Product.create({
             name,
             images: images || [],
@@ -101,6 +124,9 @@ async function postHandler(req) {
             barcode: barcode || "",
             taxRate: Math.min(100, Math.max(0, Number(taxRate) || 0)),
             hsn: hsn || "",
+            metaTemplates: templateIds,
+            customMetaFields: ownFields,
+            meta: safeMeta,
         });
 
         const populatedProduct = await Product.findById(product._id)

@@ -69,10 +69,12 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-UserSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        next();
-    }
+// Mongoose 9 removed the `next` callback from middleware. The missing `return`
+// here also meant an unchanged password was re-hashed on every save, which
+// would invalidate it — the early return fixes both.
+UserSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
+
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });

@@ -16,9 +16,9 @@ const ICON_BY_TYPE = {
 };
 
 const COLOR_VARIANTS = [
-    { color: "bg-[#F0F4EC]", borderColor: "border-[#869661]", tagColor: "text-[#647345]" },
-    { color: "bg-[#FFF5F0]", borderColor: "border-[#D86B4B]", tagColor: "text-[#D86B4B]" },
-    { color: "bg-[#FDF8EF]", borderColor: "border-[#C4A642]", tagColor: "text-[#8B7A2E]" },
+    { color: "bg-[var(--c-accent-soft)]", borderColor: "border-[var(--c-primary)]", tagColor: "text-[#647345]" },
+    { color: "bg-[#FFF5F0]", borderColor: "border-[var(--c-accent)]", tagColor: "text-[var(--c-accent)]" },
+    { color: "bg-[var(--c-surface-warm)]", borderColor: "border-[#C4A642]", tagColor: "text-[#8B7A2E]" },
 ];
 
 function formatDiscountLabel(c) {
@@ -79,10 +79,10 @@ export default function OffersPage() {
     };
 
     return (
-        <main className="min-h-screen bg-[#FEFBF6]">
+        <main className="min-h-screen bg-[var(--c-bg)]">
             {/* Hero */}
             <section className="relative h-[50vh] lg:h-[60vh] w-full overflow-hidden">
-                <div className="absolute inset-0 bg-[#2A2F25] z-10" />
+                <div className="absolute inset-0 bg-[var(--c-text)] z-10" />
                 <img
                     src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=2853&auto=format&fit=crop"
                     alt="Offers"
@@ -90,7 +90,7 @@ export default function OffersPage() {
                 />
                 <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-                        <span className="inline-block bg-[#D86B4B] text-white text-xs font-semibold px-5 py-2 rounded-full mb-6">
+                        <span className="inline-block bg-[var(--c-accent)] text-white text-xs font-semibold px-5 py-2 rounded-full mb-6">
                             🎉 Live Offers
                         </span>
                         <h1 className="font-serif text-[44px] lg:text-6xl text-white font-bold mb-4 leading-tight">
@@ -99,7 +99,7 @@ export default function OffersPage() {
                         <p className="text-white/70 text-lg max-w-xl mx-auto mb-8">
                             Copy a code and apply it at checkout for instant savings.
                         </p>
-                        <Link href="/products" className="inline-flex items-center bg-[#869661] hover:bg-[#71824F] text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-colors">
+                        <Link href="/products" className="inline-flex items-center bg-[var(--c-primary)] hover:bg-[var(--c-primary-dark)] text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-colors">
                             Browse Products
                         </Link>
                     </motion.div>
@@ -110,21 +110,21 @@ export default function OffersPage() {
             <section className="py-16 lg:py-24">
                 <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
                     <div className="text-center mb-12">
-                        <h2 className="font-serif text-[32px] font-bold text-[#2A2F25] mb-3">Available Coupon Codes</h2>
-                        <p className="text-[#767B71] text-[15px] max-w-lg mx-auto">
+                        <h2 className="font-serif text-[32px] font-bold text-[var(--c-text)] mb-3">Available Coupon Codes</h2>
+                        <p className="text-[var(--c-text-muted)] text-[15px] max-w-lg mx-auto">
                             Click any code to copy and paste it at checkout.
                         </p>
                     </div>
 
                     {loading ? (
                         <div className="flex justify-center py-16">
-                            <Loader2 className="w-8 h-8 text-[#869661] animate-spin" />
+                            <Loader2 className="w-8 h-8 text-[var(--c-primary)] animate-spin" />
                         </div>
                     ) : coupons.length === 0 ? (
                         <div className="text-center py-16 max-w-md mx-auto">
-                            <Gift className="w-12 h-12 mx-auto mb-4 text-[#869661]/40" strokeWidth={1.5} />
-                            <h3 className="font-serif text-xl font-bold text-[#2A2F25] mb-2">No Active Offers</h3>
-                            <p className="text-[#767B71] text-sm">
+                            <Gift className="w-12 h-12 mx-auto mb-4 text-[var(--c-primary)]/40" strokeWidth={1.5} />
+                            <h3 className="font-serif text-xl font-bold text-[var(--c-text)] mb-2">No Active Offers</h3>
+                            <p className="text-[var(--c-text-muted)] text-sm">
                                 Check back soon — new promotions drop regularly.
                             </p>
                         </div>
@@ -143,19 +143,19 @@ export default function OffersPage() {
                                         onClick={() => handleCopy(coupon.code)}
                                     >
                                         <Icon className={`w-8 h-8 ${style.tagColor} mx-auto mb-4`} strokeWidth={1.5} />
-                                        <h3 className="font-serif text-xl font-bold text-[#2A2F25] mb-2">
+                                        <h3 className="font-serif text-xl font-bold text-[var(--c-text)] mb-2">
                                             {formatDiscountLabel(coupon)}
                                         </h3>
-                                        <p className="text-[#767B71] text-sm mb-3 leading-relaxed min-h-[40px]">
+                                        <p className="text-[var(--c-text-muted)] text-sm mb-3 leading-relaxed min-h-[40px]">
                                             {coupon.description || "Exclusive discount on eligible products."}
                                         </p>
                                         {coupon.minPurchase > 0 && (
-                                            <p className="text-[11px] text-[#767B71]/70 mb-4 font-medium">
+                                            <p className="text-[11px] text-[var(--c-text-muted)]/70 mb-4 font-medium">
                                                 Min. order ₹{coupon.minPurchase}
                                                 {coupon.maxDiscount ? ` · Max ₹${coupon.maxDiscount} off` : ""}
                                             </p>
                                         )}
-                                        <div className={`inline-flex items-center gap-2 bg-white border border-[#ECE8E0] px-5 py-2.5 rounded-xl font-mono font-bold text-sm tracking-wider ${style.tagColor} group-hover:shadow-md transition-all`}>
+                                        <div className={`inline-flex items-center gap-2 bg-white border border-[var(--c-border)] px-5 py-2.5 rounded-xl font-mono font-bold text-sm tracking-wider ${style.tagColor} group-hover:shadow-md transition-all`}>
                                             {coupon.code}
                                             {copiedCode === coupon.code
                                                 ? <Check className="w-4 h-4 text-green-600" />
@@ -172,14 +172,14 @@ export default function OffersPage() {
 
             {/* Trending Products */}
             {trending.length > 0 && (
-                <section className="py-16 lg:py-20 bg-white border-t border-[#ECE8E0]">
+                <section className="py-16 lg:py-20 bg-white border-t border-[var(--c-border)]">
                     <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
                         <div className="flex items-end justify-between mb-10">
                             <div>
-                                <span className="text-[#D86B4B] text-sm font-medium mb-1 block">New In</span>
-                                <h2 className="font-serif text-[28px] font-bold text-[#2A2F25]">Latest Arrivals</h2>
+                                <span className="text-[var(--c-accent)] text-sm font-medium mb-1 block">New In</span>
+                                <h2 className="font-serif text-[28px] font-bold text-[var(--c-text)]">Latest Arrivals</h2>
                             </div>
-                            <Link href="/products" className="hidden sm:inline-flex items-center text-sm font-medium text-[#2A2F25] hover:text-[#647345] transition-colors">
+                            <Link href="/products" className="hidden sm:inline-flex items-center text-sm font-medium text-[var(--c-text)] hover:text-[#647345] transition-colors">
                                 View All →
                             </Link>
                         </div>

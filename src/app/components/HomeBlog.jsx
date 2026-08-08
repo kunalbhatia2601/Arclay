@@ -43,7 +43,7 @@ export default function HomeBlog() {
                     <motion.div 
                         initial={{ opacity: 0, x: 10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once:true }} transition={{ delay: 0.1 }}
                     >
-                        <Link href="/blog" className="text-[13px] font-semibold text-[#9CA3AF] hover:text-[#2A2F25] transition-colors">
+                        <Link href="/blog" className="text-[13px] font-semibold text-[#9CA3AF] hover:text-[var(--c-text)] transition-colors">
                             See all
                         </Link>
                     </motion.div>
@@ -68,7 +68,7 @@ export default function HomeBlog() {
                         >
                             <Link href="/blog" className="block w-full">
                                 {/* Image Box */}
-                                <div className="relative aspect-[4/3] w-full rounded-[2rem] overflow-hidden bg-[#F3EFE8] mb-4">
+                                <div className="relative aspect-[4/3] w-full rounded-[2rem] overflow-hidden bg-[var(--c-surface-alt)] mb-4">
                                     <img 
                                         src={blog.mainImage} 
                                         alt={blog.title}
@@ -90,7 +90,7 @@ export default function HomeBlog() {
                                     <span className="text-[13px] font-medium text-[#9CA3AF] mb-1.5 block">
                                         {blog.category}
                                     </span>
-                                    <h3 className="font-sans text-[16px] lg:text-[18px] font-bold text-[#1A1D23] leading-snug line-clamp-2 transition-colors group-hover:text-[#D86B4B]">
+                                    <h3 className="font-sans text-[16px] lg:text-[18px] font-bold text-[#1A1D23] leading-snug line-clamp-2 transition-colors group-hover:text-[var(--c-accent)]">
                                         {blog.title}
                                     </h3>
                                 </div>

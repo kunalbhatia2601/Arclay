@@ -3,6 +3,14 @@ import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
 import { withAdmin } from "@/lib/auth";
 import { assignVariantBarcodes } from "@/lib/variantBarcodes";
+import MetaFieldTemplate from "@/models/MetaFieldTemplate";
+import {
+    loadTemplatesForProduct,
+    mergeFieldDefinitions,
+    normalizeFields,
+    resolveProductMeta,
+    sanitizeMetaValues,
+} from "@/lib/meta";
 
 // GET single product
 async function getHandler(req, { params }) {
@@ -22,9 +30,20 @@ async function getHandler(req, { params }) {
             );
         }
 
+        // The editor needs the field definitions alongside the values, plus
+        // whichever templates this product's category would suggest.
+        const templates = await loadTemplatesForProduct(product, { includeSuggested: true });
+        const appliedIds = new Set((product.metaTemplates || []).map(String));
+        const resolvedMeta = resolveProductMeta(
+            product,
+            templates.filter(t => appliedIds.has(String(t._id)))
+        );
+
         return Response.json({
             success: true,
             product,
+            meta: resolvedMeta,
+            availableTemplates: templates,
         });
     } catch (error) {
         console.error("Get product error:", error);
@@ -40,7 +59,11 @@ async function putHandler(req, { params }) {
     try {
         const { id } = await params;
         const body = await req.json();
-        const { name, images, description, variationTypes, variants, category, isActive, isFeatured, long_description, barcode, taxRate, hsn } = body;
+        const {
+            name, images, description, variationTypes, variants, category,
+            isActive, isFeatured, long_description, barcode, taxRate, hsn,
+            metaTemplates, customMetaFields, meta, removeOrphanKeys
+        } = body;
 
         await connectDB();
 
@@ -70,6 +93,47 @@ async function putHandler(req, { params }) {
         if (barcode !== undefined) product.barcode = barcode;
         if (taxRate !== undefined) product.taxRate = Math.min(100, Math.max(0, Number(taxRate) || 0));
         if (hsn !== undefined) product.hsn = hsn;
+
+        // ── Custom metadata ──────────────────────────────────────────
+        if (metaTemplates !== undefined) {
+            product.metaTemplates = Array.isArray(metaTemplates) ? metaTemplates : [];
+        }
+        if (customMetaFields !== undefined) {
+            product.customMetaFields = normalizeFields(customMetaFields);
+        }
+
+        if (meta !== undefined) {
+            const templates = product.metaTemplates?.length
+                ? await MetaFieldTemplate.find({ _id: { $in: product.metaTemplates } }).lean()
+                : [];
+            const definitions = mergeFieldDefinitions(templates, product.customMetaFields || []);
+            const { meta: safeMeta, errors } = sanitizeMetaValues(meta, definitions);
+
+            if (errors.length) {
+                return Response.json(
+                    { success: false, message: errors[0], errors },
+                    { status: 400 }
+                );
+            }
+
+            // Values whose definition disappeared (template edited or detached)
+            // are preserved by default so no product data is lost silently.
+            // The editor deletes them explicitly via removeOrphanKeys.
+            const existing = product.meta instanceof Map
+                ? Object.fromEntries(product.meta)
+                : (product.meta || {});
+            const definedKeys = new Set(definitions.map(d => d.key));
+            const discard = new Set(Array.isArray(removeOrphanKeys) ? removeOrphanKeys : []);
+
+            const preservedOrphans = {};
+            for (const [key, value] of Object.entries(existing)) {
+                if (!definedKeys.has(key) && !discard.has(key)) {
+                    preservedOrphans[key] = value;
+                }
+            }
+
+            product.meta = { ...preservedOrphans, ...safeMeta };
+        }
 
         await product.save();
 

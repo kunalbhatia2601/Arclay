@@ -131,7 +131,7 @@ export default function Navbar() {
             <>
                 <div className={`w-full sticky top-0 z-50 transition-all duration-300`}>
                     {/* Top Announcement Bar */}
-                    <div className="hidden lg:block w-full bg-[#2A2F25] text-white text-[12px] py-1.5 font-medium border-b border-white/5">
+                    <div className="hidden lg:block w-full bg-[var(--c-text)] text-white text-[12px] py-1.5 font-medium border-b border-white/5">
                         <div className="container mx-auto px-6 xl:px-8 flex justify-between items-center max-w-7xl">
                             <div className="flex gap-6 items-center">
                                 {phoneContact && (
@@ -176,7 +176,7 @@ export default function Navbar() {
                                     </div>
                                 )}
                                 <div className="flex flex-col min-w-0">
-                                    <span className="font-serif text-[14px] xs:text-[16px] sm:text-[26px] font-bold tracking-tight text-[#2A2F25] leading-none truncate">
+                                    <span className="font-serif text-[14px] xs:text-[16px] sm:text-[26px] font-bold tracking-tight text-[var(--c-text)] leading-none truncate">
                                         {SITE_NAME}
                                     </span>
                                     {SITE_DESCRIPTION && (
@@ -189,12 +189,12 @@ export default function Navbar() {
 
                             {/* Center Navigation Links (Desktop) */}
                             <div className="hidden lg:flex items-center gap-2">
-                                <Link href="/" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/') ? 'bg-[#F0F4EC] text-[#3A4B29]' : 'text-foreground hover:bg-[#F0F4EC]/50 hover:text-[#3A4B29]'}`}>
+                                <Link href="/" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/') ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
                                     <Home className="w-4 h-4" strokeWidth={2} /> Home
                                 </Link>
 
                                 <div className="relative group" onMouseEnter={() => setIsShopHovered(true)} onMouseLeave={() => setIsShopHovered(false)}>
-                                    <Link href="/products" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/products') || isShopHovered ? 'bg-[#F0F4EC] text-[#3A4B29]' : 'text-foreground hover:bg-[#F0F4EC]/50 hover:text-[#3A4B29]'}`}>
+                                    <Link href="/products" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/products') || isShopHovered ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
                                         <Package className="w-4 h-4" strokeWidth={2} /> Shop <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                                     </Link>
                                     <AnimatePresence>
@@ -202,7 +202,7 @@ export default function Navbar() {
                                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute left-0 top-full pt-2 w-56">
                                                 <div className="bg-white border border-border shadow-xl rounded-2xl py-3 overflow-hidden">
                                                     {shopCategories.map(cat => (
-                                                        <Link key={cat.label} href={cat.href} className="block px-5 py-2.5 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">
+                                                        <Link key={cat.label} href={cat.href} className="block px-5 py-2.5 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors">
                                                             {cat.label}
                                                         </Link>
                                                     ))}
@@ -212,29 +212,29 @@ export default function Navbar() {
                                     </AnimatePresence>
                                 </div>
 
-                                <Link href="/bundles" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/bundles') ? 'bg-[#F0F4EC] text-[#3A4B29]' : 'text-foreground hover:bg-[#F0F4EC]/50 hover:text-[#3A4B29]'}`}>
+                                <Link href="/bundles" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/bundles') ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
                                     <Gift className="w-4 h-4" strokeWidth={2} /> Gift Boxes
                                 </Link>
 
-                                <Link href="/offers" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/offers') ? 'bg-[#F0F4EC] text-[#3A4B29]' : 'text-foreground hover:bg-[#F0F4EC]/50 hover:text-[#3A4B29]'}`}>
+                                <Link href="/offers" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/offers') ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
                                     <Percent className="w-4 h-4" strokeWidth={2} /> Offers
                                 </Link>
 
                                 <div className="relative group">
-                                    <button className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-foreground hover:bg-[#F0F4EC]/50 hover:text-[#3A4B29] transition-all">
+                                    <button className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29] transition-all">
                                         <BookOpen className="w-4 h-4" strokeWidth={2} /> More <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                                     </button>
                                     <div className="absolute left-0 top-full pt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                                         <div className="bg-white border border-border shadow-xl rounded-2xl py-3 overflow-hidden">
-                                            <Link href="/about" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors text-nowrap">About Us</Link>
-                                            <Link href="/blog" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Blog</Link>
-                                            <Link href="/contact" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors">Contact</Link>
-                                            <Link href="/faqs" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[#F0F4EC] hover:text-[#3A4B29] transition-colors border-t border-border/40 mt-1">FAQs</Link>
+                                            <Link href="/about" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors text-nowrap">About Us</Link>
+                                            <Link href="/blog" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors">Blog</Link>
+                                            <Link href="/contact" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors">Contact</Link>
+                                            <Link href="/faqs" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors border-t border-border/40 mt-1">FAQs</Link>
                                         </div>
                                     </div>
                                 </div>
                             </div>                            {/* Right Area - Luxury Liquid Icons */}
-                            <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[#869661]/5 backdrop-blur-md rounded-full border border-[#869661]/10 relative shrink min-w-0">
+                            <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[var(--c-primary)]/5 backdrop-blur-md rounded-full border border-[var(--c-primary)]/10 relative shrink min-w-0">
                                 {[
                                     { icon: Search, onClick: () => setIsSearchOpen(true), label: "Search" },
                                     // { icon: Bell, onClick: () => setIsNotificationsOpen(!isNotificationsOpen), label: "Notifications", hasBadge: true, count: 0 },
@@ -243,34 +243,34 @@ export default function Navbar() {
                                 ].map((action, idx) => (
                                     <div key={action.label} className={`relative group flex items-center justify-center shrink-0 ${action.hiddenClass || ""}`}>
                                         {action.href ? (
-                                            <Link href={action.href} className="p-2 sm:p-2.5 rounded-full hover:bg-[#869661]/10 transition-all text-[#2A2F25] block relative z-10">
+                                            <Link href={action.href} className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--c-primary)]/10 transition-all text-[var(--c-text)] block relative z-10">
                                                 {action.loading ? (
-                                                    <div className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem] border-2 border-[#869661] border-t-transparent rounded-full animate-spin" />
+                                                    <div className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem] border-2 border-[var(--c-primary)] border-t-transparent rounded-full animate-spin" />
                                                 ) : (
                                                     <action.icon className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem]" strokeWidth={1.5} />
                                                 )}
                                             </Link>
                                         ) : (
-                                            <button onClick={action.onClick} className="p-2 sm:p-2.5 rounded-full hover:bg-[#869661]/10 transition-all text-[#2A2F25] relative z-10">
+                                            <button onClick={action.onClick} className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--c-primary)]/10 transition-all text-[var(--c-text)] relative z-10">
                                                 <action.icon className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem]" strokeWidth={1.5} />
                                                 {action.hasBadge && action.count > 0 && (
-                                                    <span className="absolute top-0 right-0 sm:-top-0.5 sm:-right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-[#D86B4B] text-white text-[9px] sm:text-[10px] flex items-center justify-center rounded-full font-bold ring-2 ring-white z-20 shadow-sm">
+                                                    <span className="absolute top-0 right-0 sm:-top-0.5 sm:-right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-[var(--c-accent)] text-white text-[9px] sm:text-[10px] flex items-center justify-center rounded-full font-bold ring-2 ring-white z-20 shadow-sm">
                                                         {action.count}
                                                     </span>
                                                 )}
                                             </button>
                                         )}
                                         {/* Liquid Blob on Hover (Targeting the gooey filter) */}
-                                        <div className="absolute inset-0 bg-[#869661]/15 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 -z-10" style={{ filter: 'url(#global-gooey)' }} />
+                                        <div className="absolute inset-0 bg-[var(--c-primary)]/15 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 -z-10" style={{ filter: 'url(#global-gooey)' }} />
                                     </div>
                                 ))}
                                 
-                                <div className="w-px h-4 sm:h-5 bg-[#869661]/20 mx-1 sm:mx-2 shrink-0" />
+                                <div className="w-px h-4 sm:h-5 bg-[var(--c-primary)]/20 mx-1 sm:mx-2 shrink-0" />
 
                                 {/* Mobile Hamburger */}
                                 <button 
                                     onClick={() => setIsMobileMenuOpen(true)}
-                                    className="lg:hidden p-2.5 rounded-full bg-[#869661] text-white relative z-10 shadow-sm shrink-0"
+                                    className="lg:hidden p-2.5 rounded-full bg-[var(--c-primary)] text-white relative z-10 shadow-sm shrink-0"
                                 >
                                     <Package className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem]" strokeWidth={2} />
                                 </button>
@@ -295,18 +295,18 @@ export default function Navbar() {
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
                             className="fixed inset-0 z-[100] bg-white/90 backdrop-blur-xl lg:hidden flex flex-col"
                         >
-                            <div className="p-6 flex justify-between items-center border-b border-[#ECE8E0]/50">
+                            <div className="p-6 flex justify-between items-center border-b border-[var(--c-border)]/50">
                                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
                                     {SITE_LOGO ? (
                                         <img src={`/${SITE_LOGO}`} alt={SITE_NAME} className="w-8 h-8 rounded-lg object-contain" />
                                     ) : (
-                                        <div className="w-8 h-8 bg-[#869661] rounded-lg flex items-center justify-center text-white font-serif font-bold italic">
+                                        <div className="w-8 h-8 bg-[var(--c-primary)] rounded-lg flex items-center justify-center text-white font-serif font-bold italic">
                                             {SITE_NAME.charAt(0).toUpperCase()}
                                         </div>
                                     )}
-                                    <span className="font-serif text-xl font-bold tracking-tight text-[#2A2F25]">{SITE_NAME}</span>
+                                    <span className="font-serif text-xl font-bold tracking-tight text-[var(--c-text)]">{SITE_NAME}</span>
                                 </Link>
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-[#2A2F25] hover:bg-[#F3EFE8] rounded-full transition-colors">
+                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-[var(--c-text)] hover:bg-[var(--c-surface-alt)] rounded-full transition-colors">
                                     <ChevronRight className="w-6 h-6 rotate-90" />
                                 </button>
                             </div>
@@ -314,18 +314,18 @@ export default function Navbar() {
                             <div className="flex-1 overflow-y-auto px-6 py-8">
                                 <nav className="space-y-8">
                                     <div>
-                                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-[#767B71] font-bold mb-4">Shop Collections</h3>
+                                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-[var(--c-text-muted)] font-bold mb-4">Shop Collections</h3>
                                         <div className="grid grid-cols-1 gap-3">
                                             {categories.map((cat) => (
                                                 <Link
                                                     key={cat._id}
                                                     href={`/products?category=${cat._id}`}
                                                     onClick={() => setIsMobileMenuOpen(false)}
-                                                    className="flex items-center justify-between p-4 bg-[#F3EFE8]/50 rounded-2xl hover:bg-[#869661] hover:text-white transition-all group relative overflow-hidden"
+                                                    className="flex items-center justify-between p-4 bg-[var(--c-surface-alt)]/50 rounded-2xl hover:bg-[var(--c-primary)] hover:text-white transition-all group relative overflow-hidden"
                                                 >
                                                     <span className="font-serif text-lg font-bold relative z-10">{cat.name}</span>
                                                     <ChevronRight className="w-5 h-5 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all relative z-10" />
-                                                    <div className="absolute inset-0 bg-[#869661] scale-x-0 group-hover:scale-x-100 transition-transform origin-left -z-0" />
+                                                    <div className="absolute inset-0 bg-[var(--c-primary)] scale-x-0 group-hover:scale-x-100 transition-transform origin-left -z-0" />
                                                 </Link>
                                             ))}
                                         </div>
@@ -340,7 +340,7 @@ export default function Navbar() {
                 {!pathname.includes("/products/") || pathname.split("/").length < 3 ? (
                     <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[360px] z-[120] pointer-events-auto">
 
-                    <div className="bg-white/80 backdrop-blur-[24px] rounded-[2.5rem] border border-[#869661]/25 shadow-[0_25px_60px_-15px_rgba(42,47,37,0.2)] p-1.5 relative overflow-visible">
+                    <div className="bg-white/80 backdrop-blur-[24px] rounded-[2.5rem] border border-[var(--c-primary)]/25 shadow-[0_25px_60px_-15px_rgba(42,47,37,0.2)] p-1.5 relative overflow-visible">
                         
                         {/* 1. Underlying Liquid Layer (Gooey Filter applies ONLY here) */}
                         <div className="absolute inset-1.5 z-0" style={{ filter: 'url(#global-gooey)' }}>
@@ -376,7 +376,7 @@ export default function Navbar() {
                                             onClick={() => setIsSearchOpen(true)}
                                             className="relative flex items-center justify-center h-full group"
                                         >
-                                            <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 text-[#2A2F25]/40 hover:text-[#869661]`}>
+                                            <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 text-[var(--c-text)]/40 hover:text-[var(--c-primary)]`}>
                                                 <nav.icon className="w-5.5 h-5.5 xs:w-6.5 xs:h-6.5" strokeWidth={1.5} />
                                             </div>
                                         </button>
@@ -392,7 +392,7 @@ export default function Navbar() {
                                         <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
                                             active 
                                                 ? 'text-[#3A4B29] scale-110' 
-                                                : 'text-[#2A2F25]/40 hover:text-[#869661]'
+                                                : 'text-[var(--c-text)]/40 hover:text-[var(--c-primary)]'
                                         }`}>
                                             <nav.icon className="w-5.5 h-5.5 xs:w-6.5 xs:h-6.5" strokeWidth={active ? 2.5 : 1.5} />
                                         </div>

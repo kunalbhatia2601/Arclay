@@ -23,9 +23,11 @@ export async function reserveStock(productId, variantIndex, quantity) {
     if (variantIndex < 0 || !(quantity > 0)) return false;
 
     const path = `variants.${variantIndex}.stock`;
+    // totalStock mirrors the sum across variants and drives the storefront's
+    // in-stock filter, so it moves in the same atomic update as the variant.
     const result = await Product.updateOne(
         { _id: productId, [path]: { $gte: quantity } },
-        { $inc: { [path]: -quantity } }
+        { $inc: { [path]: -quantity, totalStock: -quantity } }
     );
 
     return result.modifiedCount === 1;
@@ -37,7 +39,10 @@ export async function releaseStock(productId, variantIndex, quantity) {
     if (variantIndex < 0 || !(quantity > 0)) return;
 
     const path = `variants.${variantIndex}.stock`;
-    await Product.updateOne({ _id: productId }, { $inc: { [path]: quantity } });
+    await Product.updateOne(
+        { _id: productId },
+        { $inc: { [path]: quantity, totalStock: quantity } }
+    );
 }
 
 // Reserve every line of an order, rolling back on the first failure so an order

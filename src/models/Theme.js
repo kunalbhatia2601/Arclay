@@ -82,6 +82,14 @@ export const DEFAULT_TOKENS = Object.fromEntries(
 );
 
 const ThemeSchema = new mongoose.Schema({
+    // Fixed discriminator enforcing the singleton. A plain findOne-then-create
+    // races: two concurrent requests both see nothing and both insert, after
+    // which findOne may return whichever copy was not the one being edited.
+    key: {
+        type: String,
+        default: 'default',
+        unique: true,   // unique already creates the index
+    },
     // key -> value. Missing keys fall back to the definition's default, so a
     // token added in a later release needs no migration.
     tokens: {
@@ -98,10 +106,14 @@ const ThemeSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
+// Atomic get-or-create on the fixed key, so concurrent callers converge on one
+// document instead of racing to insert competing copies.
 ThemeSchema.statics.getTheme = async function () {
-    let theme = await this.findOne();
-    if (!theme) theme = await this.create({});
-    return theme;
+    return this.findOneAndUpdate(
+        { key: 'default' },
+        { $setOnInsert: { key: 'default' } },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 };
 
 export default mongoose.models.Theme || mongoose.model('Theme', ThemeSchema);

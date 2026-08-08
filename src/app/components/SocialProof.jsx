@@ -66,15 +66,15 @@ export default function SocialProof() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="py-20 lg:py-28 bg-[#FEFBF6] overflow-hidden"
+            className="py-20 lg:py-28 bg-[var(--c-bg)] overflow-hidden"
         >
             <div className="container mx-auto px-4 lg:px-8">
                 {/* Heading */}
                 <div className="text-center mb-12 lg:mb-16">
-                    <h2 className="font-serif text-[32px] md:text-4xl lg:text-[44px] font-bold text-[#2A2F25]">
+                    <h2 className="font-serif text-[32px] md:text-4xl lg:text-[44px] font-bold text-[var(--c-text)]">
                         What Our Customers Say
                     </h2>
-                    <p className="text-[#767B71] mt-3 text-sm lg:text-base max-w-lg mx-auto">
+                    <p className="text-[var(--c-text-muted)] mt-3 text-sm lg:text-base max-w-lg mx-auto">
                         Don&apos;t just take our word for it - hear from our satisfied customers
                     </p>
                 </div>
@@ -83,20 +83,20 @@ export default function SocialProof() {
                 <div className="max-w-4xl mx-auto mb-20 lg:mb-28">
                     {loading ? (
                         <div className="flex justify-center py-20">
-                            <div className="w-8 h-8 border-4 border-[#869661] border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-8 h-8 border-4 border-[var(--c-primary)] border-t-transparent rounded-full animate-spin"></div>
                         </div>
                     ) : review ? (
-                        <div className="bg-white rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-[#ECE8E0] px-6 py-12 md:px-16 md:py-20 text-center transition-all duration-500 relative overflow-hidden group">
+                        <div className="bg-white rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-[var(--c-border)] px-6 py-12 md:px-16 md:py-20 text-center transition-all duration-500 relative overflow-hidden group">
                            
                             {/* Quote Icon */}
                             <div className="flex justify-center mb-10">
-                                <div className="w-20 h-20 rounded-full bg-[#F0F4EC]/50 flex items-center justify-center border border-[#869661]/10">
-                                    <Quote className="w-8 h-8 text-[#869661] opacity-30" />
+                                <div className="w-20 h-20 rounded-full bg-[var(--c-accent-soft)]/50 flex items-center justify-center border border-[var(--c-primary)]/10">
+                                    <Quote className="w-8 h-8 text-[var(--c-primary)] opacity-30" />
                                 </div>
                             </div>
 
                             {/* Quote Text */}
-                            <p className="font-serif text-[20px] md:text-[24px] text-[#2A2F25] leading-relaxed max-w-2xl mx-auto">
+                            <p className="font-serif text-[20px] md:text-[24px] text-[var(--c-text)] leading-relaxed max-w-2xl mx-auto">
                                 &quot;{review.text}&quot;
                             </p>
 
@@ -106,13 +106,13 @@ export default function SocialProof() {
                                     {review.author[0]}
                                 </div>
                                 <div className="text-center">
-                                    <p className="font-bold text-[#2A2F25] text-[15px]">{review.author}</p>
+                                    <p className="font-bold text-[var(--c-text)] text-[15px]">{review.author}</p>
                                     {/* Stars */}
                                     <div className="flex justify-center gap-0.5 mt-2">
                                         {Array.from({ length: 5 }, (_, i) => (
                                             <svg
                                                 key={i}
-                                                className={`w-3.5 h-3.5 ${i < (review.rating || 5) ? "text-[#E6B147] fill-[#E6B147]" : "text-[#ECE8E0] fill-[#ECE8E0]"}`}
+                                                className={`w-3.5 h-3.5 ${i < (review.rating || 5) ? "text-[#E6B147] fill-[#E6B147]" : "text-[var(--c-border)] fill-[var(--c-border)]"}`}
                                                 viewBox="0 0 24 24"
                                             >
                                                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
@@ -130,7 +130,7 @@ export default function SocialProof() {
                             {/* Prev */}
                             <button
                                 onClick={goPrev}
-                                className="w-10 h-10 rounded-full bg-white border border-[#ECE8E0] flex items-center justify-center text-[#2A2F25] hover:shadow-md transition-all sm:translate-x-[-100%]"
+                                className="w-10 h-10 rounded-full bg-white border border-[var(--c-border)] flex items-center justify-center text-[var(--c-text)] hover:shadow-md transition-all sm:translate-x-[-100%]"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
@@ -143,8 +143,8 @@ export default function SocialProof() {
                                         onClick={() => setCurrent(i)}
                                         className={`rounded-full transition-all duration-500 ${
                                             i === current
-                                                ? "w-6 h-1.5 bg-[#869661]"
-                                                : "w-1.5 h-1.5 bg-[#ECE8E0]"
+                                                ? "w-6 h-1.5 bg-[var(--c-primary)]"
+                                                : "w-1.5 h-1.5 bg-[var(--c-border)]"
                                         }`}
                                     />
                                 ))}
@@ -153,7 +153,7 @@ export default function SocialProof() {
                             {/* Next */}
                             <button
                                 onClick={goNext}
-                                className="w-10 h-10 rounded-full bg-white border border-[#ECE8E0] flex items-center justify-center text-[#2A2F25] hover:shadow-md transition-all sm:translate-x-[100%]"
+                                className="w-10 h-10 rounded-full bg-white border border-[var(--c-border)] flex items-center justify-center text-[var(--c-text)] hover:shadow-md transition-all sm:translate-x-[100%]"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
@@ -162,7 +162,7 @@ export default function SocialProof() {
                 </div>
 
                 {/* Instagram Grid Section */}
-                <div className="border-[#ECE8E0]">
+                <div className="border-[var(--c-border)]">
                     <div className="text-center mb-10">
                          <div className="flex items-center justify-center gap-2 mb-3">
                              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] flex items-center justify-center">
@@ -172,12 +172,12 @@ export default function SocialProof() {
                                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
                                  </svg>
                              </div>
-                             <p className="text-[#D86B4B] font-bold text-sm tracking-wide">@{siteName.toLowerCase().replace(/\s+/g, '')}</p>
+                             <p className="text-[var(--c-accent)] font-bold text-sm tracking-wide">@{siteName.toLowerCase().replace(/\s+/g, '')}</p>
                          </div>
-                        <h2 className="font-serif text-[32px] md:text-4xl font-bold text-[#2A2F25]">
+                        <h2 className="font-serif text-[32px] md:text-4xl font-bold text-[var(--c-text)]">
                             Follow Our Journey
                         </h2>
-                        <p className="text-[#767B71] text-sm mt-3">Tag us in your photos for a chance to be featured</p>
+                        <p className="text-[var(--c-text-muted)] text-sm mt-3">Tag us in your photos for a chance to be featured</p>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

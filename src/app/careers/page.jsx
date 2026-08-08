@@ -19,7 +19,7 @@ const jobs = [
 
 export default function CareersPage() {
     return (
-        <div className="min-h-screen bg-[#FEFBF6] pt-24 pb-20 px-4">
+        <div className="min-h-screen bg-[var(--c-bg)] pt-24 pb-20 px-4">
             <div className="container mx-auto max-w-5xl">
                 {/* Hero */}
                 <motion.div 
@@ -27,12 +27,12 @@ export default function CareersPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-center mb-20"
                 >
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#869661]/10 text-[#869661] text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--c-primary)]/10 text-[var(--c-primary)] text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
                         <Sparkles className="w-3.5 h-3.5" />
                         Join Our Tribe
                     </div>
-                    <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#2A2F25] mb-6">Crafting the Future of Tradition</h1>
-                    <p className="text-[#767B71] text-lg max-w-2xl mx-auto leading-relaxed">At {SITE_NAME}, we don&apos;t just make pickles; we preserve legacies. Join us in bringing artisanal excellence to the global stage.</p>
+                    <h1 className="font-serif text-5xl md:text-6xl font-bold text-[var(--c-text)] mb-6">Crafting the Future of Tradition</h1>
+                    <p className="text-[var(--c-text-muted)] text-lg max-w-2xl mx-auto leading-relaxed">At {SITE_NAME}, we don&apos;t just make pickles; we preserve legacies. Join us in bringing artisanal excellence to the global stage.</p>
                 </motion.div>
 
                 {/* Values */}
@@ -44,40 +44,40 @@ export default function CareersPage() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-white rounded-[2rem] p-8 border border-[#ECE8E0] text-center"
+                            className="bg-white rounded-[2rem] p-8 border border-[var(--c-border)] text-center"
                         >
-                            <div className="w-12 h-12 rounded-2xl bg-[#F0F4EC] flex items-center justify-center text-[#869661] mx-auto mb-6">
+                            <div className="w-12 h-12 rounded-2xl bg-[var(--c-accent-soft)] flex items-center justify-center text-[var(--c-primary)] mx-auto mb-6">
                                 <v.icon className="w-6 h-6" />
                             </div>
-                            <h3 className="font-serif text-xl font-bold text-[#2A2F25] mb-3">{v.title}</h3>
-                            <p className="text-sm text-[#767B71] leading-relaxed">{v.desc}</p>
+                            <h3 className="font-serif text-xl font-bold text-[var(--c-text)] mb-3">{v.title}</h3>
+                            <p className="text-sm text-[var(--c-text-muted)] leading-relaxed">{v.desc}</p>
                         </motion.div>
                     ))}
                 </div>
 
                 {/* Open Positions */}
-                <div className="bg-white rounded-[3rem] p-8 md:p-12 border border-[#ECE8E0] shadow-sm">
+                <div className="bg-white rounded-[3rem] p-8 md:p-12 border border-[var(--c-border)] shadow-sm">
                     <div className="flex items-center justify-between mb-10">
-                        <h2 className="font-serif text-3xl font-bold text-[#2A2F25]">Open Positions</h2>
-                        <div className="hidden md:flex items-center gap-2 text-xs font-bold text-[#869661] uppercase tracking-widest">
+                        <h2 className="font-serif text-3xl font-bold text-[var(--c-text)]">Open Positions</h2>
+                        <div className="hidden md:flex items-center gap-2 text-xs font-bold text-[var(--c-primary)] uppercase tracking-widest">
                             <Briefcase className="w-4 h-4" /> 3 Current Openings
                         </div>
                     </div>
 
                     <div className="grid gap-4">
                         {jobs.map((job, i) => (
-                            <div key={i} className="group p-6 rounded-2xl border border-[#ECE8E0] hover:border-[#869661] hover:bg-[#F0F4EC]/30 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer">
+                            <div key={i} className="group p-6 rounded-2xl border border-[var(--c-border)] hover:border-[var(--c-primary)] hover:bg-[var(--c-accent-soft)]/30 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer">
                                 <div>
-                                    <h3 className="text-lg font-bold text-[#2A2F25] group-hover:text-[#869661] transition-colors">{job.title}</h3>
+                                    <h3 className="text-lg font-bold text-[var(--c-text)] group-hover:text-[var(--c-primary)] transition-colors">{job.title}</h3>
                                     <div className="flex flex-wrap gap-4 mt-1">
-                                        <span className="text-xs text-[#767B71]">{job.dept}</span>
-                                        <span className="text-xs text-[#767B71]">•</span>
-                                        <span className="text-xs text-[#767B71]">{job.location}</span>
+                                        <span className="text-xs text-[var(--c-text-muted)]">{job.dept}</span>
+                                        <span className="text-xs text-[var(--c-text-muted)]">•</span>
+                                        <span className="text-xs text-[var(--c-text-muted)]">{job.location}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <span className="text-[10px] font-bold text-[#869661] uppercase tracking-widest bg-[#F0F4EC] px-3 py-1 rounded-full">{job.type}</span>
-                                    <ArrowRight className="w-5 h-5 text-[#869661] transform transition-transform group-hover:translate-x-1" />
+                                    <span className="text-[10px] font-bold text-[var(--c-primary)] uppercase tracking-widest bg-[var(--c-accent-soft)] px-3 py-1 rounded-full">{job.type}</span>
+                                    <ArrowRight className="w-5 h-5 text-[var(--c-primary)] transform transition-transform group-hover:translate-x-1" />
                                 </div>
                             </div>
                         ))}
@@ -86,8 +86,8 @@ export default function CareersPage() {
 
                 {/* Call to Action */}
                 <div className="mt-20 text-center">
-                    <p className="text-[#767B71] text-sm mb-4">Don't see a perfect fit? We're always looking for brilliant minds.</p>
-                    <button className="text-[#869661] font-bold underline underline-offset-8 hover:text-[#2A2F25] transition-colors">Apply Spontaneously</button>
+                    <p className="text-[var(--c-text-muted)] text-sm mb-4">Don't see a perfect fit? We're always looking for brilliant minds.</p>
+                    <button className="text-[var(--c-primary)] font-bold underline underline-offset-8 hover:text-[var(--c-text)] transition-colors">Apply Spontaneously</button>
                 </div>
             </div>
         </div>

@@ -2,6 +2,8 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
 import Review from "@/models/Review";
+import MetaFieldTemplate from "@/models/MetaFieldTemplate"; // Required for template lookup
+import { loadTemplatesForProduct, resolveProductMeta } from "@/lib/meta";
 
 export async function GET(req, { params }) {
     try {
@@ -40,9 +42,27 @@ export async function GET(req, { params }) {
             .populate('category', 'name')
             .lean();
 
+        // Custom metadata, resolved against its templates and filtered to the
+        // fields marked visible. The detail page renders from this rather than
+        // reading raw values, so display rules live in one place.
+        const templates = await loadTemplatesForProduct(product);
+        const { fields, groups } = resolveProductMeta(product, templates);
+        const visibleFields = fields.filter(
+            f => f.hasValue && f.display?.show !== false && f.display?.where !== 'hidden'
+        );
+
         return Response.json({
             success: true,
             product,
+            meta: {
+                fields: visibleFields,
+                groups: groups
+                    .map(g => ({
+                        ...g,
+                        fields: g.fields.filter(f => visibleFields.includes(f)),
+                    }))
+                    .filter(g => g.fields.length > 0),
+            },
             reviews,
             relatedProducts
         });

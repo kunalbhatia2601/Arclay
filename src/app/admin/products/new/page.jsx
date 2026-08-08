@@ -8,6 +8,7 @@ import ImagePicker from "@/app/components/ImagePicker";
 import ImageGeneratorModal from "@/app/components/ImageGeneratorModal";
 import RichTextEditor from "@/app/components/RichTextEditor";
 import BarcodeScanner from "@/app/components/BarcodeScanner";
+import ProductMetaPanel from "@/app/components/admin/ProductMetaPanel";
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -28,6 +29,14 @@ export default function NewProductPage() {
         barcode: "",
         taxRate: "",
         hsn: "",
+    });
+
+    // Custom metadata is kept separate from formData so the panel owns its own
+    // shape (templates + one-off fields + values) without bloating the form.
+    const [metaState, setMetaState] = useState({
+        metaTemplates: [],
+        customMetaFields: [],
+        meta: {},
     });
 
     useEffect(() => {
@@ -194,6 +203,9 @@ export default function NewProductPage() {
                     })),
                 taxRate: parseFloat(formData.taxRate) || 0,
                 hsn: formData.hsn || "",
+                metaTemplates: metaState.metaTemplates,
+                customMetaFields: metaState.customMetaFields,
+                meta: metaState.meta,
                 variants: validVariants.map(v => ({
                     attributes: v.attributes,
                     regularPrice: parseFloat(v.regularPrice),
@@ -590,6 +602,22 @@ export default function NewProductPage() {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Custom Fields */}
+                    <div>
+                        <h2 className="text-lg font-semibold text-foreground mb-1">
+                            Custom Fields
+                        </h2>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Extra product details — apply a template or define one-off fields.
+                            These can be shown on the product page and used as filters.
+                        </p>
+                        <ProductMetaPanel
+                            value={metaState}
+                            onChange={setMetaState}
+                            categoryId={formData.category}
+                        />
                     </div>
 
                     {/* Status */}
