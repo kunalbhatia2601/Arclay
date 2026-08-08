@@ -43,6 +43,7 @@ const navItems = [
     { href: "/admin/meta-templates", label: "Field Templates", icon: ListChecks },
     { href: "/admin/pages", label: "Pages", icon: LayoutTemplate },
     { href: "/admin/cards", label: "Product Cards", icon: SquareStack },
+    { href: "/admin/navigation", label: "Navigation", icon: Menu },
     { href: "/admin/theme", label: "Theme", icon: Palette },
     { href: "/admin/product-ads", label: "Product Ads", icon: Megaphone },
     { href: "/admin/categories", label: "Categories", icon: Tags },

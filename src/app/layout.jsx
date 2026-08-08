@@ -61,15 +61,17 @@ import ClientTransition from "./components/ClientTransition";
 import { getThemeTokens, tokensToCss } from "@/lib/theme";
 import { getDefaultCardPreset } from "@/lib/cardPresetServer";
 import CardPresetProvider from "./components/CardPresetProvider";
+import { getNavigation } from "@/lib/navigationServer";
 
 export default async function RootLayout({ children }) {
   // Design tokens are rendered server-side into a :root block so the correct
   // palette is present in the first paint — no flash of default colours.
   // Fetched here so every product card on the site — including pages the
   // builder does not own — honours the admin's default card style.
-  const [{ tokens, customCss }, cardPreset] = await Promise.all([
+  const [{ tokens, customCss }, cardPreset, navigation] = await Promise.all([
     getThemeTokens(),
     getDefaultCardPreset(),
+    getNavigation(),
   ]);
 
   return (
@@ -95,13 +97,13 @@ export default async function RootLayout({ children }) {
         >
           <UserProvider>
             <CardPresetProvider preset={cardPreset}>
-            <Navbar />
+            <Navbar config={navigation.navbar} mobileConfig={navigation.mobileBar} />
             <ClientTransition>
               {children}
             </ClientTransition>
             {/* Bottom nav spacer for mobile - prevents content from hiding behind fixed bottom nav */}
             <div className="lg:hidden h-16" />
-            <Footer />
+            <Footer config={navigation.footer} />
             <ChatWidget />
             
             {/* Global SVG Gooey Filter for Liquid Effects */}

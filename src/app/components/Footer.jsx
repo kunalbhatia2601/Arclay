@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { DEFAULT_NAVIGATION } from "@/lib/navigation";
+import * as Icons from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Sparkles, Phone, Mail, Truck, Shield, RotateCcw, Award, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
@@ -9,7 +11,18 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
 const SITE_LOGO = process.env.NEXT_PUBLIC_SITE_LOGO || "";
 const SITE_DESCRIPTION = process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "";
 
-export default function Footer() {
+export default function Footer({ config }) {
+    // Footer content is admin-defined; defaults keep the original copy.
+    const cfg = config || DEFAULT_NAVIGATION.footer;
+    const brandName = cfg.brandName?.trim() || SITE_NAME;
+    const tagline = cfg.tagline?.trim() || SITE_DESCRIPTION;
+    // Fall back to the original icon set when no socials are configured.
+    const socialLinks = (cfg.socials || []).length
+        ? cfg.socials
+        : [
+            { icon: "Instagram", href: "#" }, { icon: "Facebook", href: "#" },
+            { icon: "Twitter", href: "#" }, { icon: "Youtube", href: "#" },
+        ];
     const pathname = usePathname();
     const [showFooter, setShowFooter] = useState(true);
     const [email, setEmail] = useState("");
@@ -71,6 +84,7 @@ export default function Footer() {
             </section>
 
             {/* Newsletter Section - Glassmorphic Card */}
+            {cfg.newsletterEnabled !== false && (
             <section className="py-24 relative z-10 px-6">
                 <div className="container mx-auto max-w-7xl">
                     <div className="bg-white/[0.03] backdrop-blur-xl rounded-[40px] border border-white/10 p-10 lg:p-16 relative overflow-hidden group">
@@ -82,9 +96,10 @@ export default function Footer() {
                                     <Sparkles className="w-3 h-3" />
                                     The Gourmet Club
                                 </div>
-                                <h3 className="font-serif text-[36px] lg:text-[48px] font-bold mb-4 leading-tight text-white">Join Our Inner Circle</h3>
+                                <h3 className="font-serif text-[36px] lg:text-[48px] font-bold mb-4 leading-tight text-white">{cfg.newsletterHeading}</h3>
                                 <p className="text-white/60 text-base max-w-md leading-relaxed">
-                                    Unlock exclusive artisanal recipes, first access to seasonal batches, and member-only rewards.
+                                    {cfg.newsletterText?.trim() ||
+                                        "Unlock exclusive artisanal recipes, first access to seasonal batches, and member-only rewards."}
                                 </p>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -92,17 +107,18 @@ export default function Footer() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="your@email.com"
+                                    placeholder={cfg.newsletterPlaceholder || "your@email.com"}
                                     className="flex-1 px-8 py-5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-[var(--c-primary)]/50 focus:bg-white/10 text-sm transition-all"
                                 />
                                 <button className="px-10 py-5 rounded-2xl bg-[var(--c-accent)] hover:bg-[#C05A3D] text-white font-bold text-sm transition-all shadow-xl shadow-[var(--c-accent)]/20 hover:shadow-[var(--c-accent)]/40 hover:-translate-y-0.5 active:translate-y-0">
-                                    Subscribe Now
+                                    {cfg.newsletterButton || "Subscribe"}
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+            )}
 
             {/* Main Footer */}
             <footer className="pt-12 pb-12 relative z-10">
@@ -124,14 +140,20 @@ export default function Footer() {
                                     </div>
                                 )}
                                 <div className="flex flex-col">
-                                    <span className="font-serif text-[32px] font-bold text-white leading-none">{SITE_NAME}</span>
-                                    {SITE_DESCRIPTION && (
+                                    <span className="font-serif text-[32px] font-bold text-white leading-none">{brandName}</span>
+                                    {tagline && (
                                         <span className="text-[11px] font-bold tracking-[0.2em] text-[var(--c-primary)] mt-1 uppercase truncate max-w-[280px]">
-                                            {SITE_DESCRIPTION}
+                                            {tagline}
                                         </span>
                                     )}
                                 </div>
                             </Link>
+
+                            {cfg.about?.trim() && (
+                                <p className="text-white/45 text-[14px] leading-relaxed max-w-sm -mt-4 mb-8">
+                                    {cfg.about}
+                                </p>
+                            )}
 
                             <p className="text-white/50 text-[15px] leading-relaxed max-w-sm mb-10">
                                 {SITE_DESCRIPTION || `Discover products you'll love, delivered with care.`}
@@ -157,40 +179,34 @@ export default function Footer() {
                             </div>
                         </div>
 
-                        {/* Link Columns */}
+                        {/* Link Columns — admin-defined, plus the live policy list */}
                         <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-12 lg:gap-8">
-                            <div>
-                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Curation</h4>
-                                <ul className="space-y-4">
-                                    {["All Products", "New Arrivals", "Bestsellers", "Gift Hampers", "Offers"].map(item => (
-                                        <li key={item}><Link href="/products" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">{item}</Link></li>
-                                    ))}
-                                </ul>
-                            </div>
+                            {(cfg.columns || []).map((column, ci) => (
+                                <div key={ci}>
+                                    <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">
+                                        {column.title}
+                                    </h4>
+                                    <ul className="space-y-4">
+                                        {(column.links || []).map((link, li) => (
+                                            <li key={li}>
+                                                <Link
+                                                    href={link.href || "#"}
+                                                    className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block"
+                                                >
+                                                    {link.label}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
 
-                            <div>
-                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Company</h4>
-                                <ul className="space-y-4">
-                                    <li><Link href="/about" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">About Us</Link></li>
-                                    <li><Link href="/blog" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">Blog</Link></li>
-                                    <li><Link href="/contact" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">Contact</Link></li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Support</h4>
-                                <ul className="space-y-4">
-                                    <li><Link href="/faqs" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">FAQs</Link></li>
-                                    <li><Link href="/orders" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">Track Order</Link></li>
-                                    <li><Link href="/account" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">My Account</Link></li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Legal</h4>
-                                <ul className="space-y-4">
-                                    {legalPolicies.length > 0 ? (
-                                        legalPolicies.map(p => (
+                            {/* Policies come from App Config rather than being retyped here */}
+                            {legalPolicies.length > 0 && (
+                                <div>
+                                    <h4 className="font-bold text-[13px] text-white mb-8 uppercase tracking-[0.2em]">Legal</h4>
+                                    <ul className="space-y-4">
+                                        {legalPolicies.map(p => (
                                             <li key={p._id || p.slug}>
                                                 <Link
                                                     href={`/policy/${p.slug}`}
@@ -199,16 +215,10 @@ export default function Footer() {
                                                     {p.title}
                                                 </Link>
                                             </li>
-                                        ))
-                                    ) : (
-                                        <li>
-                                            <Link href="/policy" className="text-white/40 hover:text-[var(--c-primary)] text-[14px] transition-all hover:translate-x-1 inline-block">
-                                                Policies
-                                            </Link>
-                                        </li>
-                                    )}
-                                </ul>
-                            </div>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -217,24 +227,44 @@ export default function Footer() {
                         {/* Copyright Section */}
                         <div className="flex flex-col gap-2 order-2 md:order-1 items-center md:items-start">
                              <p className="text-white/60 text-[13px]">
-                                © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+                                {(cfg.copyright || "© {year} {site}. All rights reserved.")
+                                    .replace("{year}", new Date().getFullYear())
+                                    .replace("{site}", SITE_NAME)}
                             </p>
-                            {SITE_DESCRIPTION && (
-                                <p className="text-white/40 text-[11px] font-medium tracking-wide">
-                                    {SITE_DESCRIPTION}
-                                </p>
+                            {(cfg.legalLinks || []).length > 0 && (
+                                <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                                    {cfg.legalLinks.map((link, i) => (
+                                        <Link
+                                            key={i}
+                                            href={link.href || "#"}
+                                            className="text-white/40 hover:text-[var(--c-primary)] text-[11px] font-medium tracking-wide transition-colors"
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    ))}
+                                </div>
                             )}
                         </div>
                         
                         {/* Social & Certs Section */}
                         <div className="flex flex-col items-center gap-6 order-1 lg:order-2">
                              <div className="flex items-center gap-4 relative">
-                                {[Instagram, Facebook, Twitter, Youtube].map((Icon, i) => (
-                                    <button key={i} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-[var(--c-primary)] hover:text-white transition-all border border-white/5 group relative overflow-hidden">
-                                        <Icon className="w-4 h-4 relative z-10" />
-                                        <div className="absolute inset-0 bg-[var(--c-primary)] scale-0 group-hover:scale-100 rounded-full transition-transform duration-500" />
-                                    </button>
-                                ))}
+                                {socialLinks.map((social, i) => {
+                                    const Icon = Icons[social.icon] || Icons.Link2;
+                                    return (
+                                        <a
+                                            key={i}
+                                            href={social.href || "#"}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={social.label || social.icon}
+                                            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-[var(--c-primary)] hover:text-white transition-all border border-white/5 group relative overflow-hidden"
+                                        >
+                                            <Icon className="w-4 h-4 relative z-10" />
+                                            <div className="absolute inset-0 bg-[var(--c-primary)] scale-0 group-hover:scale-100 rounded-full transition-transform duration-500" />
+                                        </a>
+                                    );
+                                })}
                             </div>
                             <div className="flex flex-wrap items-center justify-center gap-3">
                                 <span className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-white/40 tracking-widest uppercase hover:text-white transition-all group relative overflow-hidden cursor-default">

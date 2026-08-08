@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useUser } from "@/context/UserContext";
+import * as Icons from "lucide-react";
+import { DEFAULT_NAVIGATION } from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +32,7 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Store";
 const SITE_LOGO = process.env.NEXT_PUBLIC_SITE_LOGO || "";
 const SITE_DESCRIPTION = process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "";
 
-export default function Navbar() {
+export default function Navbar({ config, mobileConfig }) {
     const { user, isAuthenticated, isAdmin, logout, loading, cartCount } = useUser();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isShopHovered, setIsShopHovered] = useState(false);
@@ -111,6 +113,14 @@ export default function Navbar() {
 
     const isActive = (path) => pathname === path || pathname.startsWith(`${path}/`);
 
+    // Menu, announcement bar and actions all come from the Navigation config.
+    const nav = config || DEFAULT_NAVIGATION.navbar;
+    const mobileBar = mobileConfig || DEFAULT_NAVIGATION.mobileBar;
+    // Config wins, then the env-var branding the site shipped with.
+    const brandName = nav.brandName?.trim() || SITE_NAME;
+    const tagline = nav.tagline?.trim() || SITE_DESCRIPTION;
+    const barItems = mobileBar.items || [];
+
     const shopCategories = [
         { label: "All Products", href: "/products" },
         ...(Array.isArray(categories) ? categories.map(cat => ({ 
@@ -119,40 +129,48 @@ export default function Navbar() {
         })) : []),
     ];
 
-    const mobileNavItems = [
-        { href: "/", icon: Home, label: "Home" },
-        { href: "/products", icon: Search, label: "Shop" },
-        // { href: "/wishlist", icon: Heart, label: "Wishlist" },
-        { href: "/account", icon: User, label: "Profile" }
-    ];
+    // A 'categories' menu item is filled from the live category list, so new
+    // categories appear in the dropdown without an edit.
+    const menuItems = (nav.menu || []).map(item =>
+        item.kind === "categories" ? { ...item, children: shopCategories } : item
+    );
 
     return (
         showNavbar && (
             <>
-                <div className={`w-full sticky top-0 z-50 transition-all duration-300`}>
+                <div className={`w-full z-50 transition-all duration-300 ${nav.sticky === false ? "relative" : "sticky top-0"}`}>
                     {/* Top Announcement Bar */}
-                    <div className="hidden lg:block w-full bg-[var(--c-text)] text-white text-[12px] py-1.5 font-medium border-b border-white/5">
-                        <div className="container mx-auto px-6 xl:px-8 flex justify-between items-center max-w-7xl">
-                            <div className="flex gap-6 items-center">
-                                {phoneContact && (
-                                    <>
-                                        <a href={`tel:${phoneContact.value}`} className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-                                            <Phone className="w-3.5 h-3.5" /> {phoneContact.value}
-                                        </a>
-                                        <span className="w-px h-3 bg-white/20" />
-                                    </>
-                                )}
-                                <span className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-                                    <Truck className="w-3.5 h-3.5" /> Free shipping on select orders
-                                </span>
-                            </div>
-                            <div className="flex gap-5 items-center">
-                                <Link href="/blog" className="opacity-70 hover:opacity-100 transition-opacity">Blog</Link>
-                                <Link href="/contact" className="opacity-70 hover:opacity-100 transition-opacity">Help</Link>
-                                <Link href="/orders" className="opacity-70 hover:opacity-100 transition-opacity">Track Order</Link>
+                    {nav.announcementEnabled !== false && (
+                        <div className="hidden lg:block w-full bg-[var(--c-text)] text-white text-[12px] py-1.5 font-medium border-b border-white/5">
+                            <div className="container mx-auto px-6 xl:px-8 flex justify-between items-center max-w-7xl">
+                                <div className="flex gap-6 items-center">
+                                    {(nav.announcementPhone || phoneContact?.value) && (
+                                        <>
+                                            <a
+                                                href={`tel:${nav.announcementPhone || phoneContact.value}`}
+                                                className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"
+                                            >
+                                                <Phone className="w-3.5 h-3.5" /> {nav.announcementPhone || phoneContact.value}
+                                            </a>
+                                            <span className="w-px h-3 bg-white/20" />
+                                        </>
+                                    )}
+                                    {nav.announcementText && (
+                                        <span className="flex items-center gap-1.5 opacity-80">
+                                            <Truck className="w-3.5 h-3.5" /> {nav.announcementText}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex gap-5 items-center">
+                                    {(nav.announcementLinks || []).map((link, i) => (
+                                        <Link key={i} href={link.href || "#"} className="opacity-70 hover:opacity-100 transition-opacity">
+                                            {link.label}
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Main Navbar */}
                     <header className={`w-full transition-all duration-300 border-b border-border/50 relative z-40 ${
@@ -160,14 +178,14 @@ export default function Navbar() {
                             ? 'bg-white/80 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-[72px]' 
                             : 'bg-white shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] h-[84px]'
                     }`}>
-                        <nav className="w-full max-w-7xl mx-auto px-4 xl:px-8 flex items-center justify-between h-full">
+                        <nav className={`w-full max-w-7xl mx-auto px-4 xl:px-8 flex items-center h-full ${nav.menuAlign === "left" ? "justify-start gap-8" : "justify-between"}`}>
                             
                             {/* Logo Area */}
                             <Link href="/" className="flex items-center gap-1 sm:gap-3 shrink-0 max-w-[45%]">
-                                {SITE_LOGO ? (
+                                {(nav.logo || SITE_LOGO) ? (
                                     <img
-                                        src={`/${SITE_LOGO}`}
-                                        alt={SITE_NAME}
+                                        src={nav.logo || `/${SITE_LOGO}`}
+                                        alt={brandName}
                                         className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl object-contain shrink-0"
                                     />
                                 ) : (
@@ -177,70 +195,78 @@ export default function Navbar() {
                                 )}
                                 <div className="flex flex-col min-w-0">
                                     <span className="font-serif text-[14px] xs:text-[16px] sm:text-[26px] font-bold tracking-tight text-[var(--c-text)] leading-none truncate">
-                                        {SITE_NAME}
+                                        {brandName}
                                     </span>
-                                    {SITE_DESCRIPTION && (
+                                    {tagline && (
                                         <span className="hidden sm:block text-[9px] sm:text-[11px] font-semibold tracking-wide text-[#7A8B56] mt-0.5 text-nowrap truncate">
-                                            {SITE_DESCRIPTION}
+                                            {tagline}
                                         </span>
                                     )}
                                 </div>
                             </Link>
 
                             {/* Center Navigation Links (Desktop) */}
-                            <div className="hidden lg:flex items-center gap-2">
-                                <Link href="/" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/') ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
-                                    <Home className="w-4 h-4" strokeWidth={2} /> Home
-                                </Link>
+                            <div className={`hidden lg:flex items-center gap-2 ${nav.menuAlign === "left" ? "" : "mx-auto"}`}>
+                                {menuItems.map((item, index) => {
+                                    const Icon = Icons[item.icon];
+                                    const hasDropdown = item.kind !== "link" && (item.children || []).length > 0;
+                                    const active = item.href && isActive(item.href);
 
-                                <div className="relative group" onMouseEnter={() => setIsShopHovered(true)} onMouseLeave={() => setIsShopHovered(false)}>
-                                    <Link href="/products" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/products') || isShopHovered ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
-                                        <Package className="w-4 h-4" strokeWidth={2} /> Shop <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-                                    </Link>
-                                    <AnimatePresence>
-                                        {isShopHovered && (
-                                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute left-0 top-full pt-2 w-56">
+                                    const inner = (
+                                        <>
+                                            {Icon && <Icon className="w-4 h-4" strokeWidth={2} />}
+                                            {item.label}
+                                            {hasDropdown && <ChevronDown className="w-3.5 h-3.5 opacity-60" />}
+                                        </>
+                                    );
+                                    const classes = `flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                                        active
+                                            ? "bg-[var(--c-accent-soft)] text-[var(--c-primary-dark)]"
+                                            : "text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[var(--c-primary-dark)]"
+                                    }`;
+
+                                    if (!hasDropdown) {
+                                        return (
+                                            <Link key={index} href={item.href || "#"} className={classes}>
+                                                {inner}
+                                            </Link>
+                                        );
+                                    }
+
+                                    return (
+                                        <div key={index} className="relative group">
+                                            {item.href ? (
+                                                <Link href={item.href} className={classes}>{inner}</Link>
+                                            ) : (
+                                                <button className={classes}>{inner}</button>
+                                            )}
+                                            <div className="absolute left-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                                                 <div className="bg-white border border-border shadow-xl rounded-2xl py-3 overflow-hidden">
-                                                    {shopCategories.map(cat => (
-                                                        <Link key={cat.label} href={cat.href} className="block px-5 py-2.5 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors">
-                                                            {cat.label}
+                                                    {(item.children || []).map((child, ci) => (
+                                                        <Link
+                                                            key={ci}
+                                                            href={child.href || "#"}
+                                                            className="block px-5 py-2.5 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[var(--c-primary-dark)] transition-colors text-nowrap"
+                                                        >
+                                                            {child.label}
                                                         </Link>
                                                     ))}
                                                 </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-
-                                <Link href="/bundles" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/bundles') ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
-                                    <Gift className="w-4 h-4" strokeWidth={2} /> Gift Boxes
-                                </Link>
-
-                                <Link href="/offers" className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isActive('/offers') ? 'bg-[var(--c-accent-soft)] text-[#3A4B29]' : 'text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29]'}`}>
-                                    <Percent className="w-4 h-4" strokeWidth={2} /> Offers
-                                </Link>
-
-                                <div className="relative group">
-                                    <button className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-foreground hover:bg-[var(--c-accent-soft)]/50 hover:text-[#3A4B29] transition-all">
-                                        <BookOpen className="w-4 h-4" strokeWidth={2} /> More <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-                                    </button>
-                                    <div className="absolute left-0 top-full pt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                                        <div className="bg-white border border-border shadow-xl rounded-2xl py-3 overflow-hidden">
-                                            <Link href="/about" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors text-nowrap">About Us</Link>
-                                            <Link href="/blog" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors">Blog</Link>
-                                            <Link href="/contact" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors">Contact</Link>
-                                            <Link href="/faqs" className="block px-5 py-2 text-sm font-medium text-foreground hover:bg-[var(--c-accent-soft)] hover:text-[#3A4B29] transition-colors border-t border-border/40 mt-1">FAQs</Link>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>                            {/* Right Area - Luxury Liquid Icons */}
+                                    );
+                                })}
+                            </div>
+
+                            {/* Right Area - Luxury Liquid Icons */}
                             <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[var(--c-primary)]/5 backdrop-blur-md rounded-full border border-[var(--c-primary)]/10 relative shrink min-w-0">
                                 {[
-                                    { icon: Search, onClick: () => setIsSearchOpen(true), label: "Search" },
-                                    // { icon: Bell, onClick: () => setIsNotificationsOpen(!isNotificationsOpen), label: "Notifications", hasBadge: true, count: 0 },
-                                    { icon: ShoppingBag, onClick: () => setIsCartOpen(true), label: "Cart", hasBadge: true, count: cartCount },
-                                    { icon: User, href: isAuthenticated ? "/account" : "/login", label: "Profile", loading: loading, hiddenClass: "hidden sm:flex" }
-                                ].map((action, idx) => (
+                                    nav.showSearch !== false && { icon: Search, onClick: () => setIsSearchOpen(true), label: "Search" },
+                                    nav.showNotifications === true && { icon: Bell, onClick: () => setIsNotificationsOpen(!isNotificationsOpen), label: "Notifications" },
+                                    nav.showWishlist === true && { icon: Heart, href: "/wishlist", label: "Wishlist" },
+                                    nav.showCart !== false && { icon: ShoppingBag, onClick: () => setIsCartOpen(true), label: "Cart", hasBadge: true, count: cartCount },
+                                    nav.showAccount !== false && { icon: User, href: isAuthenticated ? "/account" : "/login", label: "Profile", loading: loading, hiddenClass: "hidden sm:flex" }
+                                ].filter(Boolean).map((action, idx) => (
                                     <div key={action.label} className={`relative group flex items-center justify-center shrink-0 ${action.hiddenClass || ""}`}>
                                         {action.href ? (
                                             <Link href={action.href} className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--c-primary)]/10 transition-all text-[var(--c-text)] block relative z-10">
@@ -337,69 +363,68 @@ export default function Navbar() {
                 </AnimatePresence>
 
                 {/* Mobile Bottom Navigation (Refined Liquid Glass) */}
-                {!pathname.includes("/products/") || pathname.split("/").length < 3 ? (
-                    <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[360px] z-[120] pointer-events-auto">
+                {mobileBar.enabled !== false && (!pathname.includes("/products/") || pathname.split("/").length < 3) ? (
+                    <div className={`lg:hidden fixed left-1/2 -translate-x-1/2 z-[120] pointer-events-auto ${
+                        mobileBar.style === "full"
+                            ? "bottom-0 w-full"
+                            : "bottom-6 w-[92%] max-w-[380px]"
+                    }`}>
+                        <div className={`bg-white/85 backdrop-blur-[24px] border border-[var(--c-primary)]/25 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.2)] p-1.5 ${
+                            mobileBar.style === "full" ? "rounded-t-3xl" : "rounded-[2.5rem]"
+                        }`}>
+                            <div
+                                className="grid w-full h-[64px] items-center px-1"
+                                style={{ gridTemplateColumns: `repeat(${barItems.length || 1}, minmax(0, 1fr))` }}
+                            >
+                                {barItems.map((item, index) => {
+                                    const Icon = Icons[item.icon] || Icons.Circle;
+                                    const active = item.kind === "link" && item.href && isActive(item.href);
 
-                    <div className="bg-white/80 backdrop-blur-[24px] rounded-[2.5rem] border border-[var(--c-primary)]/25 shadow-[0_25px_60px_-15px_rgba(42,47,37,0.2)] p-1.5 relative overflow-visible">
-                        
-                        {/* 1. Underlying Liquid Layer (Gooey Filter applies ONLY here) */}
-                        <div className="absolute inset-1.5 z-0" style={{ filter: 'url(#global-gooey)' }}>
-                            {mobileNavItems.map((nav, idx) => {
-                                const active = isActive(nav.href);
-                                return (
-                                    <div key={`bg-${nav.label}`} className="absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${idx * 25}%`, width: '25%' }}>
-                                        {/* Static "base" blobs for the active pill to merge into */}
-                                        <div className={`w-8 h-8 rounded-full transition-all duration-500 ${active ? 'bg-white opacity-100 scale-110' : 'bg-white/5 opacity-0 scale-75'}`} />
-                                        
-                                        {active && (
-                                            <motion.div
-                                                layoutId="liquid-pill-mobile-v2"
-                                                className="absolute w-[52px] h-[52px] xs:w-[60px] xs:h-[60px] bg-white rounded-full shadow-[0_4px_15px_rgba(134,150,97,0.3)]"
-                                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                            />
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* 2. Content Layer (Icons - NO FILTER HERE for maximum sharpness/visibility) */}
-                        <div className="grid grid-cols-4 w-full h-[64px] relative z-20 items-center px-1">
-                            {mobileNavItems.map((nav) => {
-                                const active = isActive(nav.href);
-                                
-                                // Search icon opens the overlay instead of navigating
-                                if (nav.label === "Shop") {
-                                    return (
-                                        <button 
-                                            key={nav.label} 
-                                            onClick={() => setIsSearchOpen(true)}
-                                            className="relative flex items-center justify-center h-full group"
-                                        >
-                                            <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 text-[var(--c-text)]/40 hover:text-[var(--c-primary)]`}>
-                                                <nav.icon className="w-5.5 h-5.5 xs:w-6.5 xs:h-6.5" strokeWidth={1.5} />
-                                            </div>
-                                        </button>
-                                    );
-                                }
-                                
-                                return (
-                                    <Link 
-                                        key={nav.label} 
-                                        href={nav.href} 
-                                        className="relative flex items-center justify-center h-full group"
-                                    >
-                                        <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
-                                            active 
-                                                ? 'text-[#3A4B29] scale-110' 
-                                                : 'text-[var(--c-text)]/40 hover:text-[var(--c-primary)]'
+                                    const body = (
+                                        <div className={`relative z-10 flex flex-col items-center justify-center gap-0.5 transition-all duration-300 ${
+                                            active
+                                                ? "text-[var(--c-primary-dark)]"
+                                                : "text-[var(--c-text)]/45 hover:text-[var(--c-primary)]"
                                         }`}>
-                                            <nav.icon className="w-5.5 h-5.5 xs:w-6.5 xs:h-6.5" strokeWidth={active ? 2.5 : 1.5} />
+                                            <span className="relative">
+                                                <Icon className="w-6 h-6" strokeWidth={active ? 2.4 : 1.6} />
+                                                {item.kind === "cart" && mounted && cartCount > 0 && (
+                                                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-[var(--c-accent)] text-white text-[9px] font-bold flex items-center justify-center">
+                                                        {cartCount > 9 ? "9+" : cartCount}
+                                                    </span>
+                                                )}
+                                            </span>
+                                            {mobileBar.showLabels !== false && (
+                                                <span className="text-[10px] font-semibold leading-none">{item.label}</span>
+                                            )}
                                         </div>
-                                    </Link>
-                                );
-                            })}
-                        </div>
+                                    );
+
+                                    // Search and cart open their overlays rather than navigating.
+                                    if (item.kind === "search" || item.kind === "cart") {
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => item.kind === "search" ? setIsSearchOpen(true) : setIsCartOpen(true)}
+                                                className="relative flex items-center justify-center h-full"
+                                                aria-label={item.label}
+                                            >
+                                                {body}
+                                            </button>
+                                        );
+                                    }
+
+                                    return (
+                                        <Link
+                                            key={index}
+                                            href={item.href || "/"}
+                                            className="relative flex items-center justify-center h-full"
+                                        >
+                                            {body}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 ) : null}
