@@ -13,7 +13,7 @@
 // Field types the builder knows how to render.
 export const FIELD_TYPES = [
     'text', 'textarea', 'richtext', 'number', 'boolean', 'select',
-    'color', 'image', 'link', 'productQuery', 'repeater', 'icon', 'html',
+    'color', 'image', 'link', 'productQuery', 'repeater', 'icon', 'html', 'datetime',
 ];
 
 const f = {
@@ -289,7 +289,7 @@ export const BLOCKS = {
         description: 'Urgency timer counting to a date',
         schema: [
             f.text('heading', 'Heading', { default: 'Sale ends in' }),
-            { key: 'endsAt', label: 'Ends at', type: 'text', placeholder: 'YYYY-MM-DD HH:mm' },
+            { key: 'endsAt', label: 'Ends at', type: 'datetime' },
             f.text('buttonLabel', 'Button label'),
             f.link('buttonHref', 'Button link'),
             f.boolean('hideWhenExpired', 'Hide block once expired', { default: true }),
@@ -544,6 +544,134 @@ export const BLOCKS = {
         schema: [
             f.text('title', 'Heading', { default: 'You may also like' }),
             f.number('limit', 'How many', { default: 4, min: 1, max: 12 }),
+        ],
+    },
+
+
+    // ── Storefront (quick-commerce style) ────────────────────────
+    'search-bar': {
+        label: 'Search bar',
+        group: 'Merchandising',
+        icon: 'Search',
+        description: 'Prominent search field with an optional scan button',
+        schema: [
+            f.text('placeholder', 'Placeholder', { default: 'Search for products, brands and more...' }),
+            f.boolean('showScanner', 'Show scan button', { default: true }),
+            f.link('scannerHref', 'Scan button link', { default: '/products' }),
+        ],
+    },
+
+    'promo-hero': {
+        label: 'Gradient promo hero',
+        group: 'Hero',
+        icon: 'Sparkles',
+        description: 'Full-bleed promo slides with headline, feature pills and a button',
+        schema: [
+            f.repeater('slides', 'Slides', [
+                f.text('headingTop', 'First line'),
+                f.text('headingMain', 'Second line'),
+                f.text('headingAccent', 'Highlighted line'),
+                f.color('accentColor', 'Highlight colour', { default: '#FFE071' }),
+                f.image('image', 'Background image'),
+                f.color('gradientFrom', 'Gradient start', { default: '' }),
+                f.color('gradientTo', 'Gradient end', { default: '' }),
+                f.repeater('features', 'Feature pills', [
+                    { key: 'icon', label: 'Icon', type: 'icon' },
+                    f.text('label', 'Label'),
+                ]),
+                f.text('buttonLabel', 'Button label', { default: 'Shop Now' }),
+                f.link('buttonHref', 'Button link', { default: '/products' }),
+            ]),
+            f.number('interval', 'Seconds per slide', { default: 5, min: 2, max: 30 }),
+            f.select('height', 'Height', [
+                { value: 'compact', label: 'Compact' },
+                { value: 'normal', label: 'Normal' },
+                { value: 'tall', label: 'Tall' },
+            ], { default: 'normal' }),
+            f.number('overlay', 'Image darkening (%)', {
+                default: 45, min: 0, max: 90,
+                hint: 'Keeps the headline readable over a photo',
+            }),
+            f.boolean('showDots', 'Show slide dots', { default: true }),
+            f.boolean('useAds', 'Also rotate through hero banners', { default: false }),
+        ],
+    },
+
+    'usp-strip': {
+        label: 'USP strip',
+        group: 'Content',
+        icon: 'BadgeCheck',
+        description: 'Compact row of four selling points with dividers',
+        schema: [
+            f.repeater('items', 'Points', [
+                { key: 'icon', label: 'Icon', type: 'icon' },
+                f.text('title', 'Title'),
+                f.text('subtitle', 'Subtitle'),
+            ]),
+        ],
+    },
+
+    'category-circles': {
+        label: 'Category circles',
+        group: 'Products',
+        icon: 'CircleDot',
+        description: 'Round category tiles with a “See all” link',
+        schema: [
+            f.text('title', 'Section title', { default: 'Shop by Category' }),
+            f.number('limit', 'How many categories', { default: 5, min: 1, max: 12 }),
+            f.boolean('showMoreTile', 'Add a “More” tile', { default: true }),
+            f.text('moreLabel', 'More tile label', { default: 'More Categories' }),
+            f.boolean('showViewAll', 'Show “See all”', { default: true }),
+            f.link('viewAllHref', 'See all link', { default: '/products' }),
+        ],
+    },
+
+    'flash-deals': {
+        label: 'Flash deals',
+        group: 'Merchandising',
+        icon: 'Zap',
+        description: 'Deal rail with a live countdown timer',
+        schema: [
+            f.text('title', 'Section title', { default: 'Flash Deals' }),
+            { key: 'endsAt', label: 'Countdown ends at', type: 'datetime' },
+            f.query('query', 'Which products'),
+            f.cardPreset(),
+            f.boolean('showViewAll', 'Show “See all”', { default: true }),
+            f.link('viewAllHref', 'See all link', { default: '/products' }),
+        ],
+    },
+
+    'coupon-strip': {
+        label: 'Coupon strip',
+        group: 'Merchandising',
+        icon: 'TicketPercent',
+        description: 'Offer banner with a coupon code and button',
+        schema: [
+            f.text('heading', 'Heading', { default: 'Flat 15% OFF on Your First Order!' }),
+            f.text('codeLabel', 'Code label', { default: 'Use Code:' }),
+            f.text('code', 'Coupon code'),
+            f.image('image', 'Side image'),
+            f.color('background', 'Background colour', { default: '' }),
+            f.text('buttonLabel', 'Button label', { default: 'Order Now' }),
+            f.link('buttonHref', 'Button link', { default: '/products' }),
+        ],
+    },
+
+    'product-section': {
+        label: 'Product section',
+        group: 'Products',
+        icon: 'LayoutGrid',
+        description: 'Product grid with a bold heading and “See all”',
+        schema: [
+            f.text('title', 'Section title', { default: 'Best Selling Products' }),
+            f.query('query', 'Which products'),
+            f.cardPreset(),
+            f.select('columns', 'Columns (desktop)', [
+                { value: '2', label: '2' }, { value: '3', label: '3' },
+                { value: '4', label: '4' }, { value: '5', label: '5' },
+            ], { default: '4' }),
+            f.boolean('showViewAll', 'Show “See all”', { default: true }),
+            f.link('viewAllHref', 'See all link', { default: '/products' }),
         ],
     },
 

@@ -47,7 +47,7 @@ const MAX_LIMIT = 48;
 
 // Fields a product card needs. Keeping this tight matters because a page can
 // hold several product blocks, each running its own query.
-const CARD_FIELDS = 'name images variants category minPrice maxPrice hasSale totalStock salesCount createdAt';
+const CARD_FIELDS = 'name images variants variationTypes category minPrice maxPrice hasSale totalStock salesCount createdAt';
 
 /**
  * Translates the filter object into a Mongo query.

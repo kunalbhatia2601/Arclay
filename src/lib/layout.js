@@ -184,8 +184,11 @@ export async function resolveSectionData(sections = []) {
         try {
             if (section.type === 'hero-slider') {
                 data.slides = await loadBanners(section.settings?.position || 'hero');
-            } else if (section.type === 'category-grid') {
-                data.categories = await loadCategories(section.settings?.limit);
+            } else if (section.type === 'promo-hero' && section.settings?.useAds) {
+                data.slides = await loadBanners('hero');
+            } else if (section.type === 'category-grid' || section.type === 'category-circles') {
+                // One extra for the trailing "More" tile.
+                data.categories = await loadCategories((Number(section.settings?.limit) || 6) + 1);
             }
         } catch (error) {
             console.error(`Failed to resolve data for "${section.type}":`, error);

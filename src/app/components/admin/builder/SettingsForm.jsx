@@ -181,6 +181,43 @@ function Field({ field, value, onChange }) {
                 </div>
             );
 
+        case "datetime": {
+            // Stored as a full ISO timestamp so it is unambiguous, but shown
+            // and edited in the admin's own timezone.
+            const local = (() => {
+                if (!value) return "";
+                const d = new Date(value);
+                if (Number.isNaN(d.getTime())) return "";
+                const pad = (n) => String(n).padStart(2, "0");
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            })();
+
+            return (
+                <div>
+                    <Label hint={field.hint || "Your local time"}>{field.label}</Label>
+                    <div className="flex gap-2">
+                        <input
+                            type="datetime-local"
+                            value={local}
+                            onChange={(e) => onChange(
+                                e.target.value ? new Date(e.target.value).toISOString() : ""
+                            )}
+                            className="input-admin"
+                        />
+                        {value && (
+                            <button
+                                type="button"
+                                onClick={() => onChange("")}
+                                className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 shrink-0"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
         case "cardPreset":
             return <CardPresetPicker field={field} value={value} onChange={onChange} />;
 

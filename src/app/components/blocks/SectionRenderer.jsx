@@ -13,6 +13,10 @@ import {
 } from "./ContentBlocks";
 import { CountdownBlock, HeroSliderBlock, MarqueeBlock } from "./InteractiveBlocks";
 import ProductListingBlock from "./ProductListingBlock";
+import {
+    CategoryCirclesBlock, CouponStripBlock, FlashDealsBlock, ProductSectionBlock,
+    PromoHeroBlock, SearchBarBlock, UspStripBlock,
+} from "./StoreBlocks";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 /**
@@ -27,6 +31,13 @@ const COMPONENTS = {
     ),
     banner: BannerBlock,
     "product-listing": ProductListingBlock,
+    "search-bar": SearchBarBlock,
+    "promo-hero": PromoHeroBlock,
+    "usp-strip": UspStripBlock,
+    "category-circles": CategoryCirclesBlock,
+    "flash-deals": FlashDealsBlock,
+    "coupon-strip": CouponStripBlock,
+    "product-section": ProductSectionBlock,
     "product-grid": ProductGridBlock,
     "product-rail": ProductRailBlock,
     "category-grid": CategoryGridBlock,

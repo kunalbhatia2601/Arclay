@@ -7,6 +7,7 @@ import { useUser } from "@/context/UserContext";
 import { toast } from "react-toastify";
 import { cn } from "@/lib/utils";
 import { DEFAULT_CARD, resolveCardPreset } from "@/lib/cardPreset";
+import VariantPickerModal from "./VariantPickerModal";
 import { useDefaultCardPreset } from "./CardPresetProvider";
 
 /**
@@ -39,7 +40,7 @@ const SHADOW = {
 
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
-export default function ProductCard({ product, viewMode = "grid", preset }) {
+function ProductCardInner({ product, viewMode = "grid", preset, onRequestVariant }) {
     const { isAuthenticated } = useUser();
     const [adding, setAdding] = useState(false);
     const [hovered, setHovered] = useState(false);
@@ -87,12 +88,20 @@ export default function ProductCard({ product, viewMode = "grid", preset }) {
     const images = product.images?.length ? product.images : [""];
     const shownImage = card.hover === "swap" && hovered && images[1] ? images[1] : images[0];
 
+    // True when the customer has a real choice to make. A product with one
+    // variant (or no variation types) can go straight into the cart.
+    const needsVariantChoice =
+        (product.variationTypes?.length || 0) > 0 && (product.variants?.length || 0) > 1;
+
     const addToCart = async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (!isAuthenticated) return toast.info("Please login to add items to your cart");
         if (!info.inStock) return toast.error("Out of stock");
+
+        // Opening the picker beats silently adding whichever variant is first.
+        if (needsVariantChoice) return onRequestVariant();
 
         setAdding(true);
         try {
@@ -371,6 +380,26 @@ export default function ProductCard({ product, viewMode = "grid", preset }) {
                 </div>
             )}
         </Link>
+    );
+}
+
+/**
+ * Wraps the card so the variant picker renders as a sibling rather than inside
+ * the card's <Link>, where its clicks would navigate away.
+ */
+export default function ProductCard(props) {
+    const [picking, setPicking] = useState(false);
+
+    return (
+        <>
+            <ProductCardInner {...props} onRequestVariant={() => setPicking(true)} />
+            {picking && (
+                <VariantPickerModal
+                    product={props.product}
+                    onClose={() => setPicking(false)}
+                />
+            )}
+        </>
     );
 }
 
