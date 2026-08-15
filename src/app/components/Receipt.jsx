@@ -1,8 +1,11 @@
 "use client";
 
-// Counter bill printers here are 3" wide (~76 mm). Hard-size the print page to
-// that roll; leave a little horizontal inset so the driver's non-printable
-// edge does not crop the right column. Preview matches the same width.
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+
+// Counter bill printers here are 3" wide (~76 mm). The printable copy is
+// portaled to document.body so the tall admin UI cannot create extra pages
+// (which used to reprint the absolute receipt once per page).
 export const RECEIPT_PRINT_CSS = `
     @media print {
         @page {
@@ -15,14 +18,17 @@ export const RECEIPT_PRINT_CSS = `
             width: 3in !important;
             min-width: 0 !important;
             max-width: 3in !important;
+            height: auto !important;
             background: #fff !important;
+            overflow: visible !important;
         }
-        body * { visibility: hidden; }
-        #receipt-sheet, #receipt-sheet * { visibility: visible; }
+        /* Only the portaled slip stays in the print tree — one page, one copy */
+        body > *:not(#receipt-sheet) {
+            display: none !important;
+        }
         #receipt-sheet {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            display: block !important;
+            position: static !important;
             width: 2.85in !important;
             max-width: 2.85in !important;
             margin: 0 !important;
@@ -32,6 +38,8 @@ export const RECEIPT_PRINT_CSS = `
             border: none !important;
             overflow: hidden !important;
             font-size: 9.5px !important;
+            background: #fff !important;
+            color: #000 !important;
         }
         #receipt-sheet table {
             width: 100% !important;
@@ -95,9 +103,17 @@ const Row = ({ label, value, bold, size }) => (
     </div>
 );
 
-export default function Receipt({ order, store = {}, tendered = null }) {
-    if (!order) return null;
+const sheetStyle = {
+    width: "3in",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    padding: "0.12in",
+    fontFamily: "ui-monospace, monospace",
+    fontSize: "10px",
+    lineHeight: 1.35,
+};
 
+function ReceiptSheet({ order, store, tendered, id, className = "" }) {
     const billNo = order.billNumber || `#${String(order._id || "").slice(-8).toUpperCase()}`;
     const placedAt = order.createdAt ? new Date(order.createdAt) : new Date();
     const change = tendered != null ? Number(tendered) - Number(order.totalAmount || 0) : null;
@@ -114,20 +130,10 @@ export default function Receipt({ order, store = {}, tendered = null }) {
 
     return (
         <div
-            id="receipt-sheet"
-            className="bg-white text-black mx-auto"
-            style={{
-                // Match the 3" thermal roll used at the counter.
-                width: "3in",
-                maxWidth: "100%",
-                boxSizing: "border-box",
-                padding: "0.12in",
-                fontFamily: "ui-monospace, monospace",
-                fontSize: "10px",
-                lineHeight: 1.35,
-            }}
+            id={id}
+            className={`bg-white text-black mx-auto ${className}`.trim()}
+            style={sheetStyle}
         >
-            {/* Header */}
             <div className="text-center" style={{ marginBottom: "2mm" }}>
                 <p style={{ fontSize: "14px", fontWeight: 700, letterSpacing: "0.5px" }}>
                     {store.legalName || store.name || "Store"}
@@ -143,7 +149,6 @@ export default function Receipt({ order, store = {}, tendered = null }) {
 
             <Rule />
 
-            {/* Bill meta */}
             <Row label="Bill No" value={billNo} bold />
             <Row
                 label="Date"
@@ -161,7 +166,6 @@ export default function Receipt({ order, store = {}, tendered = null }) {
 
             <Rule />
 
-            {/* Items */}
             <table
                 style={{
                     width: "100%",
@@ -232,7 +236,6 @@ export default function Receipt({ order, store = {}, tendered = null }) {
 
             <Rule />
 
-            {/* Totals */}
             <Row label="Subtotal" value={money(grossSubtotal)} />
             {totalDiscount > 0 && (
                 <Row
@@ -242,7 +245,6 @@ export default function Receipt({ order, store = {}, tendered = null }) {
             )}
             {order.shippingFee > 0 && <Row label="Shipping" value={money(order.shippingFee)} />}
 
-            {/* GST breakup — CGST/SGST split for an intra-state counter sale */}
             {hasTax && (
                 <>
                     <Rule />
@@ -312,5 +314,37 @@ export default function Receipt({ order, store = {}, tendered = null }) {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function Receipt({ order, store = {}, tendered = null }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!order) return null;
+
+    return (
+        <>
+            {/* On-screen preview — never included in the print tree */}
+            <div className="print:hidden">
+                <ReceiptSheet order={order} store={store} tendered={tendered} />
+            </div>
+
+            {/* Single print copy as a direct body child — CSS keeps only this node */}
+            {mounted &&
+                createPortal(
+                    <ReceiptSheet
+                        id="receipt-sheet"
+                        className="hidden print:block"
+                        order={order}
+                        store={store}
+                        tendered={tendered}
+                    />,
+                    document.body
+                )}
+        </>
     );
 }
