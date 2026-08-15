@@ -63,7 +63,7 @@ export function PdpGallery({ settings }) {
                 )}
             >
                 <img
-                    src={images[selectedImage] || images[0]}
+                    src={images[selectedImage] || images[0] || "https://placehold.net/default.svg"}
                     alt={product.name}
                     className="w-full h-full object-cover"
                 />

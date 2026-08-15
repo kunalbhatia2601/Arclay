@@ -327,7 +327,7 @@ function ProductCardInner({ product, viewMode = "grid", preset, onRequestVariant
         >
             <div className={cn("relative overflow-hidden", ASPECT[card.imageAspect] ?? ASPECT.square)}>
                 <img
-                    src={shownImage}
+                    src={shownImage || "https://placehold.net/default.svg"}
                     alt={product.name}
                     className={cn(
                         "w-full h-full transition-transform duration-500",

@@ -259,17 +259,23 @@ export default function Navbar({ config, mobileConfig }) {
                             </div>
 
                             {/* Right Area - Luxury Liquid Icons */}
-                            <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-2.5 bg-[var(--c-primary)]/5 backdrop-blur-md rounded-full border border-[var(--c-primary)]/10 relative shrink min-w-0">
+                            <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-2.5 bg-[var(--c-primary)]/5 backdrop-blur-md rounded-full border border-[var(--c-primary)]/10 relative shrink-0">
                                 {[
                                     nav.showSearch !== false && { icon: Search, onClick: () => setIsSearchOpen(true), label: "Search" },
                                     nav.showNotifications === true && { icon: Bell, onClick: () => setIsNotificationsOpen(!isNotificationsOpen), label: "Notifications" },
                                     nav.showWishlist === true && { icon: Heart, href: "/wishlist", label: "Wishlist" },
                                     nav.showCart !== false && { icon: ShoppingBag, onClick: () => setIsCartOpen(true), label: "Cart", hasBadge: true, count: cartCount },
-                                    nav.showAccount !== false && { icon: User, href: isAuthenticated ? "/account" : "/login", label: "Profile", loading: loading, hiddenClass: "hidden sm:flex" }
-                                ].filter(Boolean).map((action, idx) => (
-                                    <div key={action.label} className={`relative group flex items-center justify-center shrink-0 ${action.hiddenClass || ""}`}>
+                                    // Always show account: /account when logged in, /login when not
+                                    { icon: User, href: isAuthenticated ? "/account" : "/login", label: "Account", loading },
+                                ].filter(Boolean).map((action) => (
+                                    <div key={action.label} className="relative group flex items-center justify-center shrink-0">
                                         {action.href ? (
-                                            <Link href={action.href} className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--c-primary)]/10 transition-all text-[var(--c-text)] block relative z-10">
+                                            <Link
+                                                href={action.href}
+                                                aria-label={action.label}
+                                                title={action.label}
+                                                className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--c-primary)]/10 transition-all text-[var(--c-text)] block relative z-10"
+                                            >
                                                 {action.loading ? (
                                                     <div className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem] border-2 border-[var(--c-primary)] border-t-transparent rounded-full animate-spin" />
                                                 ) : (
@@ -277,7 +283,12 @@ export default function Navbar({ config, mobileConfig }) {
                                                 )}
                                             </Link>
                                         ) : (
-                                            <button onClick={action.onClick} className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--c-primary)]/10 transition-all text-[var(--c-text)] relative z-10">
+                                            <button
+                                                onClick={action.onClick}
+                                                aria-label={action.label}
+                                                title={action.label}
+                                                className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--c-primary)]/10 transition-all text-[var(--c-text)] relative z-10"
+                                            >
                                                 <action.icon className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem]" strokeWidth={1.5} />
                                                 {action.hasBadge && action.count > 0 && (
                                                     <span className="absolute top-0 right-0 sm:-top-0.5 sm:-right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-[var(--c-accent)] text-white text-[9px] sm:text-[10px] flex items-center justify-center rounded-full font-bold ring-2 ring-white z-20 shadow-sm">
@@ -286,16 +297,14 @@ export default function Navbar({ config, mobileConfig }) {
                                                 )}
                                             </button>
                                         )}
-                                        {/* Liquid Blob on Hover (Targeting the gooey filter) */}
                                         <div className="absolute inset-0 bg-[var(--c-primary)]/15 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 -z-10" style={{ filter: 'url(#global-gooey)' }} />
                                     </div>
                                 ))}
-                                
-                                <div className="w-px h-4 sm:h-5 bg-[var(--c-primary)]/20 mx-1 sm:mx-2 shrink-0" />
 
-                                {/* Mobile Hamburger */}
-                                <button 
+                                <div className="w-px h-4 sm:h-5 bg-[var(--c-primary)]/20 mx-1 shrink-0 lg:hidden" />
+                                <button
                                     onClick={() => setIsMobileMenuOpen(true)}
+                                    aria-label="Open menu"
                                     className="lg:hidden p-2.5 rounded-full bg-[var(--c-primary)] text-white relative z-10 shadow-sm shrink-0"
                                 >
                                     <Package className="w-5 h-5 sm:w-[1.4rem] sm:h-[1.4rem]" strokeWidth={2} />
