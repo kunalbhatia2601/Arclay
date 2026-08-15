@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Printer, ArrowLeft } from "lucide-react";
 import ProductLabel, {
     LABEL_SIZES,
-    PRINT_SHEET_CSS,
+    LabelPrintSheet,
     variantLabel,
 } from "@/app/components/ProductLabel";
 
@@ -16,7 +16,7 @@ export default function ProductLabelsPage() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [sizeKey, setSizeKey] = useState("a4");
+    const [sizeKey, setSizeKey] = useState("thermal");
     const [copies, setCopies] = useState({});
     const [showSalePrice, setShowSalePrice] = useState(true);
 
@@ -95,8 +95,6 @@ export default function ProductLabelsPage() {
 
     return (
         <div className="w-full">
-            <style>{PRINT_SHEET_CSS}</style>
-
             {/* Controls — hidden when printing */}
             <div className="print:hidden">
                 <div className="mb-6">
@@ -181,24 +179,19 @@ export default function ProductLabelsPage() {
                 </div>
             </div>
 
-            {/* Printable sheet — layout from size (stack = thermal, grid = sheet) */}
-            <div
-                id="label-sheet"
-                data-layout={size.layout}
-                className="flex flex-wrap gap-2"
-            >
-                {labels.map(({ variant, key }) => (
-                    <ProductLabel
-                        key={key}
-                        productName={product.name}
-                        variant={variant}
-                        size={size}
-                        showSalePrice={showSalePrice}
-                    />
-                ))}
-            </div>
-
-            {labels.length === 0 && (
+            {labels.length > 0 ? (
+                <LabelPrintSheet size={size}>
+                    {labels.map(({ variant, key }) => (
+                        <ProductLabel
+                            key={key}
+                            productName={product.name}
+                            variant={variant}
+                            size={size}
+                            showSalePrice={showSalePrice}
+                        />
+                    ))}
+                </LabelPrintSheet>
+            ) : (
                 <p className="text-muted-foreground text-sm print:hidden">
                     Set at least one copy to preview labels.
                 </p>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Printer, Search, AlertTriangle } from "lucide-react";
 import ProductLabel, {
     LABEL_SIZES,
-    PRINT_SHEET_CSS,
+    LabelPrintSheet,
     variantLabel,
 } from "@/app/components/ProductLabel";
 
@@ -17,7 +17,7 @@ export default function ProductLabelsIndexPage() {
 
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
-    const [sizeKey, setSizeKey] = useState("a4");
+    const [sizeKey, setSizeKey] = useState("thermal");
     const [showSalePrice, setShowSalePrice] = useState(true);
     const [copies, setCopies] = useState({});
 
@@ -100,8 +100,6 @@ export default function ProductLabelsIndexPage() {
 
     return (
         <div className="w-full">
-            <style>{PRINT_SHEET_CSS}</style>
-
             <div className="print:hidden">
                 <div className="mb-8">
                     <h1 className="font-serif text-3xl font-bold text-foreground">
@@ -307,22 +305,19 @@ export default function ProductLabelsIndexPage() {
                 )}
             </div>
 
-            {/* Printable sheet — layout from size (stack = thermal, grid = sheet) */}
-            <div
-                id="label-sheet"
-                data-layout={size.layout}
-                className="flex flex-wrap gap-2"
-            >
-                {sheet.map(({ label, key }) => (
-                    <ProductLabel
-                        key={key}
-                        productName={label.productName}
-                        variant={label.variant}
-                        size={size}
-                        showSalePrice={showSalePrice}
-                    />
-                ))}
-            </div>
+            {sheet.length > 0 && (
+                <LabelPrintSheet size={size}>
+                    {sheet.map(({ label, key }) => (
+                        <ProductLabel
+                            key={key}
+                            productName={label.productName}
+                            variant={label.variant}
+                            size={size}
+                            showSalePrice={showSalePrice}
+                        />
+                    ))}
+                </LabelPrintSheet>
+            )}
         </div>
     );
 }
