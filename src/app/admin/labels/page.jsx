@@ -6,6 +6,7 @@ import { Printer, Search, AlertTriangle } from "lucide-react";
 import ProductLabel, {
     LABEL_SIZES,
     LabelPrintSheet,
+    printLabelRoll,
     variantLabel,
 } from "@/app/components/ProductLabel";
 
@@ -97,6 +98,22 @@ export default function ProductLabelsIndexPage() {
     }, [labels, copies]);
 
     const selectedRows = labels.filter((label) => copiesFor(label.id) > 0).length;
+
+    const handlePrint = () => {
+        if (sheet.length === 0) return;
+        if (size.layout === "stack") {
+            printLabelRoll(
+                sheet.map(({ label }) => ({
+                    productName: label.productName,
+                    variant: label.variant,
+                })),
+                size,
+                { showSalePrice }
+            );
+            return;
+        }
+        window.print();
+    };
 
     return (
         <div className="w-full">
@@ -206,7 +223,7 @@ export default function ProductLabelsIndexPage() {
                         </span>
 
                         <button
-                            onClick={() => window.print()}
+                            onClick={handlePrint}
                             disabled={sheet.length === 0}
                             className="ml-auto px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-medium flex items-center gap-2 disabled:opacity-50"
                         >

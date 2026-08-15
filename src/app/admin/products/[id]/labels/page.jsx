@@ -7,6 +7,7 @@ import { Printer, ArrowLeft } from "lucide-react";
 import ProductLabel, {
     LABEL_SIZES,
     LabelPrintSheet,
+    printLabelRoll,
     variantLabel,
 } from "@/app/components/ProductLabel";
 
@@ -74,6 +75,22 @@ export default function ProductLabelsPage() {
         setCopies((prev) => ({ ...prev, [index]: value }));
     };
 
+    const handlePrint = () => {
+        if (labels.length === 0 || !product) return;
+        if (size.layout === "stack") {
+            printLabelRoll(
+                labels.map(({ variant }) => ({
+                    productName: product.name,
+                    variant,
+                })),
+                size,
+                { showSalePrice }
+            );
+            return;
+        }
+        window.print();
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -137,7 +154,7 @@ export default function ProductLabelsPage() {
                         </label>
 
                         <button
-                            onClick={() => window.print()}
+                            onClick={handlePrint}
                             disabled={labels.length === 0}
                             className="ml-auto px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-medium flex items-center gap-2 disabled:opacity-50"
                         >
