@@ -1,36 +1,46 @@
 "use client";
 
-// On screen the slip is previewed at a typical 80 mm thermal width. When
-// printing, do not force a page size — the OS printer dialog already knows
-// the roll/paper. Fill that printable width so content cannot spill past it.
+// Counter bill printers here are 3" wide (~76 mm). Hard-size the print page to
+// that roll; leave a little horizontal inset so the driver's non-printable
+// edge does not crop the right column. Preview matches the same width.
 export const RECEIPT_PRINT_CSS = `
     @media print {
-        @page { margin: 0; }
-        html, body {
+        @page {
+            size: 3in auto;
             margin: 0;
-            padding: 0;
-            width: 100%;
-            background: #fff;
+        }
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 3in !important;
+            min-width: 0 !important;
+            max-width: 3in !important;
+            background: #fff !important;
         }
         body * { visibility: hidden; }
         #receipt-sheet, #receipt-sheet * { visibility: visible; }
         #receipt-sheet {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100% !important;
-            max-width: 100%;
-            margin: 0;
-            padding: 2mm 3mm;
-            box-sizing: border-box;
-            box-shadow: none;
-            border: none;
-            overflow: hidden;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 2.85in !important;
+            max-width: 2.85in !important;
+            margin: 0 !important;
+            padding: 0.08in 0.1in !important;
+            box-sizing: border-box !important;
+            box-shadow: none !important;
+            border: none !important;
+            overflow: hidden !important;
+            font-size: 9.5px !important;
         }
         #receipt-sheet table {
             width: 100% !important;
+            table-layout: fixed !important;
         }
-        #receipt-sheet * {
+        #receipt-sheet th,
+        #receipt-sheet td,
+        #receipt-sheet span,
+        #receipt-sheet p {
             max-width: 100%;
             overflow-wrap: anywhere;
             word-break: break-word;
@@ -107,11 +117,11 @@ export default function Receipt({ order, store = {}, tendered = null }) {
             id="receipt-sheet"
             className="bg-white text-black mx-auto"
             style={{
-                // Preview width only — print CSS overrides to 100% of the paper.
-                width: "80mm",
+                // Match the 3" thermal roll used at the counter.
+                width: "3in",
                 maxWidth: "100%",
                 boxSizing: "border-box",
-                padding: "4mm",
+                padding: "0.12in",
                 fontFamily: "ui-monospace, monospace",
                 fontSize: "10px",
                 lineHeight: 1.35,
@@ -162,10 +172,10 @@ export default function Receipt({ order, store = {}, tendered = null }) {
             >
                 <thead>
                     <tr style={{ borderBottom: "1px solid #000" }}>
-                        <th style={{ textAlign: "left", paddingBottom: "1mm", width: "46%" }}>Item</th>
+                        <th style={{ textAlign: "left", paddingBottom: "1mm", width: "42%" }}>Item</th>
                         <th style={{ textAlign: "center", paddingBottom: "1mm", width: "12%" }}>Qty</th>
-                        <th style={{ textAlign: "right", paddingBottom: "1mm", width: "21%" }}>Rate</th>
-                        <th style={{ textAlign: "right", paddingBottom: "1mm", width: "21%" }}>Amt</th>
+                        <th style={{ textAlign: "right", paddingBottom: "1mm", width: "23%" }}>Rate</th>
+                        <th style={{ textAlign: "right", paddingBottom: "1mm", width: "23%" }}>Amt</th>
                     </tr>
                 </thead>
                 <tbody>
