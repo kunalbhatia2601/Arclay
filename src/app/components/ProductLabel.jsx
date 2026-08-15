@@ -1,6 +1,6 @@
 "use client";
 
-import { barcodeToSvg } from "@/lib/barcode";
+import { barcodeToSvg, encodeCode128B } from "@/lib/barcode";
 
 export const LABEL_SIZES = {
     thermal: {
@@ -11,9 +11,6 @@ export const LABEL_SIZES = {
         barHeight: 14,
         showBarcodeText: false,
         layout: "stack",
-        // Portable label printers map CSS "width" to the feed direction, so the
-        // print document uses a swapped page box and rotates the face 90°.
-        rotateForPrinter: true,
     },
     thermal50x30: {
         label: "Thermal die-cut (50 × 30 mm)",
@@ -23,7 +20,6 @@ export const LABEL_SIZES = {
         barHeight: 16,
         showBarcodeText: false,
         layout: "stack",
-        rotateForPrinter: true,
     },
     a4: {
         label: "A4 sheet (65 × 38 mm grid)",
@@ -33,7 +29,6 @@ export const LABEL_SIZES = {
         barHeight: 40,
         showBarcodeText: true,
         layout: "grid",
-        rotateForPrinter: false,
     },
 };
 
@@ -42,119 +37,139 @@ export function variantLabel(attributes) {
     return Object.values(attributes).join(" / ");
 }
 
-function escapeHtml(value) {
-    return String(value ?? "").replace(/[<>&"']/g, (c) => (
-        { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]
-    ));
+/** 203 dpi — common thermal print head density */
+const THERMAL_DPI = 203;
+
+function mmToPx(mm) {
+    return Math.max(1, Math.round((Number(mm) / 25.4) * THERMAL_DPI));
 }
 
-function priceHtml(variant, showSalePrice) {
+function subtitleFor(productName, variant) {
+    const variantName = variantLabel(variant.attributes);
+    if (
+        !variantName ||
+        variantName.trim().toLowerCase() === String(productName || "").trim().toLowerCase()
+    ) {
+        return "";
+    }
+    return variantName;
+}
+
+function drawBarcode(ctx, text, x, y, maxW, barH) {
+    const widths = encodeCode128B(text);
+    if (!widths) return;
+
+    const modules = [...widths].reduce((s, w) => s + Number(w), 0) + 20; // quiet zones
+    const moduleW = Math.max(0.7, maxW / modules);
+
+    let cursor = x + 10 * moduleW;
+    let isBar = true;
+    for (const ch of widths) {
+        const w = Number(ch) * moduleW;
+        if (isBar) {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(cursor, y, w, barH);
+        }
+        cursor += w;
+        isBar = !isBar;
+    }
+}
+
+function renderLabelCanvas(item, size, showSalePrice) {
+    const w = mmToPx(size.widthMm);
+    const h = mmToPx(size.heightMm);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#000";
+    ctx.textBaseline = "top";
+
+    const pad = mmToPx(1.2);
+    const colGap = mmToPx(1.5);
+    const textW = Math.floor((w - pad * 2) * 0.52);
+    const codeW = w - pad * 2 - textW - colGap;
+
+    const productName = String(item.productName || "");
+    const subtitle = subtitleFor(productName, item.variant);
+    const variant = item.variant || {};
+
+    // --- text column ---
+    let ty = pad;
+    ctx.font = `bold ${Math.round(mmToPx(2.6))}px sans-serif`;
+    ctx.fillText(productName, pad, ty, textW);
+    ty += mmToPx(3.2);
+
+    if (subtitle) {
+        ctx.font = `${Math.round(mmToPx(1.9))}px sans-serif`;
+        ctx.fillText(subtitle, pad, ty, textW);
+        ty += mmToPx(2.4);
+    }
+
     const hasSale =
         showSalePrice && variant.salePrice != null && variant.salePrice !== "";
     if (hasSale) {
-        return (
-            `<span style="font-size:5.5pt;text-decoration:line-through;margin-right:1mm">` +
-            `₹${Number(variant.regularPrice).toLocaleString("en-IN")}</span>` +
-            `<span style="font-size:9pt;font-weight:700">` +
-            `₹${Number(variant.salePrice).toLocaleString("en-IN")}</span>`
+        const mrp = `₹${Number(variant.regularPrice).toLocaleString("en-IN")}`;
+        const sale = `₹${Number(variant.salePrice).toLocaleString("en-IN")}`;
+        ctx.font = `${Math.round(mmToPx(1.8))}px sans-serif`;
+        ctx.fillText(mrp, pad, ty, textW);
+        const mrpW = ctx.measureText(mrp).width;
+        ctx.strokeStyle = "#000";
+        ctx.beginPath();
+        ctx.moveTo(pad, ty + mmToPx(1.1));
+        ctx.lineTo(pad + mrpW, ty + mmToPx(1.1));
+        ctx.stroke();
+        ctx.font = `bold ${Math.round(mmToPx(2.8))}px sans-serif`;
+        ctx.fillText(sale, pad + mrpW + mmToPx(1), ty - mmToPx(0.3), textW);
+    } else {
+        ctx.font = `bold ${Math.round(mmToPx(2.8))}px sans-serif`;
+        ctx.fillText(
+            `₹${Number(variant.regularPrice).toLocaleString("en-IN")}`,
+            pad,
+            ty,
+            textW
         );
     }
-    return (
-        `<span style="font-size:9pt;font-weight:700">` +
-        `₹${Number(variant.regularPrice).toLocaleString("en-IN")}</span>`
-    );
-}
 
-function labelFaceHtml({ productName, variant, size, showSalePrice }) {
-    const variantName = variantLabel(variant.attributes);
-    const subtitle =
-        variantName &&
-        variantName.trim().toLowerCase() !== String(productName || "").trim().toLowerCase()
-            ? variantName
-            : "";
+    // --- barcode column ---
+    const codeX = pad + textW + colGap;
+    const barH = Math.min(mmToPx(size.barHeight * 0.35), h - pad * 2 - mmToPx(3));
+    const barY = Math.round((h - barH - mmToPx(2.5)) / 2);
 
-    const svg = variant.barcode
-        ? barcodeToSvg(variant.barcode, {
-              moduleWidth: size.moduleWidth,
-              height: size.barHeight,
-              showText: false,
-          })
-        : null;
+    if (variant.barcode) {
+        drawBarcode(ctx, String(variant.barcode), codeX, barY, codeW, barH);
+        ctx.font = `${Math.round(mmToPx(1.6))}px monospace`;
+        ctx.textAlign = "center";
+        ctx.fillText(
+            String(variant.barcode),
+            codeX + codeW / 2,
+            barY + barH + mmToPx(0.6),
+            codeW
+        );
+        ctx.textAlign = "left";
+    }
 
-    const barcodeBlock = svg
-        ? `<div style="flex:0 0 auto;max-width:48%;max-height:100%;overflow:hidden;line-height:0;text-align:center">
-             <div style="max-width:100%;max-height:${size.heightMm - 4}mm;overflow:hidden">${svg}</div>
-             <div style="font-size:5pt;font-family:ui-monospace,monospace;margin-top:0.4mm;line-height:1">
-               ${escapeHtml(variant.barcode)}
-             </div>
-           </div>`
-        : `<div style="font-size:5pt">No barcode</div>`;
-
-    return `
-      <div style="
-        width:${size.widthMm}mm;
-        height:${size.heightMm}mm;
-        box-sizing:border-box;
-        padding:1mm 1.5mm;
-        display:flex;
-        flex-direction:row;
-        align-items:center;
-        gap:1.5mm;
-        overflow:hidden;
-        background:#fff;
-        color:#000;
-        font-family:system-ui,sans-serif;
-      ">
-        <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:0.5mm">
-          <div style="font-size:7.5pt;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15">
-            ${escapeHtml(productName)}
-          </div>
-          ${
-              subtitle
-                  ? `<div style="font-size:5.5pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1">${escapeHtml(subtitle)}</div>`
-                  : ""
-          }
-          <div style="line-height:1.1">${priceHtml(variant, showSalePrice)}</div>
-        </div>
-        ${barcodeBlock}
-      </div>
-    `;
+    return canvas.toDataURL("image/png");
 }
 
 /**
- * Opens a dedicated print document (iframe) so die-cut thermal printers get
- * exact mm pages — not the tall admin UI. Portable label drivers treat CSS
- * width as the feed axis, so thermal pages are swapped + rotated.
+ * Thermal die-cut labels: rasterise each sticker to an exact-mm PNG at 203 dpi,
+ * then print one image per page. Avoids CSS rotation / @page quirks that were
+ * stretching one label across two stickers on portable label printers.
  */
 export function printLabelRoll(items, size, { showSalePrice = true } = {}) {
-    if (!items?.length) return;
+    if (!items?.length || typeof document === "undefined") return;
 
-    const rotate = !!size.rotateForPrinter;
-    // Physical sticker: widthMm × heightMm (as you read it after peeling).
-    // Printer page box when rotate=true: feed(heightMm) × across(widthMm).
-    const pageW = rotate ? size.heightMm : size.widthMm;
-    const pageH = rotate ? size.widthMm : size.heightMm;
+    const w = size.widthMm;
+    const h = size.heightMm;
 
-    const pages = items
+    const imgs = items
         .map((item) => {
-            const face = labelFaceHtml({
-                productName: item.productName,
-                variant: item.variant,
-                size,
-                showSalePrice,
-            });
-
-            if (!rotate) {
-                return `<div class="page">${face}</div>`;
-            }
-
-            // Face is designed in reading orientation (wide × short). Rotate into
-            // the feed-oriented page box so one sticker = one gap advance.
-            return `
-              <div class="page">
-                <div class="rotator">${face}</div>
-              </div>
-            `;
+            const src = renderLabelCanvas(item, size, showSalePrice);
+            return `<div class="page"><img src="${src}" width="${w}mm" height="${h}mm" alt="" /></div>`;
         })
         .join("");
 
@@ -164,46 +179,42 @@ export function printLabelRoll(items, size, { showSalePrice = true } = {}) {
 <meta charset="utf-8" />
 <title>Labels</title>
 <style>
-  @page { size: ${pageW}mm ${pageH}mm; margin: 0; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    width: ${pageW}mm;
-    margin: 0;
-    padding: 0;
-    background: #fff;
-  }
+  @page { size: ${w}mm ${h}mm; margin: 0; }
+  * { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; background: #fff; }
   .page {
-    width: ${pageW}mm;
-    height: ${pageH}mm;
+    width: ${w}mm;
+    height: ${h}mm;
     overflow: hidden;
     page-break-after: always;
     break-after: page;
-    position: relative;
   }
-  .page:last-child {
-    page-break-after: auto;
-    break-after: auto;
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  img {
+    display: block;
+    width: ${w}mm;
+    height: ${h}mm;
+    max-width: ${w}mm;
+    max-height: ${h}mm;
   }
-  .rotator {
-    width: ${size.widthMm}mm;
-    height: ${size.heightMm}mm;
-    transform: rotate(90deg);
-    transform-origin: top left;
-    position: absolute;
-    top: 0;
-    left: ${pageW}mm;
-  }
-  .page svg { max-width: 100%; max-height: ${Math.max(10, size.heightMm - 6)}mm; height: auto; }
 </style>
 </head>
 <body>
-${pages}
+${imgs}
 <script>
   window.onload = function () {
-    setTimeout(function () {
-      window.focus();
-      window.print();
-    }, 50);
+    var imgs = Array.prototype.slice.call(document.images || []);
+    var left = imgs.length;
+    function go() {
+      setTimeout(function () { window.focus(); window.print(); }, 30);
+    }
+    if (!left) return go();
+    imgs.forEach(function (img) {
+      if (img.complete) { if (--left === 0) go(); }
+      else {
+        img.onload = img.onerror = function () { if (--left === 0) go(); };
+      }
+    });
   };
 </script>
 </body>
@@ -230,9 +241,7 @@ ${pages}
             if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
         }, 1000);
     };
-
     iframe.contentWindow?.addEventListener?.("afterprint", cleanup);
-    // Fallback if afterprint never fires (some WebKit builds).
     setTimeout(cleanup, 60_000);
 }
 
@@ -289,16 +298,9 @@ export default function ProductLabel({ productName, variant, size, showSalePrice
           })
         : null;
 
-    const variantName = variantLabel(variant.attributes);
-    const subtitle =
-        variantName &&
-        variantName.trim().toLowerCase() !== String(productName || "").trim().toLowerCase()
-            ? variantName
-            : "";
-
+    const subtitle = subtitleFor(productName, variant);
     const hasSale =
         showSalePrice && variant.salePrice != null && variant.salePrice !== "";
-
     const isThermal = size.layout === "stack";
 
     if (isThermal) {
