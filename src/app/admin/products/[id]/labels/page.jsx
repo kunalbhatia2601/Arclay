@@ -95,7 +95,7 @@ export default function ProductLabelsPage() {
 
     return (
         <div className="w-full">
-            <style>{`${size.pageCss}${PRINT_SHEET_CSS}`}</style>
+            <style>{PRINT_SHEET_CSS}</style>
 
             {/* Controls — hidden when printing */}
             <div className="print:hidden">
@@ -181,8 +181,12 @@ export default function ProductLabelsPage() {
                 </div>
             </div>
 
-            {/* Printable sheet */}
-            <div id="label-sheet" className="flex flex-wrap gap-2">
+            {/* Printable sheet — layout from size (stack = thermal, grid = sheet) */}
+            <div
+                id="label-sheet"
+                data-layout={size.layout}
+                className="flex flex-wrap gap-2"
+            >
                 {labels.map(({ variant, key }) => (
                     <ProductLabel
                         key={key}

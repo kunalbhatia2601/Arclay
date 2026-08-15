@@ -100,7 +100,7 @@ export default function ProductLabelsIndexPage() {
 
     return (
         <div className="w-full">
-            <style>{`${size.pageCss}${PRINT_SHEET_CSS}`}</style>
+            <style>{PRINT_SHEET_CSS}</style>
 
             <div className="print:hidden">
                 <div className="mb-8">
@@ -307,8 +307,12 @@ export default function ProductLabelsIndexPage() {
                 )}
             </div>
 
-            {/* Printable sheet */}
-            <div id="label-sheet" className="flex flex-wrap gap-2">
+            {/* Printable sheet — layout from size (stack = thermal, grid = sheet) */}
+            <div
+                id="label-sheet"
+                data-layout={size.layout}
+                className="flex flex-wrap gap-2"
+            >
                 {sheet.map(({ label, key }) => (
                     <ProductLabel
                         key={key}

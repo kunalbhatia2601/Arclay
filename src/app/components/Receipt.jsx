@@ -1,21 +1,39 @@
 "use client";
 
-// Printed on 80 mm thermal roll, the common counter-printer width. Only the
-// receipt is made visible so the surrounding admin UI never reaches the paper.
+// On screen the slip is previewed at a typical 80 mm thermal width. When
+// printing, do not force a page size — the OS printer dialog already knows
+// the roll/paper. Fill that printable width so content cannot spill past it.
 export const RECEIPT_PRINT_CSS = `
     @media print {
-        @page { size: 80mm auto; margin: 0; }
+        @page { margin: 0; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background: #fff;
+        }
         body * { visibility: hidden; }
         #receipt-sheet, #receipt-sheet * { visibility: visible; }
         #receipt-sheet {
             position: absolute;
             left: 0;
             top: 0;
-            width: 80mm;
+            width: 100% !important;
+            max-width: 100%;
             margin: 0;
-            padding: 4mm;
+            padding: 2mm 3mm;
+            box-sizing: border-box;
             box-shadow: none;
             border: none;
+            overflow: hidden;
+        }
+        #receipt-sheet table {
+            width: 100% !important;
+        }
+        #receipt-sheet * {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
     }
 `;
@@ -50,10 +68,20 @@ const Row = ({ label, value, bold, size }) => (
             gap: "2mm",
             fontWeight: bold ? 700 : 400,
             fontSize: size,
+            minWidth: 0,
         }}
     >
-        <span>{label}</span>
-        <span>{value}</span>
+        <span style={{ minWidth: 0, flex: "1 1 auto" }}>{label}</span>
+        <span
+            style={{
+                textAlign: "right",
+                flex: "0 1 auto",
+                minWidth: 0,
+                overflowWrap: "anywhere",
+            }}
+        >
+            {value}
+        </span>
     </div>
 );
 
@@ -79,7 +107,10 @@ export default function Receipt({ order, store = {}, tendered = null }) {
             id="receipt-sheet"
             className="bg-white text-black mx-auto"
             style={{
+                // Preview width only — print CSS overrides to 100% of the paper.
                 width: "80mm",
+                maxWidth: "100%",
+                boxSizing: "border-box",
                 padding: "4mm",
                 fontFamily: "ui-monospace, monospace",
                 fontSize: "10px",
