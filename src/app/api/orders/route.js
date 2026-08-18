@@ -169,7 +169,8 @@ async function postHandler(req) {
                     sku: variant.sku
                 },
                 quantity: cartItem.quantity,
-                priceAtOrder: price
+                priceAtOrder: price,
+                costAtOrder: variant.costPrice ?? null
             });
 
             // Same lines, but with the product document attached so coupon

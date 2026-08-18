@@ -151,6 +151,9 @@ export default function CategoriesPage() {
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
                                         Category
                                     </th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-foreground hidden sm:table-cell">
+                                        Type
+                                    </th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-foreground hidden md:table-cell">
                                         Description
                                     </th>
@@ -179,9 +182,14 @@ export default function CategoriesPage() {
                                                     )}
                                                 </div>
                                                 <span className="font-medium text-foreground">
-                                                    {category.name}
+                                                    {category.parent ? `${category.parent.name} / ${category.name}` : category.name}
                                                 </span>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 hidden sm:table-cell">
+                                            <span className="text-xs font-medium text-muted-foreground">
+                                                {category.parent ? "Subcategory" : "Category"}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4 hidden md:table-cell">
                                             <span className="text-muted-foreground text-sm line-clamp-1">

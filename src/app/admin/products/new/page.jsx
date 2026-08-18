@@ -9,6 +9,7 @@ import ImageGeneratorModal from "@/app/components/ImageGeneratorModal";
 import RichTextEditor from "@/app/components/RichTextEditor";
 import BarcodeScanner from "@/app/components/BarcodeScanner";
 import ProductMetaPanel from "@/app/components/admin/ProductMetaPanel";
+import { preventEnterSubmit } from "@/lib/formKeys";
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -23,8 +24,9 @@ export default function NewProductPage() {
         description: "",
         long_description: "",
         variationTypes: [],
-        variants: [],
+        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "", barcode: "", costPrice: "", expiresAt: "" }],
         category: "",
+        subcategory: "",
         isActive: true,
         barcode: "",
         taxRate: "",
@@ -45,7 +47,7 @@ export default function NewProductPage() {
 
     const fetchCategories = async () => {
         try {
-            const res = await fetch("/api/admin/categories?limit=100", {
+            const res = await fetch("/api/admin/categories?limit=200", {
                 credentials: "include",
             });
             const data = await res.json();
@@ -151,7 +153,9 @@ export default function NewProductPage() {
                 salePrice: "",
                 stock: "",
                 sku: "",
-                barcode: ""
+                barcode: "",
+                costPrice: "",
+                expiresAt: ""
             };
         });
 
@@ -194,6 +198,7 @@ export default function NewProductPage() {
         try {
             const submitData = {
                 ...formData,
+                subcategory: formData.subcategory || null,
                 images: formData.images.filter((img) => img.trim()),
                 variationTypes: formData.variationTypes
                     .filter(t => t.name.trim() && t.options.some(o => o.trim()))
@@ -212,7 +217,9 @@ export default function NewProductPage() {
                     salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
                     stock: parseInt(v.stock) || 0,
                     sku: v.sku || "",
-                    barcode: (v.barcode || "").trim()
+                    barcode: (v.barcode || "").trim(),
+                    costPrice: v.costPrice === "" || v.costPrice == null ? null : parseFloat(v.costPrice),
+                    expiresAt: v.expiresAt || null
                 })),
             };
 
@@ -266,7 +273,7 @@ export default function NewProductPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmit} className="space-y-8">
                     {/* Basic Info */}
                     <div className="space-y-4">
                         <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
@@ -292,17 +299,41 @@ export default function NewProductPage() {
                             </label>
                             <select
                                 value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: "" })}
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                             >
                                 <option value="">Select a category</option>
-                                {categories.map((cat) => (
+                                {categories.filter((cat) => !cat.parent).map((cat) => (
                                     <option key={cat._id} value={cat._id}>
                                         {cat.name}
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">
+                                Subcategory
+                            </label>
+                            <select
+                                value={formData.subcategory}
+                                onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                                disabled={!formData.category}
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                            >
+                                <option value="">None (optional)</option>
+                                {categories
+                                    .filter((cat) => String(cat.parent?._id || cat.parent || "") === String(formData.category))
+                                    .map((cat) => (
+                                        <option key={cat._id} value={cat._id}>
+                                            {cat.name}
+                                        </option>
+                                    ))}
+                            </select>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Optional nested group under the selected category
+                            </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -413,14 +444,20 @@ export default function NewProductPage() {
                         />
                     </div>
 
-                    {/* Variation Types */}
+                    {/* Variation Types — optional; skip this for a simple product */}
                     <div className="space-y-4">
                         <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
-                            Variation Types
+                            Variations
                             <span className="font-normal text-sm text-muted-foreground ml-2">
-                                (e.g., Color, Size, Weight)
+                                Optional — skip this for a simple product with one price
                             </span>
                         </h2>
+
+                        {formData.variationTypes.length === 0 && (
+                            <p className="text-sm text-muted-foreground">
+                                Fill in pricing below. Only add Color, Size, Weight, etc. if this product has multiple SKUs.
+                            </p>
+                        )}
 
                         {formData.variationTypes.map((type, typeIndex) => (
                             <div key={typeIndex} className="p-4 bg-muted rounded-xl">
@@ -498,9 +535,11 @@ export default function NewProductPage() {
                     {/* Variants */}
                     <div className="space-y-4">
                         <h2 className="font-serif text-xl font-bold text-foreground border-b border-border pb-2">
-                            Variants
+                            {formData.variationTypes.length === 0 ? "Pricing & stock" : "Variants"}
                             <span className="font-normal text-sm text-muted-foreground ml-2">
-                                (Price & Stock for each combination)
+                                {formData.variationTypes.length === 0
+                                    ? "One price, stock, cost, and expiry for this product"
+                                    : "(Price & stock for each combination)"}
                             </span>
                         </h2>
 
@@ -515,7 +554,7 @@ export default function NewProductPage() {
                                     type="button"
                                     onClick={() => setFormData({
                                         ...formData,
-                                        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "", barcode: "" }]
+                                        variants: [{ attributes: {}, regularPrice: "", salePrice: "", stock: "", sku: "", barcode: "", costPrice: "", expiresAt: "" }]
                                     })}
                                     className="mt-3 text-sm text-primary hover:underline"
                                 >
@@ -595,6 +634,27 @@ export default function NewProductPage() {
                                                     onChange={(e) => handleVariantChange(index, "barcode", e.target.value)}
                                                     className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono"
                                                     placeholder="auto-generated"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Cost price (₹)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={variant.costPrice || ""}
+                                                    onChange={(e) => handleVariantChange(index, "costPrice", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                                    placeholder="Admin only"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-1">Expiry date</label>
+                                                <input
+                                                    type="date"
+                                                    value={variant.expiresAt || ""}
+                                                    onChange={(e) => handleVariantChange(index, "expiresAt", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                                                 />
                                             </div>
                                         </div>

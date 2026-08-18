@@ -11,6 +11,8 @@ import {
     resolveProductMeta,
     sanitizeMetaValues,
 } from "@/lib/meta";
+import { resolveProductTaxonomy } from "@/lib/categories";
+import { withAdminVariantFields } from "@/lib/productPublic";
 
 // GET single product
 async function getHandler(req, { params }) {
@@ -21,6 +23,7 @@ async function getHandler(req, { params }) {
 
         const product = await Product.findById(id)
             .populate("category", "name")
+            .populate("subcategory", "name")
             .lean();
 
         if (!product) {
@@ -61,7 +64,7 @@ async function putHandler(req, { params }) {
         const body = await req.json();
         const {
             name, images, description, variationTypes, variants, category,
-            isActive, isFeatured, long_description, barcode, taxRate, hsn,
+            subcategory, isActive, isFeatured, long_description, barcode, taxRate, hsn,
             metaTemplates, customMetaFields, meta, removeOrphanKeys
         } = body;
 
@@ -82,11 +85,18 @@ async function putHandler(req, { params }) {
         if (variationTypes !== undefined) product.variationTypes = variationTypes;
         if (variants !== undefined) {
             // Keeps existing barcodes intact and fills any newly added variant.
-            product.variants = await assignVariantBarcodes(variants, {
+            product.variants = await assignVariantBarcodes(withAdminVariantFields(variants), {
                 excludeProductId: product._id,
             });
         }
-        if (category !== undefined) product.category = category;
+        if (category !== undefined || subcategory !== undefined) {
+            const taxonomy = await resolveProductTaxonomy(
+                category !== undefined ? category : product.category,
+                subcategory !== undefined ? subcategory : product.subcategory
+            );
+            product.category = taxonomy.categoryId;
+            product.subcategory = taxonomy.subcategoryId;
+        }
         if (isActive !== undefined) product.isActive = isActive;
         if (isFeatured !== undefined) product.isFeatured = isFeatured;
         if (long_description !== undefined) product.long_description = long_description;
@@ -139,6 +149,7 @@ async function putHandler(req, { params }) {
 
         const populatedProduct = await Product.findById(product._id)
             .populate("category", "name")
+            .populate("subcategory", "name")
             .lean();
 
         return Response.json({
@@ -150,7 +161,7 @@ async function putHandler(req, { params }) {
         console.error("Update product error:", error);
         return Response.json(
             { success: false, message: error.message || "Server error" },
-            { status: 500 }
+            { status: error.status || 500 }
         );
     }
 }

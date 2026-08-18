@@ -1,6 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import Category from "@/models/Category";
 import { withAdmin } from "@/lib/auth";
+import { assertUniqueSiblingName, resolveParent } from "@/lib/categories";
 
 // GET all categories
 async function getHandler(req) {
@@ -29,9 +30,10 @@ async function getHandler(req) {
 
         const [categories, total] = await Promise.all([
             Category.find(query)
-                .sort({ createdAt: -1 })
+                .sort({ parent: 1, createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
+                .populate("parent", "name")
                 .lean(),
             Category.countDocuments(query),
         ]);
@@ -58,7 +60,7 @@ async function getHandler(req) {
 // POST create category
 async function postHandler(req) {
     try {
-        const { name, image, description, isActive } = await req.json();
+        const { name, image, description, isActive, parent } = await req.json();
 
         if (!name) {
             return Response.json(
@@ -69,11 +71,16 @@ async function postHandler(req) {
 
         await connectDB();
 
+        const parentDoc = await resolveParent(parent || null);
+        const parentId = parentDoc?._id || null;
+        await assertUniqueSiblingName(name, parentId);
+
         const category = await Category.create({
             name,
             image: image || "",
             description: description || "",
             isActive: isActive !== false,
+            parent: parentId,
         });
 
         return Response.json({
@@ -84,8 +91,8 @@ async function postHandler(req) {
     } catch (error) {
         console.error("Create category error:", error);
         return Response.json(
-            { success: false, message: "Server error" },
-            { status: 500 }
+            { success: false, message: error.message || "Server error" },
+            { status: error.status || 500 }
         );
     }
 }

@@ -2,6 +2,7 @@ import connectDB from "@/lib/mongodb";
 import Bundle from "@/models/Bundle";
 import Product from "@/models/Product";
 import { withPublicProtection } from "@/lib/auth";
+import { stripAdminProducts } from "@/lib/productPublic";
 
 // GET bundle by slug with full product details
 async function getHandler(req, { params }) {
@@ -27,7 +28,10 @@ async function getHandler(req, { params }) {
 
         return Response.json({
             success: true,
-            bundle
+            bundle: {
+                ...bundle,
+                products: stripAdminProducts(bundle.products || []),
+            }
         });
     } catch (error) {
         console.error("Get bundle by slug error:", error);

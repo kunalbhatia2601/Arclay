@@ -94,9 +94,11 @@ export function PdpTitle({ settings }) {
         <div>
             {(settings.showCategory !== false || settings.showRating !== false) && (
                 <div className="flex items-center gap-3 mb-3 flex-wrap">
-                    {settings.showCategory !== false && product.category?.name && (
+                    {settings.showCategory !== false && (product.subcategory?.name || product.category?.name) && (
                         <span className="bg-[var(--c-accent-soft)] text-[var(--c-primary-dark)] text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                            {product.category.name}
+                            {product.subcategory?.name
+                                ? `${product.category?.name} / ${product.subcategory.name}`
+                                : product.category.name}
                         </span>
                     )}
                     {settings.showRating !== false && reviews.length > 0 && (
@@ -470,6 +472,7 @@ export const PRODUCT_FIELD_SOURCES = [
     { value: "name", label: "Product name" },
     { value: "subtitle", label: "Subtitle" },
     { value: "category", label: "Category" },
+    { value: "subcategory", label: "Subcategory" },
     { value: "sku", label: "SKU (selected variant)" },
     { value: "barcode", label: "Barcode (selected variant)" },
     { value: "price", label: "Current price" },
@@ -489,7 +492,12 @@ function resolveFieldValue(source, ctx) {
     switch (source) {
         case "name": return product.name;
         case "subtitle": return product.subtitle;
-        case "category": return product.category?.name;
+        case "category":
+            return product.subcategory?.name
+                ? `${product.category?.name} / ${product.subcategory.name}`
+                : product.category?.name;
+        case "subcategory":
+            return product.subcategory?.name;
         case "sku": return selectedVariant?.sku;
         case "barcode": return selectedVariant?.barcode;
         case "price": return money(price.price);

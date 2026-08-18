@@ -28,6 +28,12 @@ const OrderItemSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    // Cost snapshot at sale time so P/L does not rewrite history if cost changes
+    costAtOrder: {
+        type: Number,
+        default: null,
+        min: 0
+    },
     // Name captured at sale time so a renamed product does not rewrite history
     name: {
         type: String,

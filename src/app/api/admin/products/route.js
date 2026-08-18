@@ -5,6 +5,8 @@ import { withAdmin } from "@/lib/auth";
 import { assignVariantBarcodes } from "@/lib/variantBarcodes";
 import MetaFieldTemplate from "@/models/MetaFieldTemplate";
 import { mergeFieldDefinitions, normalizeFields, sanitizeMetaValues } from "@/lib/meta";
+import { resolveProductTaxonomy } from "@/lib/categories";
+import { withAdminVariantFields } from "@/lib/productPublic";
 
 // GET all products
 async function getHandler(req) {
@@ -45,6 +47,7 @@ async function getHandler(req) {
                 .skip(skip)
                 .limit(limit)
                 .populate("category", "name")
+                .populate("subcategory", "name")
                 .lean(),
             Product.countDocuments(query),
         ]);
@@ -73,7 +76,7 @@ async function postHandler(req) {
     try {
         const {
             name, images, description, variationTypes, variants, category,
-            isActive, barcode, taxRate, hsn,
+            subcategory, isActive, barcode, taxRate, hsn,
             metaTemplates, customMetaFields, meta
         } = await req.json();
 
@@ -93,8 +96,10 @@ async function postHandler(req) {
 
         await connectDB();
 
+        const taxonomy = await resolveProductTaxonomy(category, subcategory);
+
         // Every variant gets a printable barcode; blanks are auto-generated.
-        const variantsWithBarcodes = await assignVariantBarcodes(variants);
+        const variantsWithBarcodes = await assignVariantBarcodes(withAdminVariantFields(variants));
 
         // Metadata is validated against the field definitions it claims to
         // use, so unknown or malformed keys never reach the document.
@@ -119,7 +124,8 @@ async function postHandler(req) {
             description: description || "",
             variationTypes: variationTypes || [],
             variants: variantsWithBarcodes,
-            category,
+            category: taxonomy.categoryId,
+            subcategory: taxonomy.subcategoryId,
             isActive: isActive !== false,
             barcode: barcode || "",
             taxRate: Math.min(100, Math.max(0, Number(taxRate) || 0)),
@@ -131,6 +137,7 @@ async function postHandler(req) {
 
         const populatedProduct = await Product.findById(product._id)
             .populate("category", "name")
+            .populate("subcategory", "name")
             .lean();
 
         return Response.json({
@@ -142,7 +149,7 @@ async function postHandler(req) {
         console.error("Create product error:", error);
         return Response.json(
             { success: false, message: error.message || "Server error" },
-            { status: 500 }
+            { status: error.status || 500 }
         );
     }
 }

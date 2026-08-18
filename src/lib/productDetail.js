@@ -4,6 +4,7 @@ import Category from '@/models/Category'; // Required for populate to work
 import Review from '@/models/Review';
 import MetaFieldTemplate from '@/models/MetaFieldTemplate'; // Required for template lookup
 import { loadTemplatesForProduct, resolveProductMeta } from '@/lib/meta';
+import { stripAdminProductFields, stripAdminProducts } from '@/lib/productPublic';
 
 /**
  * Server-side product detail loader.
@@ -21,6 +22,7 @@ export async function getProductDetail(id) {
 
         const product = await Product.findOne({ _id: id, isActive: true })
             .populate('category', 'name')
+            .populate('subcategory', 'name')
             .lean();
 
         if (!product) return null;
@@ -36,7 +38,7 @@ export async function getProductDetail(id) {
                 isActive: true,
             })
                 .limit(4)
-                .select('name images variants category minPrice maxPrice hasSale')
+                .select('name images variants category subcategory minPrice maxPrice hasSale')
                 .populate('category', 'name')
                 .lean(),
             loadTemplatesForProduct(product),
@@ -48,9 +50,9 @@ export async function getProductDetail(id) {
         );
 
         return {
-            product: JSON.parse(JSON.stringify(product)),
+            product: stripAdminProductFields(JSON.parse(JSON.stringify(product))),
             reviews: JSON.parse(JSON.stringify(reviews)),
-            relatedProducts: JSON.parse(JSON.stringify(relatedProducts)),
+            relatedProducts: stripAdminProducts(JSON.parse(JSON.stringify(relatedProducts))),
             meta: {
                 // Everything resolved, so a block can bind to any field the
                 // admin chooses rather than only the "visible" ones.

@@ -18,11 +18,26 @@ export default function EditCategoryPage({ params }) {
         image: "",
         description: "",
         isActive: true,
+        parent: "",
     });
+    const [parents, setParents] = useState([]);
 
     useEffect(() => {
         fetchCategory();
+        fetchParents();
     }, [id]);
+
+    const fetchParents = async () => {
+        try {
+            const res = await fetch("/api/admin/categories?limit=200", { credentials: "include" });
+            const data = await res.json();
+            if (data.success) {
+                setParents((data.categories || []).filter((c) => !c.parent && String(c._id) !== String(id)));
+            }
+        } catch (error) {
+            console.error("Failed to fetch categories:", error);
+        }
+    };
 
     const fetchCategory = async () => {
         try {
@@ -37,6 +52,7 @@ export default function EditCategoryPage({ params }) {
                     image: data.category.image || "",
                     description: data.category.description || "",
                     isActive: data.category.isActive,
+                    parent: data.category.parent?._id || data.category.parent || "",
                 });
             } else {
                 setError("Category not found");
@@ -59,7 +75,10 @@ export default function EditCategoryPage({ params }) {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    parent: formData.parent || null,
+                }),
             });
 
             const data = await res.json();
@@ -124,6 +143,24 @@ export default function EditCategoryPage({ params }) {
                             className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="e.g., Signature Pickles"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                            Parent category
+                        </label>
+                        <select
+                            value={formData.parent}
+                            onChange={(e) => setFormData({ ...formData, parent: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                            <option value="">None — this is a top-level category</option>
+                            {parents.map((cat) => (
+                                <option key={cat._id} value={cat._id}>
+                                    {cat.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>

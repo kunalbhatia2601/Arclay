@@ -2,6 +2,7 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
 import { withPublicProtection } from "@/lib/auth";
+import { stripAdminProducts } from "@/lib/productPublic";
 
 // GET featured products
 async function getHandler(req) {
@@ -19,7 +20,7 @@ async function getHandler(req) {
 
         return Response.json({
             success: true,
-            products
+            products: stripAdminProducts(products)
         });
     } catch (error) {
         console.error("Get featured products error:", error);

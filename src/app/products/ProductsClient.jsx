@@ -10,6 +10,7 @@ import { Search, SlidersHorizontal, Grid3X3, LayoutList, ChevronDown, X } from "
 export default function ProductsPageContent({ aboveGrid = null, belowGrid = null }) {
     const searchParams = useSearchParams();
     const initialCategory = searchParams.get("category") || "";
+    const initialSubcategory = searchParams.get("subcategory") || "";
     const initialSearch = searchParams.get("search") || "";
 
     const [products, setProducts] = useState([]);
@@ -19,6 +20,7 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
 
     const [search, setSearch] = useState(initialSearch);
     const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+    const [selectedSubcategory, setSelectedSubcategory] = useState(initialSubcategory);
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
     const [priceRange, setPriceRange] = useState(5000);
@@ -29,8 +31,10 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
     // Sync state with URL changes (e.g., when clicking category in navbar while already on products page)
     useEffect(() => {
         const cat = searchParams.get("category") || "";
+        const sub = searchParams.get("subcategory") || "";
         const s = searchParams.get("search") || "";
         setSelectedCategory(cat);
+        setSelectedSubcategory(sub);
         setSearch(s);
     }, [searchParams]);
 
@@ -40,6 +44,7 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
             const params = new URLSearchParams({ page, limit: 12, sort });
             if (search) params.set("search", search);
             if (selectedCategory) params.set("category", selectedCategory);
+            if (selectedSubcategory) params.set("subcategory", selectedSubcategory);
             if (minPrice) params.set("minPrice", minPrice);
             if (maxPrice) params.set("maxPrice", maxPrice);
 
@@ -59,14 +64,14 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
         } finally {
             setLoading(false);
         }
-    }, [search, selectedCategory, minPrice, maxPrice, sort]);
+    }, [search, selectedCategory, selectedSubcategory, minPrice, maxPrice, sort]);
 
     useEffect(() => { fetchProducts(1); }, [fetchProducts]);
 
     const handleSearch = (e) => { e.preventDefault(); fetchProducts(1); };
 
     const clearFilters = () => {
-        setSearch(""); setSelectedCategory(""); setMinPrice(""); setMaxPrice(""); setSort("popular"); setPriceRange(5000);
+        setSearch(""); setSelectedCategory(""); setSelectedSubcategory(""); setMinPrice(""); setMaxPrice(""); setSort("popular"); setPriceRange(5000);
     };
 
     const sortOptions = [
@@ -77,7 +82,14 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
         { value: "name-asc", label: "Name: A - Z" },
     ];
 
-    const selectedCategoryName = categories.find(c => c._id === selectedCategory)?.name || "All Products";
+    const parentCategories = (Array.isArray(categories) ? categories : []).filter((c) => !c.parent);
+    const childCategories = (Array.isArray(categories) ? categories : []).filter(
+        (c) => selectedCategory && String(c.parent?._id || c.parent || "") === String(selectedCategory)
+    );
+    const selectedCategoryName =
+        categories.find((c) => c._id === selectedSubcategory)?.name
+        || categories.find((c) => c._id === selectedCategory)?.name
+        || "All Products";
 
     return (
         <main className="min-h-screen bg-[var(--c-bg)]">
@@ -151,13 +163,13 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
                 <div className="flex gap-2 relative min-w-max pb-1 isolate">
                     {[
                         { _id: "", name: "All" },
-                        ...categories
+                        ...parentCategories
                     ].map((cat) => {
                         const isSelected = selectedCategory === cat._id;
                         return (
                             <button
                                 key={cat._id || 'all'}
-                                onClick={() => setSelectedCategory(cat._id)}
+                                onClick={() => { setSelectedCategory(cat._id); setSelectedSubcategory(""); }}
                                 className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 z-10 shrink-0 ${
                                     isSelected ? "text-white" : "text-[var(--c-text)] bg-[var(--c-surface-alt)]/50"
                                 }`}
@@ -166,6 +178,27 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
                                 {isSelected && (
                                     <motion.div
                                         layoutId="category-pill-active"
+                                        className="absolute inset-0 bg-[var(--c-primary)] rounded-full -z-10"
+                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                    />
+                                )}
+                            </button>
+                        );
+                    })}
+                    {childCategories.map((cat) => {
+                        const isSelected = selectedSubcategory === cat._id;
+                        return (
+                            <button
+                                key={cat._id}
+                                onClick={() => setSelectedSubcategory(cat._id)}
+                                className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 z-10 shrink-0 ${
+                                    isSelected ? "text-white" : "text-[var(--c-text)] bg-[var(--c-surface-alt)]/50"
+                                }`}
+                            >
+                                <span className="relative z-20">{cat.name}</span>
+                                {isSelected && (
+                                    <motion.div
+                                        layoutId="subcategory-pill-active"
                                         className="absolute inset-0 bg-[var(--c-primary)] rounded-full -z-10"
                                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                                     />
@@ -192,20 +225,20 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
                                 <div className="space-y-1 relative overflow-visible">
                                     {[
                                         { _id: "", name: "All Products", productCount: pagination.total },
-                                        ...(Array.isArray(categories) ? categories : [])
+                                        ...parentCategories
                                     ].map((cat) => (
                                         <button
                                             key={cat._id}
-                                            onClick={() => setSelectedCategory(cat._id)}
+                                            onClick={() => { setSelectedCategory(cat._id); setSelectedSubcategory(""); }}
                                             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-[14px] transition-all group relative z-10 ${
-                                                (selectedCategory === cat._id) || (selectedCategory === "" && cat._id === "")
+                                                (selectedCategory === cat._id && !selectedSubcategory) || (selectedCategory === "" && cat._id === "")
                                                     ? "text-[#3A4B29] font-bold"
                                                     : "text-[var(--c-text-muted)] hover:text-[var(--c-text)]"
                                             }`}
                                         >
                                             <span className="relative z-10">{cat.name}</span>
                                             {/* <span className={`text-[10px] px-2 py-0.5 rounded-full transition-colors relative z-10 ${
-                                                (selectedCategory === cat._id) || (selectedCategory === "" && cat._id === "")
+                                                (selectedCategory === cat._id && !selectedSubcategory) || (selectedCategory === "" && cat._id === "")
                                                     ? "bg-[var(--c-primary)] text-white"
                                                     : "bg-[var(--c-surface-alt)] text-[var(--c-text-muted)] group-hover:bg-[var(--c-border)]"
                                             }`}>
@@ -215,6 +248,26 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
                                             {((selectedCategory === cat._id) || (selectedCategory === "" && cat._id === "")) && (
                                                 <motion.div
                                                     layoutId="liquid-pill-products-sidebar"
+                                                    className="absolute inset-0 bg-[var(--c-accent-soft)] rounded-xl z-[-1]"
+                                                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                                />
+                                            )}
+                                        </button>
+                                    ))}
+                                    {childCategories.map((cat) => (
+                                        <button
+                                            key={cat._id}
+                                            onClick={() => setSelectedSubcategory(cat._id)}
+                                            className={`w-full flex items-center justify-between pl-8 pr-4 py-2.5 rounded-xl text-[13px] transition-all group relative z-10 ${
+                                                selectedSubcategory === cat._id
+                                                    ? "text-[#3A4B29] font-bold"
+                                                    : "text-[var(--c-text-muted)] hover:text-[var(--c-text)]"
+                                            }`}
+                                        >
+                                            <span className="relative z-10">{cat.name}</span>
+                                            {selectedSubcategory === cat._id && (
+                                                <motion.div
+                                                    layoutId="liquid-pill-products-sub"
                                                     className="absolute inset-0 bg-[var(--c-accent-soft)] rounded-xl z-[-1]"
                                                     transition={{ type: "spring", stiffness: 350, damping: 25 }}
                                                 />
@@ -255,7 +308,7 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
                             </div>
 
                             {/* Clear Filters */}
-                            {(selectedCategory || minPrice || maxPrice || search || sort !== "popular") && (
+                            {(selectedCategory || selectedSubcategory || minPrice || maxPrice || search || sort !== "popular") && (
                                 <button
                                     onClick={clearFilters}
                                     className="w-full py-3 bg-[var(--c-surface-alt)] text-[var(--c-text)] hover:bg-[var(--c-border)] transition-colors text-sm font-semibold rounded-xl"
@@ -365,11 +418,16 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
                             <div>
                                 <h3 className="font-semibold text-sm text-[var(--c-text)] mb-3 uppercase tracking-wider">Categories</h3>
                                 <div className="space-y-2">
-                                    <button onClick={() => setSelectedCategory("")} className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${selectedCategory === "" ? "bg-[var(--c-accent-soft)] text-[#3A4B29] font-semibold" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)]"}`}>
+                                    <button onClick={() => { setSelectedCategory(""); setSelectedSubcategory(""); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${selectedCategory === "" ? "bg-[var(--c-accent-soft)] text-[#3A4B29] font-semibold" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)]"}`}>
                                         All Products
                                     </button>
-                                    {categories.map((cat) => (
-                                        <button key={cat._id} onClick={() => { setSelectedCategory(cat._id); setShowMobileFilters(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${selectedCategory === cat._id ? "bg-[var(--c-accent-soft)] text-[#3A4B29] font-semibold" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)]"}`}>
+                                    {parentCategories.map((cat) => (
+                                        <button key={cat._id} onClick={() => { setSelectedCategory(cat._id); setSelectedSubcategory(""); setShowMobileFilters(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${selectedCategory === cat._id && !selectedSubcategory ? "bg-[var(--c-accent-soft)] text-[#3A4B29] font-semibold" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)]"}`}>
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                    {childCategories.length > 0 && childCategories.map((cat) => (
+                                        <button key={cat._id} onClick={() => { setSelectedSubcategory(cat._id); setShowMobileFilters(false); }} className={`w-full text-left px-4 py-3 pl-8 rounded-xl text-sm transition-colors ${selectedSubcategory === cat._id ? "bg-[var(--c-accent-soft)] text-[#3A4B29] font-semibold" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)]"}`}>
                                             {cat.name}
                                         </button>
                                     ))}

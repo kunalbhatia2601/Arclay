@@ -3,6 +3,7 @@ import Product from "@/models/Product";
 import Category from "@/models/Category"; // Required for populate to work
 import { escapeRegex } from "@/lib/utils";
 import { buildMetaFilter } from "@/lib/meta";
+import { stripAdminProducts } from "@/lib/productPublic";
 
 // Sort keys the storefront may ask for, mapped to real index-backed sorts.
 // Price and bestselling lean on the denormalized fields on Product.
@@ -26,6 +27,7 @@ export async function GET(req) {
         const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit")) || 12));
         const search = searchParams.get("search") || "";
         const category = searchParams.get("category");
+        const subcategory = searchParams.get("subcategory");
         const minPrice = searchParams.get("minPrice");
         const maxPrice = searchParams.get("maxPrice");
         const isFeatured = searchParams.get("isFeatured");
@@ -46,6 +48,10 @@ export async function GET(req) {
 
         if (category) {
             query.category = category;
+        }
+
+        if (subcategory) {
+            query.subcategory = subcategory;
         }
 
         if (isFeatured === "true") {
@@ -104,14 +110,15 @@ export async function GET(req) {
                 .skip(skip)
                 .limit(limit)
                 .populate("category", "name image")
+                .populate("subcategory", "name")
                 .lean(),
             Product.countDocuments(query),
-            Category.find({ isActive: true }).select("name image").lean(),
+            Category.find({ isActive: true }).select("name image parent").lean(),
         ]);
 
         return Response.json({
             success: true,
-            products,
+            products: stripAdminProducts(products),
             categories,
             pagination: {
                 page,

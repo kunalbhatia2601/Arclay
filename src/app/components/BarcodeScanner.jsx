@@ -86,6 +86,9 @@ export default function BarcodeScanner({ value, onChange, onScanSuccess }) {
                     type="text"
                     value={value || ""}
                     onChange={(e) => onChange(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") e.preventDefault();
+                    }}
                     className="flex-1 px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Enter or scan barcode"
                 />

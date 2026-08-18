@@ -1,6 +1,11 @@
 import connectDB from "@/lib/mongodb";
 import Category from "@/models/Category";
 import { withAdmin } from "@/lib/auth";
+import {
+    assertCategoryDeletable,
+    assertUniqueSiblingName,
+    resolveParent,
+} from "@/lib/categories";
 
 // GET single category
 async function getHandler(req, { params }) {
@@ -9,7 +14,7 @@ async function getHandler(req, { params }) {
 
         await connectDB();
 
-        const category = await Category.findById(id).lean();
+        const category = await Category.findById(id).populate("parent", "name").lean();
 
         if (!category) {
             return Response.json(
@@ -35,7 +40,7 @@ async function getHandler(req, { params }) {
 async function putHandler(req, { params }) {
     try {
         const { id } = await params;
-        const { name, image, description, isActive } = await req.json();
+        const { name, image, description, isActive, parent } = await req.json();
 
         await connectDB();
 
@@ -48,7 +53,28 @@ async function putHandler(req, { params }) {
             );
         }
 
-        if (name !== undefined) category.name = name;
+        if (parent !== undefined) {
+            if (parent && String(parent) === String(category._id)) {
+                return Response.json(
+                    { success: false, message: "A category cannot be its own parent" },
+                    { status: 400 }
+                );
+            }
+            const childCount = await Category.countDocuments({ parent: category._id });
+            const nextParent = await resolveParent(parent || null);
+            if (nextParent && childCount > 0) {
+                return Response.json(
+                    { success: false, message: "Move or delete subcategories before nesting this category" },
+                    { status: 400 }
+                );
+            }
+            category.parent = nextParent?._id || null;
+        }
+
+        if (name !== undefined) {
+            await assertUniqueSiblingName(name, category.parent, category._id);
+            category.name = name;
+        }
         if (image !== undefined) category.image = image;
         if (description !== undefined) category.description = description;
         if (isActive !== undefined) category.isActive = isActive;
@@ -63,8 +89,8 @@ async function putHandler(req, { params }) {
     } catch (error) {
         console.error("Update category error:", error);
         return Response.json(
-            { success: false, message: "Server error" },
-            { status: 500 }
+            { success: false, message: error.message || "Server error" },
+            { status: error.status || 500 }
         );
     }
 }
@@ -75,6 +101,8 @@ async function deleteHandler(req, { params }) {
         const { id } = await params;
 
         await connectDB();
+
+        await assertCategoryDeletable(id);
 
         const category = await Category.findByIdAndDelete(id);
 
@@ -92,8 +120,8 @@ async function deleteHandler(req, { params }) {
     } catch (error) {
         console.error("Delete category error:", error);
         return Response.json(
-            { success: false, message: "Server error" },
-            { status: 500 }
+            { success: false, message: error.message || "Server error" },
+            { status: error.status || 500 }
         );
     }
 }

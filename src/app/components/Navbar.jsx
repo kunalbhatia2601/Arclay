@@ -123,7 +123,7 @@ export default function Navbar({ config, mobileConfig }) {
 
     const shopCategories = [
         { label: "All Products", href: "/products" },
-        ...(Array.isArray(categories) ? categories.map(cat => ({ 
+        ...(Array.isArray(categories) ? categories.filter(cat => !cat.parent).map(cat => ({ 
             label: cat?.name || "Category", 
             href: `/products?category=${cat?._id || cat || ""}` 
         })) : []),
@@ -351,7 +351,7 @@ export default function Navbar({ config, mobileConfig }) {
                                     <div>
                                         <h3 className="text-[10px] uppercase tracking-[0.2em] text-[var(--c-text-muted)] font-bold mb-4">Shop Collections</h3>
                                         <div className="grid grid-cols-1 gap-3">
-                                            {categories.map((cat) => (
+                                            {categories.filter(cat => !cat.parent).map((cat) => (
                                                 <Link
                                                     key={cat._id}
                                                     href={`/products?category=${cat._id}`}

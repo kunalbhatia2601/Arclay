@@ -296,7 +296,9 @@ export default function ProductsPage() {
                                             </td>
                                             <td className="px-8 py-6 hidden lg:table-cell">
                                                 <span className="px-4 py-1.5 bg-[#869661]/10 text-[#4A5D23] rounded-full text-[13px] font-bold whitespace-nowrap">
-                                                    {product.category?.name || "General"}
+                                                    {product.subcategory?.name
+                                                        ? `${product.category?.name || "General"} / ${product.subcategory.name}`
+                                                        : (product.category?.name || "General")}
                                                 </span>
                                             </td>
                                             <td className="px-8 py-6">

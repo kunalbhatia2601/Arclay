@@ -4,6 +4,7 @@ import Category from "@/models/Category"; // Required for populate to work
 import Review from "@/models/Review";
 import MetaFieldTemplate from "@/models/MetaFieldTemplate"; // Required for template lookup
 import { loadTemplatesForProduct, resolveProductMeta } from "@/lib/meta";
+import { stripAdminProductFields, stripAdminProducts } from "@/lib/productPublic";
 
 export async function GET(req, { params }) {
     try {
@@ -13,6 +14,7 @@ export async function GET(req, { params }) {
 
         const product = await Product.findOne({ _id: id, isActive: true })
             .populate("category", "name")
+            .populate("subcategory", "name")
             .lean();
 
         if (!product) {
@@ -38,7 +40,7 @@ export async function GET(req, { params }) {
             isActive: true
         })
             .limit(4)
-            .select('name images variants category')
+            .select('name images variants category subcategory')
             .populate('category', 'name')
             .lean();
 
@@ -53,7 +55,7 @@ export async function GET(req, { params }) {
 
         return Response.json({
             success: true,
-            product,
+            product: stripAdminProductFields(product),
             meta: {
                 fields: visibleFields,
                 groups: groups
@@ -64,7 +66,7 @@ export async function GET(req, { params }) {
                     .filter(g => g.fields.length > 0),
             },
             reviews,
-            relatedProducts
+            relatedProducts: stripAdminProducts(relatedProducts)
         });
     } catch (error) {
         console.error("Get product error:", error);

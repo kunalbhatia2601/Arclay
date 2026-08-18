@@ -2,6 +2,7 @@ import Product from '@/models/Product';
 import Category from '@/models/Category'; // Required for populate to work
 import { buildMetaFilter } from '@/lib/meta';
 import { toPlain } from '@/lib/utils';
+import { stripAdminProducts } from '@/lib/productPublic';
 
 /**
  * Resolves a structured product query into actual products.
@@ -106,7 +107,7 @@ export async function resolveProductQuery(query = {}) {
 
             const byId = new Map(products.map(p => [String(p._id), p]));
             // Serialized because these are handed to client blocks.
-            return toPlain(ids.map(id => byId.get(String(id))).filter(Boolean).slice(0, limit));
+            return stripAdminProducts(toPlain(ids.map(id => byId.get(String(id))).filter(Boolean).slice(0, limit)));
         }
 
         const results = await Product.find(buildProductFilter(query.filter))
@@ -116,7 +117,7 @@ export async function resolveProductQuery(query = {}) {
             .populate('category', 'name image')
             .lean();
 
-        return toPlain(results);
+        return stripAdminProducts(toPlain(results));
     } catch (error) {
         console.error('resolveProductQuery failed:', error);
         return [];

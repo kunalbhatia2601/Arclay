@@ -271,6 +271,7 @@ async function postHandler(req) {
             },
             quantity: line.quantity,
             priceAtOrder: lines[i].price,
+            costAtOrder: lines[i].variant.costPrice ?? null,
             name: lines[i].name,
             lineDiscount: line.lineDiscount,
             taxRate: line.taxRate,

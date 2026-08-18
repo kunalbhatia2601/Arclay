@@ -374,7 +374,9 @@ export default function ProductDetailClient({ params, top = null, afterBuyBox = 
                             {/* Title Section */}
                             <div className="flex items-center gap-3 mb-3">
                                 <span className="bg-[#EAF3E2] text-[#4A5D23] text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                    {product.category?.name || "Pickles"}
+                                    {product.subcategory?.name
+                                        ? `${product.category?.name} / ${product.subcategory.name}`
+                                        : (product.category?.name || "Pickles")}
                                 </span>
                                 <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 fill-[var(--c-star)] text-[var(--c-star)]" />

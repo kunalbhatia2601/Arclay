@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,24 @@ export default function NewCategoryPage() {
         image: "",
         description: "",
         isActive: true,
+        parent: "",
     });
+    const [parents, setParents] = useState([]);
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await fetch("/api/admin/categories?limit=200", { credentials: "include" });
+                const data = await res.json();
+                if (data.success) {
+                    setParents((data.categories || []).filter((c) => !c.parent));
+                }
+            } catch (err) {
+                console.error("Failed to fetch categories:", err);
+            }
+        };
+        load();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,7 +45,10 @@ export default function NewCategoryPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    parent: formData.parent || null,
+                }),
             });
 
             const data = await res.json();
@@ -85,6 +105,27 @@ export default function NewCategoryPage() {
                             className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="e.g., Signature Pickles"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                            Parent category
+                        </label>
+                        <select
+                            value={formData.parent}
+                            onChange={(e) => setFormData({ ...formData, parent: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                            <option value="">None — this is a top-level category</option>
+                            {parents.map((cat) => (
+                                <option key={cat._id} value={cat._id}>
+                                    {cat.name}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Choose a parent to create a subcategory
+                        </p>
                     </div>
 
                     <div>

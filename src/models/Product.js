@@ -48,6 +48,17 @@ const VariantSchema = new mongoose.Schema({
         type: String,
         trim: true,
         default: ''
+    },
+    // Purchase / landed cost. Admin-only; stripped from public APIs.
+    costPrice: {
+        type: Number,
+        min: [0, 'Cost cannot be negative'],
+        default: null
+    },
+    // Best-before / expiry. Admin-only; stripped from public APIs.
+    expiresAt: {
+        type: Date,
+        default: null
     }
 }, { _id: false });
 
@@ -105,6 +116,11 @@ const ProductSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
         required: [true, 'Category is required']
+    },
+    subcategory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+        default: null
     },
     isActive: {
         type: Boolean,
@@ -277,6 +293,7 @@ ProductSchema.pre('findOneAndUpdate', function () {
 // Index for faster queries
 ProductSchema.index({ name: 'text', description: 'text' });
 ProductSchema.index({ category: 1, isActive: 1 });
+ProductSchema.index({ subcategory: 1, isActive: 1 });
 // POS barcode lookups hit these on every scan.
 ProductSchema.index({ 'variants.barcode': 1 });
 ProductSchema.index({ barcode: 1 });
