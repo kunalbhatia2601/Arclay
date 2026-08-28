@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  */
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
-export default function VariantPickerModal({ product, onClose, onAdded }) {
+export default function VariantPickerModal({ product, onClose, onAdded, onConfirm }) {
     const [selected, setSelected] = useState(() => {
         const initial = {};
         for (const type of product?.variationTypes || []) {
@@ -67,6 +67,14 @@ export default function VariantPickerModal({ product, onClose, onAdded }) {
     const add = async () => {
         if (!variant) return toast.error("Please choose an option");
         if (stock < quantity) return toast.error(stock ? `Only ${stock} left` : "Out of stock");
+
+        // Caller (e.g. the POS, which has its own local cart) handles the add
+        // itself instead of going through the storefront's /api/cart.
+        if (onConfirm) {
+            onConfirm(variant, quantity);
+            onClose();
+            return;
+        }
 
         setAdding(true);
         try {

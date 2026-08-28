@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import BarcodeScanner from "@/app/components/BarcodeScanner";
+import VariantPickerModal from "@/app/components/VariantPickerModal";
 import Receipt, { RECEIPT_PRINT_CSS } from "@/app/components/Receipt";
 import DayReportModal from "@/app/components/pos/DayReportModal";
 import ShortcutsHelp from "@/app/components/pos/ShortcutsHelp";
@@ -69,6 +70,7 @@ export default function POSPage() {
 
     const [showReport, setShowReport] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
+    const [variantPickerProduct, setVariantPickerProduct] = useState(null);
 
     const searchInputRef = useRef(null);
     const scanInputRef = useRef(null);
@@ -722,14 +724,23 @@ export default function POSPage() {
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                             {products.map((product) => {
-                                const stock = product.variants?.[0]?.stock ?? 0;
+                                const variants = product.variants || [];
+                                const needsVariantChoice =
+                                    (product.variationTypes?.length || 0) > 0 && variants.length > 1;
+                                // Total across all variants — a single variant being out
+                                // doesn't mean the product is; the picker sorts out which one.
+                                const stock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
                                 const out = stock <= 0;
 
                                 return (
                                     <button
                                         key={product._id}
                                         disabled={out}
-                                        onClick={() => addToCart(product, product.variants?.[0], 1, 0)}
+                                        onClick={() =>
+                                            needsVariantChoice
+                                                ? setVariantPickerProduct(product)
+                                                : addToCart(product, variants[0], 1, 0)
+                                        }
                                         className="p-3 bg-background border border-border rounded-xl hover:border-primary/50 hover:bg-muted/50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden">
@@ -1015,6 +1026,16 @@ export default function POSPage() {
             )}
             {showReport && <DayReportModal onClose={() => setShowReport(false)} />}
             {showHelp && <ShortcutsHelp onClose={() => setShowHelp(false)} />}
+            {variantPickerProduct && (
+                <VariantPickerModal
+                    product={variantPickerProduct}
+                    onClose={() => setVariantPickerProduct(null)}
+                    onConfirm={(variant, quantity) => {
+                        addToCart(variantPickerProduct, variant, quantity);
+                        setVariantPickerProduct(null);
+                    }}
+                />
+            )}
 
             {lastSale && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 print:bg-transparent print:p-0 print:block">
