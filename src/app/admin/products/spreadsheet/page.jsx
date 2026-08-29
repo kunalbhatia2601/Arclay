@@ -28,6 +28,7 @@ const BLANK_PRODUCT = {
     MRP: "",
     CP: "",
     SP: "",
+    Stock: "",
     Barcode: "",
     "GST %": "",
     HSN: "",
@@ -81,8 +82,11 @@ function SheetTable({ columns, rows, onChange, onRemove, onEditImages }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map((row) => (
-                        <tr key={row._key} className="hover:bg-muted/40">
+                    {rows.map((row, idx) => (
+                        <tr
+                            key={row._key}
+                            className={`hover:bg-muted/40 ${idx % 2 === 1 ? "bg-muted/25" : ""}`}
+                        >
                             {columns.map((c) => (
                                 <td key={c.key} className="p-1 border-b border-border">
                                     {c.type === "images" ? (
@@ -176,7 +180,10 @@ export default function CatalogSheetPage() {
     const switchTab = (id) => {
         setTab(id);
         setSearch("");
+        setActiveChip(null);
     };
+    // Products-tab-only quick filters, combined with the search box above.
+    const [activeChip, setActiveChip] = useState(null); // null | "lowStock" | "missingImage" | "missingBarcode"
     // Product names touched this session (edited, added, or had a variant row
     // added/removed) — Save only resends these, not the whole catalog. A
     // product+its Variations-tab rows travel together because the server
@@ -251,10 +258,39 @@ export default function CatalogSheetPage() {
         () => subCategories.filter((r) => matchesSearch(r, SUBCATEGORY_SEARCH_FIELDS, search)),
         [subCategories, search]
     );
-    const filteredProducts = useMemo(
-        () => products.filter((r) => matchesSearch(r, PRODUCT_SEARCH_FIELDS, search)),
-        [products, search]
-    );
+    const LOW_STOCK_THRESHOLD = 5;
+    // Simple products carry their own stock/barcode; variated ones carry it
+    // per-variant on the Variations tab — check whichever applies.
+    const productVariantRows = (row) => variations.filter((v) => v["Product Name"] === row["Product Name"]);
+    const isLowStock = (row) => {
+        if (trim(row["Is Variated"]).toLowerCase() === "yes") {
+            const rows = productVariantRows(row);
+            return rows.length > 0 && rows.every((v) => Number(v.Stock ?? 0) <= LOW_STOCK_THRESHOLD);
+        }
+        return Number(row.Stock ?? 0) <= LOW_STOCK_THRESHOLD;
+    };
+    const isMissingImage = (row) => !trim(row["Image URL"]);
+    const isMissingBarcode = (row) => {
+        if (trim(row["Is Variated"]).toLowerCase() === "yes") {
+            const rows = productVariantRows(row);
+            return rows.length === 0 || rows.some((v) => !trim(v.Barcode));
+        }
+        return !trim(row.Barcode);
+    };
+
+    const productChips = [
+        { id: "lowStock", label: "Low stock", test: isLowStock },
+        { id: "missingImage", label: "Missing image", test: isMissingImage },
+        { id: "missingBarcode", label: "Missing barcode", test: isMissingBarcode },
+    ];
+
+    const filteredProducts = useMemo(() => {
+        const chip = productChips.find((c) => c.id === activeChip);
+        return products
+            .filter((r) => matchesSearch(r, PRODUCT_SEARCH_FIELDS, search))
+            .filter((r) => !chip || chip.test(r));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [products, variations, search, activeChip]);
     const filteredVariations = useMemo(
         () => visibleVariations.filter((r) => matchesSearch(r, VARIATION_SEARCH_FIELDS, search)),
         [visibleVariations, search]
@@ -356,6 +392,7 @@ export default function CatalogSheetPage() {
         { key: "MRP", width: 90, type: "number" },
         { key: "CP", width: 90, type: "number" },
         { key: "SP", width: 90, type: "number" },
+        { key: "Stock", width: 80, type: "number" },
         { key: "Barcode", width: 140 },
         { key: "GST %", width: 80, type: "number" },
         { key: "HSN", width: 100 },
@@ -440,12 +477,33 @@ export default function CatalogSheetPage() {
             </div>
 
             {!loading && (
-                <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder={`Search ${TABS.find((t) => t.id === tab)?.label.toLowerCase()}...`}
-                    className="mb-3 px-3 py-2 rounded-lg border border-border bg-background text-sm w-64 focus:outline-none focus:ring-1 focus:ring-primary"
-                />
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder={`Search ${TABS.find((t) => t.id === tab)?.label.toLowerCase()}...`}
+                        className="px-3 py-2 rounded-lg border border-border bg-background text-sm w-64 focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    {tab === "products" &&
+                        productChips.map((chip) => {
+                            const count = products.filter(chip.test).length;
+                            const active = activeChip === chip.id;
+                            return (
+                                <button
+                                    key={chip.id}
+                                    onClick={() => setActiveChip(active ? null : chip.id)}
+                                    disabled={!count}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors disabled:opacity-40 disabled:cursor-default ${
+                                        active
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                                    }`}
+                                >
+                                    {chip.label} ({count})
+                                </button>
+                            );
+                        })}
+                </div>
             )}
 
             {loading ? (
