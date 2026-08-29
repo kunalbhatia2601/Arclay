@@ -17,6 +17,7 @@ import {
     Palette,
     Tags,
     Boxes,
+    Sheet,
     Image as ImageIcon,
     Ticket,
     Star,
@@ -58,6 +59,7 @@ const navSections = [
         icon: Package,
         items: [
             { href: "/admin/products", label: "Products", icon: Package },
+            { href: "/admin/products/spreadsheet", label: "Catalog Sheet", icon: Sheet },
             { href: "/admin/categories", label: "Categories", icon: Tags },
             { href: "/admin/bundles", label: "Bundles", icon: Boxes },
             { href: "/admin/labels", label: "Product Labels", icon: Barcode },

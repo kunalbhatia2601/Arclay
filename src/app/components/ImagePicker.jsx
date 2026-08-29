@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 /**
  * MediaPicker component - allows upload, select from gallery, or enter URL for both images and videos
@@ -16,7 +17,8 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
     const [showGallery, setShowGallery] = useState(false);
     const [galleryMedia, setGalleryMedia] = useState([]);
     const [loadingGallery, setLoadingGallery] = useState(false);
-    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(null); // { done, total } while uploading
+    const [dragOver, setDragOver] = useState(false);
     const [urlInput, setUrlInput] = useState('');
 
     // Normalize value to array
@@ -53,31 +55,39 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
         }
     };
 
-    const handleUpload = async (e) => {
-        const files = Array.from(e.target.files);
+    const uploadOne = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/admin/upload', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || `${file.name} failed`);
+        return data.image.url;
+    };
+
+    const uploadFiles = async (fileList) => {
+        const files = Array.from(fileList);
         if (files.length === 0) return;
 
-        setUploading(true);
-        const uploadedUrls = [];
+        setUploadProgress({ done: 0, total: files.length });
+        let done = 0;
+        const results = await Promise.allSettled(
+            files.map((file) =>
+                uploadOne(file).then((url) => {
+                    done += 1;
+                    setUploadProgress({ done, total: files.length });
+                    return url;
+                })
+            )
+        );
 
-        for (const file of files) {
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-
-                const res = await fetch('/api/admin/upload', {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: formData,
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    uploadedUrls.push(data.image.url);
-                }
-            } catch (error) {
-                console.error('Upload failed:', error);
-            }
+        const uploadedUrls = results.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+        const failed = results.filter((r) => r.status === 'rejected');
+        if (failed.length) {
+            toast.error(`${failed.length} of ${files.length} upload${files.length === 1 ? '' : 's'} failed`);
         }
 
         if (uploadedUrls.length > 0) {
@@ -88,8 +98,18 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
             }
         }
 
-        setUploading(false);
+        setUploadProgress(null);
+    };
+
+    const handleUpload = (e) => {
+        uploadFiles(e.target.files);
         e.target.value = '';
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        uploadFiles(e.dataTransfer.files);
     };
 
     const handleSelectFromGallery = (url) => {
@@ -124,6 +144,14 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
         }
     };
 
+    const moveMedia = (idx, delta) => {
+        const next = idx + delta;
+        if (next < 0 || next >= mediaList.length) return;
+        const copy = [...mediaList];
+        [copy[idx], copy[next]] = [copy[next], copy[idx]];
+        onChange(copy);
+    };
+
     return (
         <div className="space-y-3">
             <label className="block text-sm font-medium text-foreground">{label}</label>
@@ -132,7 +160,7 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
             {mediaList.length > 0 && (
                 <div className={`flex ${multiple ? 'flex-wrap gap-2' : ''}`}>
                     {mediaList.map((url, idx) => (
-                        <div key={idx} className="relative group">
+                        <div key={url + idx} className="relative group">
                             {type === 'video' ? (
                                 <video
                                     src={url}
@@ -146,6 +174,11 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
                                     className={`object-cover rounded-lg border border-border ${multiple ? 'w-20 h-20' : 'w-32 h-32'}`}
                                 />
                             )}
+                            {multiple && idx === 0 && (
+                                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px] font-medium">
+                                    Main
+                                </span>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => handleRemoveMedia(url)}
@@ -153,6 +186,30 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
                             >
                                 ×
                             </button>
+                            {multiple && mediaList.length > 1 && (
+                                <div className="absolute -bottom-2 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                    {idx > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => moveMedia(idx, -1)}
+                                            title="Move earlier"
+                                            className="w-5 h-5 bg-background border border-border rounded text-[10px] flex items-center justify-center hover:bg-muted"
+                                        >
+                                            ‹
+                                        </button>
+                                    )}
+                                    {idx < mediaList.length - 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => moveMedia(idx, 1)}
+                                            title="Move later"
+                                            className="w-5 h-5 bg-background border border-border rounded text-[10px] flex items-center justify-center hover:bg-muted"
+                                        >
+                                            ›
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -234,16 +291,44 @@ export default function MediaPicker({ value, onChange, multiple = false, label =
             )}
 
             {mode === 'upload' && (
-                <label className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer w-fit text-sm">
-                    {uploading ? 'Uploading...' : `Upload ${multiple ? (type === 'video' ? 'Videos' : 'Images') : (type === 'video' ? 'Video' : 'Image')}`}
-                    <input
-                        type="file"
-                        multiple={multiple}
-                        onChange={handleUpload}
-                        className="hidden"
-                        disabled={uploading}
-                    />
-                </label>
+                <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                        dragOver ? 'border-primary bg-primary/5' : 'border-border'
+                    }`}
+                >
+                    {uploadProgress ? (
+                        <div className="space-y-2">
+                            <div className="w-6 h-6 mx-auto border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm text-muted-foreground">
+                                Uploading {uploadProgress.done} of {uploadProgress.total}...
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-sm text-muted-foreground mb-2">
+                                Drag &amp; drop {multiple ? (type === 'video' ? 'videos' : 'images') : (type === 'video' ? 'a video' : 'an image')} here, or
+                            </p>
+                            <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer text-sm">
+                                Choose {multiple ? 'Files' : 'File'}
+                                <input
+                                    type="file"
+                                    multiple={multiple}
+                                    accept={type === 'video' ? 'video/*' : type === 'image' ? 'image/*' : undefined}
+                                    onChange={handleUpload}
+                                    className="hidden"
+                                />
+                            </label>
+                            {type !== 'video' && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    Auto-compressed on upload — same quality, smaller file.
+                                </p>
+                            )}
+                        </>
+                    )}
+                </div>
             )}
 
             {mode === 'url' && (

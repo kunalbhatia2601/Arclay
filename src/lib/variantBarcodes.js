@@ -3,19 +3,21 @@ import { generateBarcodeValue } from './barcode';
 
 const MAX_ATTEMPTS = 12;
 
-async function isTaken(code, excludeProductId) {
+/** Name of the product already holding this barcode, or null if it's free. */
+async function ownerName(code, excludeProductId) {
     const query = { 'variants.barcode': code };
     if (excludeProductId) {
         query._id = { $ne: excludeProductId };
     }
-    return !!(await Product.exists(query));
+    const owner = await Product.findOne(query, { name: 1 }).lean();
+    return owner?.name || null;
 }
 
 async function nextFreeBarcode(reservedInBatch, excludeProductId) {
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         const candidate = generateBarcodeValue();
         if (reservedInBatch.has(candidate)) continue;
-        if (await isTaken(candidate, excludeProductId)) continue;
+        if (await ownerName(candidate, excludeProductId)) continue;
         return candidate;
     }
     throw new Error('Could not allocate a unique barcode, please try again');
@@ -39,8 +41,9 @@ export async function assignVariantBarcodes(variants, { excludeProductId } = {})
         if (reserved.has(code)) {
             throw new Error(`Barcode ${code} is used twice in this product`);
         }
-        if (await isTaken(code, excludeProductId)) {
-            throw new Error(`Barcode ${code} is already assigned to another product`);
+        const owner = await ownerName(code, excludeProductId);
+        if (owner) {
+            throw new Error(`Barcode ${code} is already assigned to "${owner}"`);
         }
 
         reserved.add(code);

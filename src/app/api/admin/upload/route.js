@@ -1,5 +1,8 @@
 import { uploadImage } from '@/lib/cloudinary';
+import { compressImage } from '@/lib/imageCompress';
 import { withAdminProtection } from '@/lib/auth';
+
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // raw file, before compression
 
 // POST upload image to Cloudinary
 async function postHandler(req) {
@@ -14,22 +17,35 @@ async function postHandler(req) {
                 { status: 400 }
             );
         }
+        if (file.size > MAX_UPLOAD_BYTES) {
+            return Response.json(
+                { success: false, message: `File is too large (max ${MAX_UPLOAD_BYTES / 1024 / 1024}MB)` },
+                { status: 400 }
+            );
+        }
 
-        // Convert file to buffer
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Convert to base64 for Cloudinary
-        const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
-
-        // Determine resource type based on MIME type
         const isVideo = file.type.startsWith('video/');
         const resourceType = isVideo ? 'video' : 'image';
 
-        // Upload to Cloudinary
-        const result = await uploadImage(base64, {
+        // Images are resized + recompressed to WebP before they ever leave
+        // this route — same quality, far fewer bytes on the wire and in
+        // Cloudinary storage. Videos pass through untouched.
+        let uploadBuffer = buffer;
+        let originalBytes = buffer.length;
+        if (!isVideo) {
+            try {
+                uploadBuffer = await compressImage(buffer);
+            } catch (err) {
+                console.error('Image compression failed, uploading original:', err);
+            }
+        }
+
+        const result = await uploadImage(uploadBuffer, {
             folder,
-            resource_type: resourceType
+            resource_type: resourceType,
         });
 
         return Response.json({
@@ -40,7 +56,9 @@ async function postHandler(req) {
                 width: result.width,
                 height: result.height,
                 format: result.format,
-                resource_type: result.resource_type
+                resource_type: result.resource_type,
+                bytes: result.bytes,
+                originalBytes,
             }
         });
     } catch (error) {
