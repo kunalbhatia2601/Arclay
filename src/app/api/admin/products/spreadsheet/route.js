@@ -5,25 +5,19 @@ import { withAdmin } from "@/lib/auth";
 import { assignVariantBarcodes } from "@/lib/variantBarcodes";
 import { withAdminVariantFields } from "@/lib/productPublic";
 import { resolveProductTaxonomy } from "@/lib/categories";
-import {
-    trim,
-    parseNumber,
-    parseMoney,
-    groupVariationJobs,
-    buildVariantsForJob,
-    attributesToOpt1,
-} from "@/lib/catalogSheet";
+import { trim, parseNumber, parseMoney, buildVariantsFromRows, attributesToOpts } from "@/lib/catalogSheet";
 
 // Same defaults as scripts/catalog-import.config.js so a row behaves the same
 // whether it came from the Excel importer or was typed here.
 const OPT_CFG = {
     untitledOptionName: "Option",
     normalizeOptionNames: true,
-    flattenOptionsToSingleType: true,
-    optionValueSeparator: " / ",
+    missingOptionValue: "Regular",
     salePriceFallsBackToMrp: true,
 };
 
+// Anything with options lives on the Variations tab — even a single
+// "Weight: 45ml" row. Only option-less products are "simple".
 const isVariatedProduct = (p) => (p.variants || []).length > 1 || (p.variationTypes || []).length > 0;
 
 async function getHandler() {
@@ -80,7 +74,7 @@ async function getHandler() {
         const variationRows = products.filter(isVariatedProduct).flatMap((p) =>
             (p.variants || []).map((v) => ({
                 "Product Name": p.name,
-                ...attributesToOpt1(v.attributes),
+                ...attributesToOpts(v.attributes),
                 Barcode: v.barcode || "",
                 MRP: v.regularPrice ?? "",
                 CP: v.costPrice ?? "",
@@ -196,35 +190,37 @@ async function postHandler(req) {
                     ? variationRows.filter((v) => trim(v["Product Name"]) === name)
                     : [];
 
-                const jobs = groupVariationJobs(name, varRows, OPT_CFG);
+                let variationTypes = [];
+                let variants;
+                if (varRows.length) {
+                    ({ variationTypes, variants } = buildVariantsFromRows(varRows, OPT_CFG));
+                } else {
+                    // Simple product (or variated with no rows yet): its own price cells.
+                    variants = [
+                        {
+                            attributes: {},
+                            regularPrice: parseMoney(row.MRP, 0),
+                            salePrice: parseNumber(row.SP, null) ?? parseMoney(row.MRP, 0),
+                            costPrice: parseNumber(row.CP, null),
+                            stock: parseNumber(row.Stock, 0) ?? 0,
+                            sku: "",
+                            barcode: trim(row.Barcode),
+                        },
+                    ];
+                }
 
-                for (const job of jobs) {
-                    const built = buildVariantsForJob(job, OPT_CFG);
-                    const variants = built.hasVariationRows
-                        ? built.variants
-                        : [
-                              {
-                                  attributes: {},
-                                  regularPrice: parseMoney(row.MRP, 0),
-                                  salePrice: parseNumber(row.SP, null) ?? (OPT_CFG.salePriceFallsBackToMrp ? parseMoney(row.MRP, 0) : null),
-                                  costPrice: parseNumber(row.CP, null),
-                                  stock: parseNumber(row.Stock, 0) ?? 0,
-                                  sku: "",
-                                  barcode: trim(row.Barcode),
-                              },
-                          ];
-
+                {
                     const images = trim(row["Image URL"])
                         .split(",")
                         .map((u) => u.trim())
                         .filter(Boolean);
 
                     const fields = {
-                        name: job.name,
+                        name,
                         images,
                         description: trim(row["Short Description"]),
                         long_description: trim(row["Long Description"]),
-                        variationTypes: built.variationTypes,
+                        variationTypes,
                         category: taxonomy.categoryId,
                         subcategory: taxonomy.subcategoryId,
                         isActive: row.isActive !== false,
@@ -235,7 +231,7 @@ async function postHandler(req) {
                     let saved;
                     const existing = row.productId
                         ? await Product.findById(row.productId)
-                        : await Product.findOne({ name: job.name });
+                        : await Product.findOne({ name });
 
                     if (existing) {
                         Object.assign(existing, fields);

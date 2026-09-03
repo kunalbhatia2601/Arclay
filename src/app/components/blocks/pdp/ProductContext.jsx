@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
+import { initialSelection, findVariant, optionExists, snapSelection } from "@/lib/variantSelection";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useUser } from "@/context/UserContext";
@@ -27,29 +28,13 @@ export default function ProductProvider({ product, reviews = [], relatedProducts
     const router = useRouter();
     const { isAuthenticated } = useUser();
 
-    const [selectedOptions, setSelectedOptions] = useState(() => {
-        const initial = {};
-        for (const type of product?.variationTypes || []) {
-            if (type.options?.length) initial[type.name] = type.options[0];
-        }
-        return initial;
-    });
+    const [selectedOptions, setSelectedOptions] = useState(() => initialSelection(product));
 
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState(0);
     const [busy, setBusy] = useState(false);
 
-    const selectedVariant = useMemo(() => {
-        const variants = product?.variants || [];
-        if (!variants.length) return null;
-        if (!product.variationTypes?.length) return variants[0];
-
-        return variants.find(variant =>
-            Object.entries(selectedOptions).every(
-                ([key, value]) => (variant.attributes || {})[key] === value
-            )
-        ) || null;
-    }, [product, selectedOptions]);
+    const selectedVariant = useMemo(() => findVariant(product, selectedOptions), [product, selectedOptions]);
 
     const price = useMemo(() => {
         if (!selectedVariant) {
@@ -78,16 +63,10 @@ export default function ProductProvider({ product, reviews = [], relatedProducts
         return Number((reviews.reduce((total, r) => total + (r.stars || 0), 0) / reviews.length).toFixed(1));
     }, [reviews]);
 
-    // Whether a given option value can still be combined with what is already
-    // selected — lets the variants block grey out impossible combinations.
-    const isOptionAvailable = (typeName, option) => {
-        const candidate = { ...selectedOptions, [typeName]: option };
-        return (product?.variants || []).some(variant =>
-            Object.entries(candidate).every(
-                ([key, value]) => (variant.attributes || {})[key] === value
-            )
-        );
-    };
+    // An option is offered whenever any variant carries it; picking one that
+    // doesn't fit the current combo snaps the other dimensions (see setOption)
+    // instead of greying it out.
+    const isOptionAvailable = (typeName, option) => optionExists(product, typeName, option);
 
     const addToCart = async ({ thenCheckout = false } = {}) => {
         if (!isAuthenticated) return router.push("/login");
@@ -124,7 +103,7 @@ export default function ProductProvider({ product, reviews = [], relatedProducts
         relatedProducts,
         meta,
         selectedOptions,
-        setOption: (name, option) => setSelectedOptions(o => ({ ...o, [name]: option })),
+        setOption: (name, option) => setSelectedOptions(o => snapSelection(product, o, name, option)),
         isOptionAvailable,
         selectedVariant,
         price,

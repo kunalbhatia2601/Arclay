@@ -1,11 +1,25 @@
 /**
- * Import Product_Catalog_Template-2.xlsx (multi-sheet) into MongoDB.
+ * Import the product catalog workbook into MongoDB.
+ *
+ * Sheets used (names configurable in catalog-import.config.js → sheets):
+ *   CATEGORY PAGE MASTER      top-level categories
+ *   SUB-CATEGORY PAGE MASTER  sub-categories + their parent
+ *   NEW PRODUCT PAGE          one row per product: name, category, descriptions, GST, HSN
+ *   Variations                one row per SKU for EVERY product (variated or not):
+ *                             Opt 1/2 Name+Value, Barcode, MRP/CP/SP, dates
+ *
+ * Prices, barcodes and options come from Variations only. A product with rows
+ *   Flavour=Fruity Fun Weight=33g / Flavour=Choco chill Weight=33g / Flavour=Fruity Fun Weight=110g
+ * becomes ONE product with two variation types (Flavour, Weight) and three
+ * variants. A product with a single row (Weight=45ml) is one product, one
+ * variation type, one variant.
  *
  * Edit defaults in scripts/catalog-import.config.js, then:
  *   node scripts/importProductCatalog.js
  *   node scripts/importProductCatalog.js --dry-run
+ *   node scripts/importProductCatalog.js --dry-run --inspect="cake gobbles"   (print built variants)
  *   node scripts/importProductCatalog.js --wipe
- *   node scripts/importProductCatalog.js --file=./Product_Catalog_Template-2.xlsx
+ *   node scripts/importProductCatalog.js --file="./Copy of Product_Catalog_Template.xlsx"
  *   node scripts/importProductCatalog.js --no-images   (skip Open Food Facts image lookup)
  */
 
@@ -27,6 +41,7 @@ const argFile = args.find((a) => a.startsWith("--file="))?.slice("--file=".lengt
 const argDry = args.includes("--dry-run");
 const argWipe = args.includes("--wipe");
 const argNoImages = args.includes("--no-images");
+const argInspect = args.find((a) => a.startsWith("--inspect="))?.slice("--inspect=".length).toLowerCase();
 
 const rawURI = process.env.MONGODB_URI || "";
 const siteName = (process.env.NEXT_PUBLIC_SITE_NAME || "arclay").toLowerCase();
@@ -56,15 +71,16 @@ function loadConfig() {
 }
 
 /**
- * `raw: false` gives formatted display text, which is what we want for money/
- * dates — but Excel renders long numbers (barcodes) as "8.90172E+12", and two
- * different 13-digit barcodes can format down to the identical string. For
- * `columns` that must stay exact, overwrite with the true integer from a raw
- * numeric pass whenever the cell was actually stored as a number.
+ * `raw: false` gives formatted display text, which is what we want for money —
+ * but Excel renders long numbers (barcodes) as "8.90172E+12", and two different
+ * 13-digit barcodes can format down to the identical string; dates come out as
+ * "01/05/2026" which JS would read as Jan 5. For `columns` that must stay
+ * exact, overwrite with the true value from a raw pass: integers as digit
+ * strings, dates as Date objects.
  */
 function sheetRows(wb, name, columns = []) {
     const ws = wb.Sheets[name];
-    if (!ws) throw new Error(`Sheet "${name}" is missing`);
+    if (!ws) throw new Error(`Sheet "${name}" is missing (have: ${wb.SheetNames.join(", ")})`);
     const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
     if (!columns.length) return rows;
 
@@ -74,6 +90,8 @@ function sheetRows(wb, name, columns = []) {
             const rawValue = rawRows[i]?.[col];
             if (typeof rawValue === "number" && Number.isFinite(rawValue)) {
                 row[col] = String(Math.round(rawValue));
+            } else if (rawValue instanceof Date && !Number.isNaN(rawValue.getTime())) {
+                row[col] = rawValue;
             }
         }
     });
@@ -103,8 +121,18 @@ function parseDate(value) {
     if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
     const s = trim(value);
     if (!s) return null;
+    // Sheet dates are dd/mm/yyyy — `new Date("01/05/2026")` would read that as Jan 5.
+    const dmy = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+    if (dmy) {
+        const d = new Date(Date.UTC(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1])));
+        return Number.isNaN(d.getTime()) ? null : d;
+    }
     const d = new Date(s);
     return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function isUrl(value) {
+    return /^https?:\/\//i.test(trim(value));
 }
 
 function titleCaseOption(name, enabled) {
@@ -141,74 +169,65 @@ function compactVariationOptions(row, { untitledOptionName, normalizeOptionNames
     return pairs;
 }
 
-function singleOptionTypeName(allPairs, untitledOptionName) {
-    const names = [];
-    for (const pairs of allPairs) {
-        if (pairs[0]?.name && !names.includes(pairs[0].name)) names.push(pairs[0].name);
-    }
-    return names.length === 1 ? names[0] : untitledOptionName;
-}
-
-function flattenPairs(pairs, typeName, separator, variantLabel) {
-    const label =
-        trim(variantLabel) || pairs.map((p) => p.value).filter(Boolean).join(separator);
-    if (!label) return { attributes: {}, label: "" };
-    return { attributes: { [typeName]: label }, label };
-}
-
-function isTypeOption(name) {
-    return trim(name).toLowerCase() === "type";
-}
-
-function dropTypePairs(pairs) {
-    return pairs.filter((p) => !isTypeOption(p.name));
-}
-
-/** TYPE column → own product named "{Product} {Type value}", unless Type value equals the product name. */
-function groupVariationJobs(productName, varRows, optCfg) {
-    if (!varRows.length) {
-        return [{ name: productName, items: [], splitByType: false }];
+/**
+ * Build products from ALL of a product's Variations rows. Each row is one SKU;
+ * each Opt N Name is a dimension. Rows that lack a dimension the product
+ * otherwise uses get `missingOptionValue` so every variant stays selectable in
+ * the storefront picker (it matches on every type).
+ *
+ * Rows that repeat an attribute combo (four "Weight=300g" Cerelacs with
+ * different barcodes) can't live in one product — the picker couldn't tell
+ * them apart. The k-th repeat goes to product copy k: "Name", "Name (2)",
+ * "Name (3)"…, each copy building its own variationTypes from its own rows.
+ * Returns [{ name, variationTypes, items:[{ vr, attributes }] }, …].
+ */
+function buildProductsFromRows(productName, varRows, optCfg, warn) {
+    const typeOrder = [];
+    const parsed = varRows.map((vr) => ({ vr, pairs: compactVariationOptions(vr, optCfg) }));
+    for (const { pairs } of parsed) {
+        for (const { name } of pairs) if (!typeOrder.includes(name)) typeOrder.push(name);
     }
 
-    const leftover = [];
-    const byType = new Map();
-    for (const vr of varRows) {
-        const pairs = compactVariationOptions(vr, optCfg);
-        const typePair = pairs.find((p) => isTypeOption(p.name));
-        if (!typePair) {
-            leftover.push({ vr, pairs });
-            continue;
+    const comboSeen = new Map(); // comboKey -> times seen so far
+    const copies = []; // index k -> rows for product copy k
+    let filledMissing = false;
+
+    for (const { vr, pairs } of parsed) {
+        const attributes = {};
+        for (const typeName of typeOrder) {
+            const pair = pairs.find((p) => p.name === typeName);
+            if (!pair) filledMissing = true;
+            attributes[typeName] = pair ? pair.value : optCfg.missingOptionValue;
         }
-        const key = typePair.value;
-        if (!byType.has(key)) byType.set(key, []);
-        byType.get(key).push({ vr, pairs: dropTypePairs(pairs) });
+        const comboKey = typeOrder.map((t) => `${t}=${attributes[t].toLowerCase()}`).join("|");
+        const k = comboSeen.get(comboKey) || 0;
+        comboSeen.set(comboKey, k + 1);
+        if (!copies[k]) copies[k] = [];
+        copies[k].push({ vr, attributes });
     }
 
-    const jobs = [];
-    if (leftover.length) {
-        jobs.push({ name: productName, items: leftover, splitByType: false });
+    if (filledMissing) {
+        warn(productName, `some rows lack one of [${typeOrder.join(", ")}]`, `filled with "${optCfg.missingOptionValue}"`);
     }
-    for (const [typeValue, items] of byType) {
-        const same = typeValue.toLowerCase() === productName.toLowerCase();
-        jobs.push({
-            name: same
-                ? productName
-                : `${productName} ${typeValue}`.replace(/\s+/g, " ").trim(),
+    if (copies.length > 1) {
+        const names = copies.slice(1).map((_, i) => `"${productName} (${i + 2})"`);
+        warn(productName, `${copies.length - 1} row(s) repeat an option combo`, `split into extra product(s) ${names.join(", ")}`);
+    }
+
+    return copies.map((items, k) => {
+        const typeOptions = new Map(typeOrder.map((t) => [t, []]));
+        for (const { attributes } of items) {
+            for (const t of typeOrder) {
+                const opts = typeOptions.get(t);
+                if (!opts.includes(attributes[t])) opts.push(attributes[t]);
+            }
+        }
+        return {
+            name: k === 0 ? productName : `${productName} (${k + 1})`,
+            variationTypes: typeOrder.map((t) => ({ name: t, options: typeOptions.get(t) })),
             items,
-            splitByType: true,
-        });
-    }
-
-    const merged = new Map();
-    for (const job of jobs) {
-        if (!merged.has(job.name)) {
-            merged.set(job.name, { name: job.name, items: [], splitByType: false });
-        }
-        const target = merged.get(job.name);
-        target.items.push(...job.items);
-        target.splitByType = target.splitByType || job.splitByType;
-    }
-    return [...merged.values()];
+        };
+    });
 }
 
 /** Sleep helper for polite pacing against the Open Food Facts API. */
@@ -401,15 +420,6 @@ function syncDerived(variants) {
     };
 }
 
-function parentColumn(row) {
-    if (row["Parent Category"] != null && trim(row["Parent Category"])) return trim(row["Parent Category"]);
-    if (row.Parent != null && trim(row.Parent)) return trim(row.Parent);
-    const keys = Object.keys(row);
-    const first = keys[0];
-    if (first && first !== "Sub-Category Name") return trim(row[first]);
-    return "";
-}
-
 async function uniqueBarcode(taken, { dryRun } = {}) {
     for (let i = 0; i < 24; i++) {
         const code = generateBarcodeValue();
@@ -424,8 +434,7 @@ async function uniqueBarcode(taken, { dryRun } = {}) {
     throw new Error("Could not allocate a unique barcode");
 }
 
-async function upsertCategory({ name, description, parentId, dryRun, cache, imageLookup, wantImage, rehost }) {
-
+async function upsertCategory({ name, description, parentId, dryRun, cache, imageLookup, wantImage, rehost, image, isActive }) {
     const key = `${parentId || "root"}::${name.toLowerCase()}`;
     if (cache.has(key)) return cache.get(key);
 
@@ -445,11 +454,15 @@ async function upsertCategory({ name, description, parentId, dryRun, cache, imag
             name,
             description: description || "",
             parent: parentId || null,
-            isActive: true,
+            image: image || "",
+            isActive: isActive !== false,
         });
-    } else if (description && !doc.description) {
-        doc.description = description;
-        await doc.save();
+    } else {
+        let changed = false;
+        if (description && !doc.description) { doc.description = description; changed = true; }
+        if (image && !doc.image) { doc.image = image; changed = true; }
+        if (isActive != null && doc.isActive !== isActive) { doc.isActive = isActive; changed = true; }
+        if (changed) await doc.save();
     }
 
     if (wantImage && imageLookup?.enabled && !doc.image) {
@@ -497,18 +510,53 @@ async function main() {
     console.log("Wipe catalog:", config.wipeExistingCatalog);
     console.log("Defaults:", config.defaults);
 
-    const wb = XLSX.readFile(excelAbs, { cellDates: true });
-    const categories = sheetRows(wb, "Categories").filter((r) => trim(r["Category Name"]));
-    const subCategories = sheetRows(wb, "Sub-Categories").filter((r) => trim(r["Sub-Category Name"]));
-    const products = sheetRows(wb, "Products", ["Barcode"]).filter((r) => trim(r["Product Name"]));
-    const variations = sheetRows(wb, "Variations", ["Barcode"]).filter((r) => trim(r["Product Name"]));
+    const sheets = {
+        categories: "CATEGORY PAGE MASTER",
+        subCategories: "SUB-CATEGORY PAGE MASTER",
+        products: "NEW PRODUCT PAGE",
+        variations: "Variations",
+        ...(config.sheets || {}),
+    };
 
+    const wb = XLSX.readFile(excelAbs, { cellDates: true });
+    const categories = sheetRows(wb, sheets.categories).filter((r) => trim(r["Category Name"]));
+    const subCategories = sheetRows(wb, sheets.subCategories).filter((r) => trim(r["Sub-Category Name"]));
+    const products = sheetRows(wb, sheets.products, ["Barcode"]).filter((r) => trim(r["Product Name"]));
+    const variations = sheetRows(wb, sheets.variations, ["Barcode", "MFG Date", "Expire Date"]).filter((r) =>
+        trim(r["Product Name"])
+    );
+
+    // Variations is the source of truth for SKUs: every product's rows, keyed by name.
     const varsByProduct = new Map();
     for (const row of variations) {
         const name = trim(row["Product Name"]);
         if (!varsByProduct.has(name)) varsByProduct.set(name, []);
         varsByProduct.get(name).push(row);
     }
+    const productNames = new Set(products.map((r) => trim(r["Product Name"])));
+
+    // A barcode listed under two different products can't be trusted for
+    // either — drop it from both so neither product scans as the other.
+    const barcodeProducts = new Map();
+    for (const row of variations) {
+        const code = trim(row.Barcode);
+        if (!code) continue;
+        if (!barcodeProducts.has(code)) barcodeProducts.set(code, new Set());
+        barcodeProducts.get(code).add(trim(row["Product Name"]));
+    }
+    const conflictBarcodes = new Set(
+        [...barcodeProducts.entries()].filter(([, owners]) => owners.size > 1).map(([code]) => code)
+    );
+
+    const fallbackCategory =
+        config.defaults.fallbackCategory === "first"
+            ? trim(categories[0]?.["Category Name"])
+            : trim(config.defaults.fallbackCategory);
+
+    console.log(
+        `Sheets: ${categories.length} categories, ${subCategories.length} sub-categories, ` +
+            `${products.length} products, ${variations.length} variation rows (${varsByProduct.size} products)`
+    );
 
     if (!config.dryRun) {
         await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 8000 });
@@ -537,17 +585,34 @@ async function main() {
         productsUpdated: 0,
         productsSkipped: 0,
         variants: 0,
+        multiTypeProducts: 0,
         imagesFetched: 0,
         imagesMissing: 0,
         imagesRehosted: 0,
         errors: [],
+        warnings: [],
     };
+    const warn = (product, issue, action) => stats.warnings.push({ product, issue, action });
+    for (const code of conflictBarcodes) {
+        for (const owner of barcodeProducts.get(code)) {
+            const others = [...barcodeProducts.get(code)].filter((n) => n !== owner).map((n) => `"${n}"`).join(", ");
+            warn(owner, `barcode ${code} also on ${others}`, "barcode dropped, a placeholder code generated");
+        }
+    }
+    if (fallbackCategory) console.log(`Blank category → "${fallbackCategory}"`);
+
+    const statusActive = (row) => {
+        const s = trim(row.Status).toLowerCase();
+        return s ? s === "active" : true;
+    };
+    const sheetImage = (row) => (isUrl(row["Image / Image Reference"]) ? trim(row["Image / Image Reference"]) : "");
 
     for (const row of categories) {
-        const name = trim(row["Category Name"]);
         await upsertCategory({
-            name,
-            description: trim(row["Description (optional)"]),
+            name: trim(row["Category Name"]),
+            description: trim(row.Description),
+            image: sheetImage(row),
+            isActive: statusActive(row),
             parentId: null,
             dryRun: config.dryRun,
             cache: catCache,
@@ -559,7 +624,7 @@ async function main() {
     }
 
     for (const row of subCategories) {
-        const parentName = parentColumn(row);
+        const parentName = trim(row["Category Name"]);
         const name = trim(row["Sub-Category Name"]);
         if (!parentName) {
             stats.errors.push(`Sub-category "${name}" has no parent category`);
@@ -577,7 +642,9 @@ async function main() {
         });
         await upsertCategory({
             name,
-            description: trim(row["Description (optional)"]),
+            description: trim(row.Description),
+            image: sheetImage(row),
+            isActive: statusActive(row),
             parentId,
             dryRun: config.dryRun,
             cache: catCache,
@@ -586,6 +653,12 @@ async function main() {
             rehost: cloudinaryRehost.rehost,
         });
         stats.subcategories++;
+    }
+
+    for (const name of varsByProduct.keys()) {
+        if (!productNames.has(name)) {
+            stats.errors.push(`${name}: has Variations rows but no row on "${sheets.products}" — skipped`);
+        }
     }
 
     const takenBarcodes = new Set();
@@ -602,10 +675,20 @@ async function main() {
         }
     }
 
+    const optCfg = {
+        untitledOptionName: config.defaults.untitledOptionName,
+        normalizeOptionNames: config.normalizeOptionNames,
+        missingOptionValue: config.defaults.missingOptionValue || "Regular",
+    };
+
     for (const row of products) {
         const name = trim(row["Product Name"]);
         try {
-            const categoryName = trim(row.Category);
+            let categoryName = trim(row.Category);
+            if (!categoryName && fallbackCategory) {
+                warn(name, "blank Category", `mapped to "${fallbackCategory}"`);
+                categoryName = fallbackCategory;
+            }
             if (!categoryName) {
                 stats.errors.push(`${name}: missing category`);
                 stats.productsSkipped++;
@@ -638,15 +721,16 @@ async function main() {
                 });
             }
 
-            const isVariated = trim(row["Is Variated"]).toLowerCase() === "yes";
             const varRows = varsByProduct.get(name) || [];
-            const optCfg = {
-                untitledOptionName: config.defaults.untitledOptionName,
-                normalizeOptionNames: config.normalizeOptionNames,
-            };
-
-            if (isVariated && varRows.length === 0 && !config.defaults.treatMissingVariationsAsSimple) {
-                stats.errors.push(`${name}: marked variated but has no Variations rows`);
+            let jobs;
+            if (varRows.length) {
+                jobs = buildProductsFromRows(name, varRows, optCfg, warn);
+            } else if (config.defaults.treatMissingVariationsAsSimple) {
+                // No SKU rows at all — fall back to the product sheet's own price columns.
+                warn(name, `no rows on "${sheets.variations}"`, `single variant from "${sheets.products}" prices`);
+                jobs = [{ name, variationTypes: [], items: [{ vr: row, attributes: {} }] }];
+            } else {
+                stats.errors.push(`${name}: no rows on "${sheets.variations}" — skipped`);
                 stats.productsSkipped++;
                 continue;
             }
@@ -655,101 +739,31 @@ async function main() {
                 .split(",")
                 .map((u) => u.trim())
                 .filter(Boolean);
-
-            const taxRate =
-                parseNumber(row["GST %"], null) ?? config.defaults.taxRate ?? 0;
+            const taxRate = parseNumber(row["GST %"], null) ?? config.defaults.taxRate ?? 0;
             const hsn = trim(row.HSN) || config.defaults.hsn || "";
-            const flatten = config.defaults.flattenOptionsToSingleType !== false;
-            const separator = config.defaults.optionValueSeparator || " / ";
-            const jobs = groupVariationJobs(name, varRows, optCfg);
 
             for (const job of jobs) {
-                let variationTypes = [];
-                let variants = [];
-                const hasVariationRows = job.items.length > 0;
+                if (job.variationTypes.length > 1) stats.multiTypeProducts++;
 
-                // Real sheet barcodes only (not the random ones generateMissingBarcodes
-                // fills in below) — those are the only ones Open Food Facts can match.
-                const jobRawBarcodes = hasVariationRows
-                    ? [...new Set(job.items.map((it) => trim(it.vr.Barcode)).filter(Boolean))]
-                    : trim(row.Barcode)
-                    ? [trim(row.Barcode)]
-                    : [];
-
-                if (hasVariationRows) {
-                    const typeMap = new Map();
-                    const allPairs = job.items.map((item) => item.pairs);
-                    const flatTypeName = flatten
-                        ? singleOptionTypeName(allPairs, config.defaults.untitledOptionName)
-                        : null;
-
-                    for (const { vr, pairs: optionPairs } of job.items) {
-                        let attrs = {};
-                        if (flatten) {
-                            const flat = flattenPairs(
-                                optionPairs,
-                                flatTypeName,
-                                separator,
-                                job.splitByType ? "" : vr["Variant Label"]
-                            );
-                            attrs = flat.attributes;
-                            if (flat.label) {
-                                if (!typeMap.has(flatTypeName)) typeMap.set(flatTypeName, []);
-                                if (!typeMap.get(flatTypeName).includes(flat.label)) {
-                                    typeMap.get(flatTypeName).push(flat.label);
-                                }
-                            }
-                        } else {
-                            for (const { name: optName, value: optValue } of optionPairs) {
-                                attrs[optName] = optValue;
-                                if (!typeMap.has(optName)) typeMap.set(optName, []);
-                                if (!typeMap.get(optName).includes(optValue)) {
-                                    typeMap.get(optName).push(optValue);
-                                }
-                            }
-                        }
-
-                        const mrp = parseMoney(vr.MRP, 0);
-                        let sale = parseMoney(vr.SP, null);
-                        if (sale == null && config.defaults.salePriceFallsBackToMrp) sale = mrp;
-                        const cost = parseNumber(vr.CP, null) ?? config.defaults.costPrice;
-
-                        let barcode = trim(vr.Barcode);
-                        if (!barcode && config.defaults.generateMissingBarcodes) {
-                            barcode = await uniqueBarcode(takenBarcodes, { dryRun: config.dryRun });
-                        } else if (barcode) {
-                            const owner = barcodeOwner.get(barcode);
-                            if (owner && owner !== job.name) {
-                                stats.errors.push(
-                                    `${job.name}: duplicate barcode ${barcode} (also on ${owner})`
-                                );
-                            }
-                            takenBarcodes.add(barcode);
-                            barcodeOwner.set(barcode, job.name);
-                        }
-
-                        variants.push({
-                            attributes: attrs,
-                            regularPrice: mrp,
-                            salePrice: sale,
-                            costPrice: cost,
-                            stock: config.defaults.stock,
-                            sku: "",
-                            barcode: barcode || "",
-                            expiresAt: parseDate(vr["Expire Date"]),
-                        });
-                    }
-
-                    variationTypes = [...typeMap.entries()].map(([n, options]) => ({
-                        name: n,
-                        options,
-                    }));
-                } else {
-                    const mrp = parseMoney(row.MRP, 0);
-                    let sale = parseMoney(row.SP, null);
+                const variants = [];
+                for (const { vr, attributes } of job.items) {
+                    const mrp = parseMoney(vr.MRP, 0);
+                    let sale = parseMoney(vr.SP, null);
                     if (sale == null && config.defaults.salePriceFallsBackToMrp) sale = mrp;
-                    const cost = parseNumber(row.CP, null) ?? config.defaults.costPrice;
-                    let barcode = trim(row.Barcode);
+                    const cost = parseNumber(trim(vr.CP).replace(/[₹,]/g, ""), null) ?? config.defaults.costPrice;
+
+                    let barcode = trim(vr.Barcode);
+                    if (conflictBarcodes.has(barcode)) barcode = "";
+                    // Same code already used by another product this run (a split
+                    // copy of a duplicate row) or already in the DB → same rule: drop it.
+                    const owner = barcode ? barcodeOwner.get(barcode) : null;
+                    if (owner && owner !== job.name) {
+                        warn(job.name, `barcode ${barcode} already on "${owner}"`, "barcode dropped, a placeholder code generated");
+                        barcode = "";
+                    } else if (owner === job.name) {
+                        warn(job.name, `barcode ${barcode} on two of its own variants`, "second one dropped, a placeholder code generated");
+                        barcode = "";
+                    }
                     if (!barcode && config.defaults.generateMissingBarcodes) {
                         barcode = await uniqueBarcode(takenBarcodes, { dryRun: config.dryRun });
                     } else if (barcode) {
@@ -757,18 +771,16 @@ async function main() {
                         barcodeOwner.set(barcode, job.name);
                     }
 
-                    variants = [
-                        {
-                            attributes: {},
-                            regularPrice: mrp,
-                            salePrice: sale,
-                            costPrice: cost,
-                            stock: config.defaults.stock,
-                            sku: "",
-                            barcode: barcode || "",
-                            expiresAt: null,
-                        },
-                    ];
+                    variants.push({
+                        attributes,
+                        regularPrice: mrp,
+                        salePrice: sale,
+                        costPrice: cost,
+                        stock: config.defaults.stock,
+                        sku: "",
+                        barcode: barcode || "",
+                        expiresAt: parseDate(vr["Expire Date"]),
+                    });
                 }
 
                 if (!variants.length) {
@@ -777,19 +789,17 @@ async function main() {
                     continue;
                 }
 
-                let jobImages = images;
-                const wantJobImages = config.imageLookup?.onlyIfMissing !== false ? images.length === 0 : true;
-                if (imageLookup.enabled && wantJobImages) {
+                // Real sheet barcodes only (not generated ones) — the only ones Open Food Facts can match.
+                const rawBarcodes = [...new Set(job.items.map(({ vr }) => trim(vr.Barcode)).filter(Boolean))];
+                let productImages = images;
+                const wantImages = config.imageLookup?.onlyIfMissing !== false ? images.length === 0 : true;
+                if (imageLookup.enabled && wantImages) {
                     const cap = config.imageLookup?.maxImagesPerProduct || 6;
                     const gathered = [];
 
-                    // Tier 1: exact barcode match, fetched concurrently — one variant's
-                    // barcode doesn't have to wait on another's. Front shot from every
-                    // barcode (gallery across flavours/sizes); ingredients/nutrition/
-                    // packaging only from the first variant that has them.
-                    const perBarcode = await Promise.all(
-                        jobRawBarcodes.map((code) => imageLookup.productImages(code))
-                    );
+                    // Tier 1: exact barcode match, fetched concurrently. Front shot from
+                    // every barcode; ingredients/nutrition/packaging from the first only.
+                    const perBarcode = await Promise.all(rawBarcodes.map((code) => imageLookup.productImages(code)));
                     perBarcode.forEach(({ front, extras }, i) => {
                         const candidates = i === 0 ? [front, ...extras] : [front];
                         for (const url of candidates) {
@@ -797,20 +807,17 @@ async function main() {
                         }
                     });
 
-                    // Tier 2: barcode not in Open Food Facts (or none on the sheet) —
-                    // fall back to a name search. Usually front-only shots of
-                    // whatever pack sizes OFF has under that brand/product name.
+                    // Tier 2: nothing by barcode — free-text name search.
                     if (gathered.length === 0) {
-                        const nameHits = await imageLookup.searchImages(job.name, cap);
+                        const nameHits = await imageLookup.searchImages(name, cap);
                         for (const url of nameHits) {
                             if (url && !gathered.includes(url) && gathered.length < cap) gathered.push(url);
                         }
                     }
 
                     if (gathered.length) {
-                        // Kept under cap before this point, so all of it is worth rehosting.
-                        jobImages = await Promise.all(gathered.map((url) => cloudinaryRehost.rehost(url)));
-                        if (cloudinaryRehost.enabled) stats.imagesRehosted += jobImages.length;
+                        productImages = await Promise.all(gathered.map((url) => cloudinaryRehost.rehost(url)));
+                        if (cloudinaryRehost.enabled) stats.imagesRehosted += productImages.length;
                         stats.imagesFetched += gathered.length;
                     } else {
                         stats.imagesMissing++;
@@ -820,22 +827,32 @@ async function main() {
                 const derived = syncDerived(variants);
                 const payload = {
                     name: job.name,
-                    images: jobImages,
+                    images: productImages,
                     description: trim(row["Short Description"]),
                     long_description: trim(row["Long Description"]),
-                    variationTypes,
+                    variationTypes: job.variationTypes,
                     variants,
                     category: categoryId,
                     subcategory: subcategoryId,
                     isActive: config.isActive,
                     isFeatured: config.isFeatured,
-                    barcode: hasVariationRows ? "" : trim(row.Barcode),
+                    barcode: "",
                     taxRate,
                     hsn,
                     ...derived,
                 };
 
                 stats.variants += variants.length;
+
+                if (argInspect && job.name.toLowerCase().includes(argInspect)) {
+                    console.log(`\n▶ ${job.name}`);
+                    console.log("  variationTypes:", JSON.stringify(job.variationTypes));
+                    for (const v of variants) {
+                        console.log(
+                            `  - ${JSON.stringify(v.attributes)}  MRP ${v.regularPrice}  SP ${v.salePrice}  CP ${v.costPrice}  barcode ${v.barcode}  exp ${v.expiresAt ? v.expiresAt.toISOString().slice(0, 10) : "-"}`
+                        );
+                    }
+                }
 
                 if (config.dryRun) {
                     stats.productsCreated++;
@@ -868,9 +885,21 @@ async function main() {
     console.log(`  Updated:        ${stats.productsUpdated}`);
     console.log(`  Skipped:        ${stats.productsSkipped}`);
     console.log(`  Variant rows:   ${stats.variants}`);
+    console.log(`  Multi-type:     ${stats.multiTypeProducts} products with 2+ variation types`);
     console.log(`  Images fetched: ${stats.imagesFetched} (Open Food Facts)`);
     console.log(`  Images rehosted: ${stats.imagesRehosted} (Cloudinary, <${(config.cloudinaryUpload?.maxBytes || 0) / 1024}KB WebP)`);
     console.log(`  Images missing: ${stats.imagesMissing} products (needs manual sourcing)`);
+    if (stats.warnings.length) {
+        console.log(`\n  Handled issues (${stats.warnings.length}):`);
+        console.table(stats.warnings.map((w) => ({ Product: w.product, Issue: w.issue, Action: w.action })));
+        const csvPath = path.join(path.dirname(excelAbs), "catalog-import-issues.csv");
+        const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
+        fs.writeFileSync(
+            csvPath,
+            ["Product,Issue,Action", ...stats.warnings.map((w) => [w.product, w.issue, w.action].map(esc).join(","))].join("\n")
+        );
+        console.log(`  Written to ${csvPath}`);
+    }
     if (stats.errors.length) {
         console.log(`  Issues (${stats.errors.length}):`);
         for (const e of stats.errors.slice(0, 40)) console.log("   -", e);

@@ -5,11 +5,20 @@
  * Command-line flags still override a few of them:
  *   --dry-run
  *   --wipe
- *   --file=./Product_Catalog_Template-4.xlsx
+ *   --file="./Copy of Product_Catalog_Template.xlsx"
  */
 export default {
     // Workbook next to package.json unless you pass --file=
-    excelPath: "./Product_Catalog_Template-4.xlsx",
+    excelPath: "./Copy of Product_Catalog_Template.xlsx",
+
+    // Sheet names inside the workbook. Prices/options/barcodes come from
+    // `variations` only; `products` carries name, category, descriptions, GST, HSN.
+    sheets: {
+        categories: "CATEGORY PAGE MASTER",
+        subCategories: "SUB-CATEGORY PAGE MASTER",
+        products: "NEW PRODUCT PAGE",
+        variations: "Variations",
+    },
 
     // Preview only — no Mongo writes
     dryRun: false,
@@ -42,17 +51,22 @@ export default {
         // Fill blank barcodes with a unique 12-digit code
         generateMissingBarcodes: true,
 
-        // Variated=Yes but no Variations rows → still create as a simple product
+        // Product has no Variations rows at all → fall back to the product
+        // sheet's own MRP/CP/SP as a single variant instead of skipping it
         treatMissingVariationsAsSimple: true,
 
-        // Blank option name (e.g. FEVI KWIK) uses this
+        // Product row with a blank Category: "first" = first row of the
+        // categories sheet, or give a category name. null = skip the product.
+        fallbackCategory: "first",
+
+        // Blank option name uses this
         untitledOptionName: "Option",
 
-        // Each Variations row is one SKU, not a Color×Size matrix.
-        // Join Opt 1–3 into a single picker so leftover 2nd/3rd columns
-        // do not grey out other sizes as "unavailable".
-        flattenOptionsToSingleType: true,
-        optionValueSeparator: " / ",
+        // Each Opt N Name is its own variation type (Flavour × Weight …).
+        // When one row of a product lacks a type its sibling rows have
+        // (e.g. Tata Tea: Weight-only rows next to Flavour+Weight rows),
+        // that row gets this value so it stays selectable in the picker.
+        missingOptionValue: "Regular",
     },
 
     // Title-case option names so Flavour / flavour become one variation type

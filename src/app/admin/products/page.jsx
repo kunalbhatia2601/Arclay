@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import BulkUploadModal from "./BulkUploadModal";
+import { pageWindow } from "@/lib/pagination";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -411,20 +412,19 @@ export default function ProductsPage() {
                                 <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                             </button>
                             <div className="flex items-center px-6 py-4 bg-white border border-[#ECE8E0] rounded-2xl gap-4">
-                                {[...Array(pagination.pages)].map((_, i) => {
-                                    const pageNum = i + 1;
-                                    // Basic logic to show limited numbers if many pages
-                                    if (pagination.pages > 5 && Math.abs(pageNum - pagination.page) > 1 && pageNum !== 1 && pageNum !== pagination.pages) return null;
-                                    return (
+                                {pageWindow(pagination.page, pagination.pages).map((item, i) =>
+                                    item === "…" ? (
+                                        <span key={`gap-${i}`} className="text-[14px] font-black text-[#767B71]">…</span>
+                                    ) : (
                                         <button
-                                            key={pageNum}
-                                            onClick={() => setPagination({ ...pagination, page: pageNum })}
-                                            className={`text-[14px] font-black transition-colors ${pagination.page === pageNum ? "text-[#869661]" : "text-[#767B71] hover:text-[#2A2F25]"}`}
+                                            key={item}
+                                            onClick={() => setPagination({ ...pagination, page: item })}
+                                            className={`text-[14px] font-black transition-colors ${pagination.page === item ? "text-[#869661]" : "text-[#767B71] hover:text-[#2A2F25]"}`}
                                         >
-                                            {pageNum}
+                                            {item}
                                         </button>
-                                    );
-                                })}
+                                    )
+                                )}
                             </div>
                             <button
                                 onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}

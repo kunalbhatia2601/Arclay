@@ -1,9 +1,10 @@
 /**
  * Row-shape parsing/grouping for the "Catalog Sheet" admin page
- * (src/app/admin/products/spreadsheet). Same 4 tabs, same column names, same
- * Opt 1-3 flattening and TYPE-column split as Product_Catalog_Template*.xlsx
- * and scripts/importProductCatalog.js — so a row typed here and a row typed
- * in Excel produce the exact same product. Pure functions only: no DB here.
+ * (src/app/admin/products/spreadsheet). Same rules as
+ * scripts/importProductCatalog.js: every Variations row is one SKU, every
+ * Opt N Name is its own variation type (Flavour × Weight …), a product with a
+ * single row is one product with one type and one variant. Pure functions
+ * only: no DB here.
  */
 
 export function trim(value) {
@@ -18,7 +19,7 @@ export function parseMoney(value, fallback = 0) {
 }
 
 export function parseNumber(value, fallback = null) {
-    const raw = trim(value).replace(/%/g, "");
+    const raw = trim(value).replace(/[₹,%]/g, "");
     if (!raw) return fallback;
     const n = Number(raw);
     return Number.isFinite(n) ? n : fallback;
@@ -54,137 +55,71 @@ export function compactVariationOptions(row, { untitledOptionName = "Option", no
     return pairs;
 }
 
-export function singleOptionTypeName(allPairs, untitledOptionName = "Option") {
-    const names = [];
-    for (const pairs of allPairs) {
-        if (pairs[0]?.name && !names.includes(pairs[0].name)) names.push(pairs[0].name);
-    }
-    return names.length === 1 ? names[0] : untitledOptionName;
-}
-
-export function flattenPairs(pairs, typeName, separator, variantLabel) {
-    const label = trim(variantLabel) || pairs.map((p) => p.value).filter(Boolean).join(separator);
-    if (!label) return { attributes: {}, label: "" };
-    return { attributes: { [typeName]: label }, label };
-}
-
-export function isTypeOption(name) {
-    return trim(name).toLowerCase() === "type";
-}
-
-export function dropTypePairs(pairs) {
-    return pairs.filter((p) => !isTypeOption(p.name));
-}
-
 /**
- * TYPE column → own product named "{Product} {Type value}", unless the Type
- * value equals the product name. Same behavior as the import script.
+ * Builds a product's `variationTypes` + `variants` (schema-ready, minus
+ * barcode assignment — that's DB-aware and stays in the API route) from its
+ * Variations-tab rows. Rows lacking a dimension their siblings have get
+ * `missingOptionValue`. Two rows with the same option combo is an error here
+ * (the importer splits them into extra products; in the editor you fix the row).
  */
-export function groupVariationJobs(productName, varRows, optCfg) {
-    if (!varRows.length) {
-        return [{ name: productName, items: [], splitByType: false }];
+export function buildVariantsFromRows(varRows, optCfg = {}) {
+    const cfg = { missingOptionValue: "Regular", ...optCfg };
+    const parsed = varRows.map((vr) => ({ vr, pairs: compactVariationOptions(vr, cfg) }));
+
+    const typeOrder = [];
+    for (const { pairs } of parsed) {
+        for (const { name } of pairs) if (!typeOrder.includes(name)) typeOrder.push(name);
     }
 
-    const leftover = [];
-    const byType = new Map();
-    for (const vr of varRows) {
-        const pairs = compactVariationOptions(vr, optCfg);
-        const typePair = pairs.find((p) => isTypeOption(p.name));
-        if (!typePair) {
-            leftover.push({ vr, pairs });
-            continue;
-        }
-        const key = typePair.value;
-        if (!byType.has(key)) byType.set(key, []);
-        byType.get(key).push({ vr, pairs: dropTypePairs(pairs) });
-    }
-
-    const jobs = [];
-    if (leftover.length) {
-        jobs.push({ name: productName, items: leftover, splitByType: false });
-    }
-    for (const [typeValue, items] of byType) {
-        const same = typeValue.toLowerCase() === productName.toLowerCase();
-        jobs.push({
-            name: same ? productName : `${productName} ${typeValue}`.replace(/\s+/g, " ").trim(),
-            items,
-            splitByType: true,
-        });
-    }
-
-    const merged = new Map();
-    for (const job of jobs) {
-        if (!merged.has(job.name)) {
-            merged.set(job.name, { name: job.name, items: [], splitByType: false });
-        }
-        const target = merged.get(job.name);
-        target.items.push(...job.items);
-        target.splitByType = target.splitByType || job.splitByType;
-    }
-    return [...merged.values()];
-}
-
-/**
- * Builds one product's `variationTypes` + `variants` (schema-ready, minus
- * barcode assignment — that's DB-aware and stays in the API route) from a
- * job's Variations-tab rows. Mirrors the per-job loop in
- * scripts/importProductCatalog.js.
- */
-export function buildVariantsForJob(job, optCfg) {
-    const flatten = optCfg.flattenOptionsToSingleType !== false;
-    const separator = optCfg.optionValueSeparator || " / ";
-    const hasVariationRows = job.items.length > 0;
-
-    if (!hasVariationRows) {
-        return { variationTypes: [], variants: [], hasVariationRows: false };
-    }
-
-    const typeMap = new Map();
-    const allPairs = job.items.map((item) => item.pairs);
-    const flatTypeName = flatten ? singleOptionTypeName(allPairs, optCfg.untitledOptionName) : null;
+    const typeOptions = new Map(typeOrder.map((t) => [t, []]));
+    const seen = new Set();
     const variants = [];
 
-    for (const { vr, pairs: optionPairs } of job.items) {
-        let attrs = {};
-        if (flatten) {
-            const flat = flattenPairs(optionPairs, flatTypeName, separator, job.splitByType ? "" : vr["Variant Label"]);
-            attrs = flat.attributes;
-            if (flat.label) {
-                if (!typeMap.has(flatTypeName)) typeMap.set(flatTypeName, []);
-                if (!typeMap.get(flatTypeName).includes(flat.label)) typeMap.get(flatTypeName).push(flat.label);
-            }
-        } else {
-            for (const { name: optName, value: optValue } of optionPairs) {
-                attrs[optName] = optValue;
-                if (!typeMap.has(optName)) typeMap.set(optName, []);
-                if (!typeMap.get(optName).includes(optValue)) typeMap.get(optName).push(optValue);
-            }
+    for (const { vr, pairs } of parsed) {
+        const attributes = {};
+        for (const typeName of typeOrder) {
+            const pair = pairs.find((p) => p.name === typeName);
+            const value = pair ? pair.value : cfg.missingOptionValue;
+            attributes[typeName] = value;
+            const opts = typeOptions.get(typeName);
+            if (!opts.includes(value)) opts.push(value);
         }
+
+        const comboKey = typeOrder.map((t) => `${t}=${attributes[t].toLowerCase()}`).join("|");
+        if (seen.has(comboKey)) {
+            throw new Error(`two variant rows have the same options (${comboKey || "no options"}) — change one`);
+        }
+        seen.add(comboKey);
 
         const mrp = parseMoney(vr.MRP, 0);
         let sale = parseMoney(vr.SP, null);
-        if (sale == null && optCfg.salePriceFallsBackToMrp) sale = mrp;
-        const cost = parseNumber(vr.CP, null);
+        if (sale == null && cfg.salePriceFallsBackToMrp !== false) sale = mrp;
 
         variants.push({
-            attributes: attrs,
+            attributes,
             regularPrice: mrp,
             salePrice: sale,
-            costPrice: cost,
+            costPrice: parseNumber(vr.CP, null),
             stock: parseNumber(vr.Stock, 0) ?? 0,
             sku: "",
             barcode: trim(vr.Barcode),
         });
     }
 
-    const variationTypes = [...typeMap.entries()].map(([n, options]) => ({ name: n, options }));
-    return { variationTypes, variants, hasVariationRows: true };
+    return {
+        variationTypes: typeOrder.map((t) => ({ name: t, options: typeOptions.get(t) })),
+        variants,
+    };
 }
 
-/** Splits a flattened variant's single-key attributes map back into Opt 1
- * Name/Value for display in the Variations tab. */
-export function attributesToOpt1(attributes) {
+/** Variant attributes → Opt 1..3 Name/Value cells for the Variations tab. */
+export function attributesToOpts(attributes) {
     const entries = Object.entries(attributes || {});
-    const [name, value] = entries[0] || ["", ""];
-    return { "Opt 1 Name": name, "Opt 1 Value": value };
+    const out = {};
+    for (let i = 0; i < 3; i++) {
+        const [name, value] = entries[i] || ["", ""];
+        out[`Opt ${i + 1} Name`] = name;
+        out[`Opt ${i + 1} Value`] = value;
+    }
+    return out;
 }

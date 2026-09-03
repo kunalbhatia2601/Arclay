@@ -47,6 +47,7 @@ const BLANK_VARIATION = {
     MRP: "",
     CP: "",
     SP: "",
+    Stock: "",
     "Variant Label": "",
 };
 
@@ -411,6 +412,7 @@ export default function CatalogSheetPage() {
         { key: "MRP", width: 90, type: "number" },
         { key: "CP", width: 90, type: "number" },
         { key: "SP", width: 90, type: "number" },
+        { key: "Stock", width: 80, type: "number" },
         { key: "Variant Label", width: 160 },
     ];
 

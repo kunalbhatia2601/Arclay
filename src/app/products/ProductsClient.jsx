@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
+import { pageWindow } from "@/lib/pagination";
 import { useSearchParams } from "next/navigation";
 import { ProductCardSkeleton } from "@/app/components/ProductSkeleton";
 import ProductCard from "@/app/components/ProductCard";
@@ -354,20 +355,23 @@ export default function ProductsPageContent({ aboveGrid = null, belowGrid = null
                                         >
                                             Previous
                                         </button>
-                                        {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                                            const pageNum = i + 1;
-                                            return (
+                                        {pageWindow(pagination.page, pagination.pages).map((item, i) =>
+                                            item === "…" ? (
+                                                <span key={`gap-${i}`} className="w-6 text-center text-[var(--c-text-muted)]">
+                                                    …
+                                                </span>
+                                            ) : (
                                                 <button
-                                                    key={pageNum}
-                                                    onClick={() => fetchProducts(pageNum)}
+                                                    key={item}
+                                                    onClick={() => fetchProducts(item)}
                                                     className={`w-10 h-10 rounded-full text-sm font-semibold transition-colors flex items-center justify-center ${
-                                                        pagination.page === pageNum ? "bg-[var(--c-primary)] text-white" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)]"
+                                                        pagination.page === item ? "bg-[var(--c-primary)] text-white" : "text-[var(--c-text-muted)] hover:bg-[var(--c-surface-alt)]"
                                                     }`}
                                                 >
-                                                    {pageNum}
+                                                    {item}
                                                 </button>
-                                            );
-                                        })}
+                                            )
+                                        )}
                                         <button
                                             onClick={() => fetchProducts(pagination.page + 1)}
                                             disabled={pagination.page === pagination.pages}

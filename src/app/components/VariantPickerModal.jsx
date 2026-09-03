@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { cn } from "@/lib/utils";
+import { initialSelection, findVariant, optionExists, snapSelection } from "@/lib/variantSelection";
 
 /**
  * Variant chooser shown when "Add to cart" is pressed on a product that has
@@ -16,13 +17,7 @@ import { cn } from "@/lib/utils";
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
 export default function VariantPickerModal({ product, onClose, onAdded, onConfirm }) {
-    const [selected, setSelected] = useState(() => {
-        const initial = {};
-        for (const type of product?.variationTypes || []) {
-            if (type.options?.length) initial[type.name] = type.options[0];
-        }
-        return initial;
-    });
+    const [selected, setSelected] = useState(() => initialSelection(product));
     const [quantity, setQuantity] = useState(1);
     const [adding, setAdding] = useState(false);
 
@@ -38,14 +33,7 @@ export default function VariantPickerModal({ product, onClose, onAdded, onConfir
         };
     }, [onClose]);
 
-    const variant = useMemo(() => {
-        const variants = product?.variants || [];
-        if (!product?.variationTypes?.length) return variants[0] || null;
-
-        return variants.find(v =>
-            Object.entries(selected).every(([key, value]) => (v.attributes || {})[key] === value)
-        ) || null;
-    }, [product, selected]);
+    const variant = useMemo(() => findVariant(product, selected), [product, selected]);
 
     const price = variant
         ? (variant.salePrice != null && variant.salePrice < variant.regularPrice
@@ -55,14 +43,9 @@ export default function VariantPickerModal({ product, onClose, onAdded, onConfir
         ? variant.regularPrice : null;
     const stock = variant?.stock || 0;
 
-    // Greys out combinations that do not exist rather than letting the customer
-    // pick one and hit an error.
-    const isAvailable = (typeName, option) => {
-        const candidate = { ...selected, [typeName]: option };
-        return (product.variants || []).some(v =>
-            Object.entries(candidate).every(([key, value]) => (v.attributes || {})[key] === value)
-        );
-    };
+    // Every listed option exists on some variant; picking one that doesn't fit
+    // the current combo snaps the other dimensions to the nearest real variant.
+    const isAvailable = (typeName, option) => optionExists(product, typeName, option);
 
     const add = async () => {
         if (!variant) return toast.error("Please choose an option");
@@ -161,7 +144,7 @@ export default function VariantPickerModal({ product, onClose, onAdded, onConfir
                                     return (
                                         <button
                                             key={option}
-                                            onClick={() => available && setSelected(s => ({ ...s, [type.name]: option }))}
+                                            onClick={() => available && setSelected(s => snapSelection(product, s, type.name, option))}
                                             disabled={!available}
                                             className={cn(
                                                 "px-4 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all",
