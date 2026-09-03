@@ -1,10 +1,27 @@
 import mongoose from 'mongoose';
 
 const OrderItemSchema = new mongoose.Schema({
+    // Null only for a custom (off-catalog) POS line — see isCustom below.
+    // A catalog line without a product would break restock and P/L silently,
+    // so the two fields are validated against each other.
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
-        required: true
+        default: null,
+        validate: {
+            validator: function (value) {
+                return this.isCustom || value != null;
+            },
+            message: 'Order item needs a product unless it is a custom line'
+        }
+    },
+    // Rung up at the counter for something not in the catalog. Such a line has
+    // no product, no variant and no stock behind it: nothing to reserve at sale
+    // time and nothing to restock on a return. The name/price are whatever the
+    // cashier typed, so these are listed for review in admin afterwards.
+    isCustom: {
+        type: Boolean,
+        default: false
     },
     // Store variant details as they were at time of order
     variant: {

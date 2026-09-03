@@ -15,6 +15,7 @@ import {
     BarChart3,
     Keyboard,
     Trash2,
+    PackagePlus,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import BarcodeScanner from "@/app/components/BarcodeScanner";
@@ -23,6 +24,7 @@ import Receipt, { RECEIPT_PRINT_CSS } from "@/app/components/Receipt";
 import DayReportModal from "@/app/components/pos/DayReportModal";
 import ShortcutsHelp from "@/app/components/pos/ShortcutsHelp";
 import CheckoutModal from "@/app/components/pos/CheckoutModal";
+import CustomItemModal from "@/app/components/pos/CustomItemModal";
 import { computeBill } from "@/lib/billing";
 
 const STORAGE_KEY = "pos-tickets-v2";
@@ -71,6 +73,7 @@ export default function POSPage() {
     const [showReport, setShowReport] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [variantPickerProduct, setVariantPickerProduct] = useState(null);
+    const [showCustomItem, setShowCustomItem] = useState(false);
 
     const searchInputRef = useRef(null);
     const scanInputRef = useRef(null);
@@ -302,6 +305,42 @@ export default function POSPage() {
         [updateActive]
     );
 
+    // A quick item is not in the catalog, so it gets a synthetic product/variant
+    // shaped like a real one — every render path below (name, price, GST, line
+    // discounts) then works unchanged. The unique id keeps each ring-up on its
+    // own line instead of merging two different hand-typed items.
+    const addCustomItem = useCallback(
+        ({ name, price, quantity, taxRate, costPrice, hsn }) => {
+            const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const variant = {
+                attributes: {},
+                regularPrice: price,
+                salePrice: price,
+                costPrice,
+                stock: Number.MAX_SAFE_INTEGER,
+                sku: "",
+                barcode: "",
+            };
+
+            updateActive((ticket) => ({
+                cart: [
+                    ...ticket.cart,
+                    {
+                        product: { _id: id, name, taxRate, hsn, isCustom: true, variants: [variant] },
+                        variant,
+                        variantIndex: -1,
+                        isCustom: true,
+                        custom: { name, price, taxRate, costPrice, hsn },
+                        quantity,
+                        lineDiscountType: "flat",
+                        lineDiscountValue: "",
+                    },
+                ],
+            }));
+        },
+        [updateActive]
+    );
+
     const updateQuantity = (index, delta) => {
         updateActive((ticket) => {
             const item = ticket.cart[index];
@@ -461,14 +500,28 @@ export default function POSPage() {
 
     const cartPayload = useCallback(
         () =>
-            cart.map((item) => ({
-                product: item.product._id,
-                variantIndex: item.variantIndex,
-                barcode: item.variant?.barcode || "",
-                quantity: item.quantity,
-                lineDiscountType: item.lineDiscountType,
-                lineDiscountValue: item.lineDiscountValue,
-            })),
+            cart.map((item) =>
+                item.isCustom
+                    ? {
+                          isCustom: true,
+                          name: item.custom.name,
+                          price: item.custom.price,
+                          taxRate: item.custom.taxRate,
+                          costPrice: item.custom.costPrice,
+                          hsn: item.custom.hsn,
+                          quantity: item.quantity,
+                          lineDiscountType: item.lineDiscountType,
+                          lineDiscountValue: item.lineDiscountValue,
+                      }
+                    : {
+                          product: item.product._id,
+                          variantIndex: item.variantIndex,
+                          barcode: item.variant?.barcode || "",
+                          quantity: item.quantity,
+                          lineDiscountType: item.lineDiscountType,
+                          lineDiscountValue: item.lineDiscountValue,
+                      }
+            ),
         [cart]
     );
 
@@ -549,6 +602,7 @@ export default function POSPage() {
         if (cart.length > 0) setShowCheckout(true);
     };
     actionsRef.current.addTicket = addTicket;
+    actionsRef.current.openCustomItem = () => setShowCustomItem(true);
     actionsRef.current.switchTicket = switchTicket;
 
     // ---------- keyboard shortcuts ----------
@@ -593,6 +647,10 @@ export default function POSPage() {
                 case "F4":
                     e.preventDefault();
                     scanInputRef.current?.focus();
+                    break;
+                case "F7":
+                    e.preventDefault();
+                    actionsRef.current.openCustomItem();
                     break;
                 case "F6":
                     e.preventDefault();
@@ -695,16 +753,25 @@ export default function POSPage() {
                         </div>
                     )}
 
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <input
-                            ref={searchInputRef}
-                            type="text"
-                            value={search}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            placeholder="Search products by name  (F3)"
-                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
+                    <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                value={search}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                placeholder="Search products by name  (F3)"
+                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setShowCustomItem(true)}
+                            title="Item not in the catalog (F7)"
+                            className="shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border border-input bg-background hover:bg-muted transition-colors text-sm font-semibold"
+                        >
+                            <PackagePlus className="w-5 h-5" /> Quick item
+                        </button>
                     </div>
 
                     {showScanner && (
@@ -876,12 +943,19 @@ export default function POSPage() {
                                 >
                                     <div className="flex justify-between items-start gap-2 mb-2">
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium text-sm truncate">
-                                                {item.product.name}
+                                            <h3 className="font-medium text-sm truncate flex items-center gap-1.5">
+                                                {item.isCustom && (
+                                                    <span className="shrink-0 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold uppercase">
+                                                        Custom
+                                                    </span>
+                                                )}
+                                                <span className="truncate">{item.product.name}</span>
                                             </h3>
                                             <p className="text-xs text-muted-foreground">
-                                                {getVariantName(item.variant) || "Default"} ·{" "}
-                                                {money(unitPrice(item.product, item.variant))}
+                                                {item.isCustom
+                                                    ? "Not in catalog"
+                                                    : getVariantName(item.variant) || "Default"}{" "}
+                                                · {money(unitPrice(item.product, item.variant))}
                                                 {taxConfig.taxEnabled && item.product?.taxRate
                                                     ? ` · GST ${item.product.taxRate}%`
                                                     : ""}
@@ -1022,6 +1096,13 @@ export default function POSPage() {
                     processing={processing}
                     onConfirm={createOrder}
                     onClose={() => setShowCheckout(false)}
+                />
+            )}
+            {showCustomItem && (
+                <CustomItemModal
+                    onClose={() => setShowCustomItem(false)}
+                    onAdd={addCustomItem}
+                    defaultTaxRate={0}
                 />
             )}
             {showReport && <DayReportModal onClose={() => setShowReport(false)} />}

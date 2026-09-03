@@ -263,15 +263,16 @@ async function postHandler(req) {
         });
 
         const orderItems = bill.lines.map((line, i) => ({
-            product: lines[i].product._id,
+            product: lines[i].product?._id ?? null,
+            isCustom: !!lines[i].isCustom,
             variant: {
-                attributes: lines[i].variant.attributes,
+                attributes: lines[i].variant?.attributes,
                 price: lines[i].price,
-                sku: lines[i].variant.sku,
+                sku: lines[i].variant?.sku,
             },
             quantity: line.quantity,
             priceAtOrder: lines[i].price,
-            costAtOrder: lines[i].variant.costPrice ?? null,
+            costAtOrder: lines[i].costPrice ?? null,
             name: lines[i].name,
             lineDiscount: line.lineDiscount,
             taxRate: line.taxRate,

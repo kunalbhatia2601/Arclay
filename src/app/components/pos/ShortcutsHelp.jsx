@@ -7,6 +7,7 @@ export const SHORTCUTS = [
     ["F3", "Focus product search"],
     ["F4", "Focus barcode box"],
     ["F6", "Cycle payment method"],
+    ["F7", "Quick item (not in catalog)"],
     ["F8", "Day report"],
     ["F9", "Complete sale"],
     ["Ctrl + ←/→", "Previous / next bill"],

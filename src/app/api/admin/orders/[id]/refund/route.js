@@ -97,6 +97,10 @@ async function postHandler(req, { params }) {
         // sale used to take it out.
         if (restock) {
             for (const { line, quantity } of accepted) {
+                // A custom line was never in the catalog, so there is no stock
+                // row to put units back into. Money still refunds normally.
+                if (line.isCustom || !line.product) continue;
+
                 const product = await Product.findById(line.product);
                 if (!product) continue;
 
@@ -110,7 +114,9 @@ async function postHandler(req, { params }) {
         // Returned units stop counting as sales, so bestseller ranking reflects
         // what customers actually kept.
         await recordSales(
-            accepted.map(({ line, quantity }) => ({ productId: line.product, quantity })),
+            accepted
+                .filter(({ line }) => !line.isCustom && line.product)
+                .map(({ line, quantity }) => ({ productId: line.product, quantity })),
             { reverse: true }
         );
 
