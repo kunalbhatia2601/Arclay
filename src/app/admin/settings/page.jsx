@@ -216,6 +216,33 @@ export default function AdminSettings() {
                                 className="w-full px-4 py-3 rounded-xl border border-input bg-background"
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">UPI ID</label>
+                            <input
+                                type="text"
+                                value={settings?.store?.upiId || ''}
+                                onChange={(e) => updateSetting('store.upiId', e.target.value.trim())}
+                                placeholder="store@okhdfcbank"
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background font-mono"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Counter payments only. Picking UPI at POS checkout shows a QR for
+                                this ID and the exact bill amount.
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">UPI Payee Name</label>
+                            <input
+                                type="text"
+                                value={settings?.store?.upiName || ''}
+                                onChange={(e) => updateSetting('store.upiName', e.target.value)}
+                                placeholder={settings?.store?.legalName || 'Store name'}
+                                className="w-full px-4 py-3 rounded-xl border border-input bg-background"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Shown in the customer&apos;s UPI app. Defaults to the legal name.
+                            </p>
+                        </div>
                     </div>
 
                     <div className="flex items-center justify-between p-4 bg-muted rounded-xl">

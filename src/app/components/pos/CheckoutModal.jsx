@@ -11,6 +11,7 @@ import {
     Receipt as ReceiptIcon,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import UpiQr from "@/app/components/pos/UpiQr";
 
 const PAYMENT_METHODS = [
     { key: "cash", label: "Cash", Icon: Banknote },
@@ -35,6 +36,7 @@ export default function CheckoutModal({
     onConfirm,
     onClose,
     processing,
+    storeInfo = {},
 }) {
     const [couponInput, setCouponInput] = useState("");
     const [applyingCoupon, setApplyingCoupon] = useState(false);
@@ -388,6 +390,17 @@ export default function CheckoutModal({
                                 </button>
                             ))}
                         </div>
+
+                        {ticket.paymentMethod === "upi" && (
+                            <div className="pt-1">
+                                <UpiQr
+                                    upiId={storeInfo.upiId}
+                                    payeeName={storeInfo.upiName || storeInfo.legalName || storeInfo.name}
+                                    amount={bill.total}
+                                    note={ticket.label || "POS sale"}
+                                />
+                            </div>
+                        )}
 
                         {ticket.paymentMethod === "cash" && (
                             <div className="space-y-2 pt-1">

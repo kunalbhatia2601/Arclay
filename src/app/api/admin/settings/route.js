@@ -20,6 +20,8 @@ async function getHandler(req) {
                 priceIncludesTax: settings.store?.priceIncludesTax !== false,
                 invoicePrefix: settings.store?.invoicePrefix || 'INV',
                 billFooter: settings.store?.billFooter || 'Thank you! Visit again.',
+                upiId: settings.store?.upiId || '',
+                upiName: settings.store?.upiName || '',
             },
             payment: {
                 razorpay: {
@@ -127,7 +129,20 @@ async function putHandler(req) {
         if (updates.store) {
             if (!settings.store) settings.store = {};
 
-            for (const field of ['legalName', 'gstin', 'invoicePrefix', 'billFooter']) {
+            // A malformed VPA would produce a QR that fails inside the customer's
+            // UPI app with no useful error, so it is rejected up front.
+            if (updates.store.upiId !== undefined) {
+                const upiId = String(updates.store.upiId || '').trim();
+                if (upiId && !/^[\w.\-]{2,256}@[a-zA-Z]{2,64}$/.test(upiId)) {
+                    return Response.json(
+                        { success: false, message: 'UPI ID must look like name@bank' },
+                        { status: 400 }
+                    );
+                }
+                settings.store.upiId = upiId;
+            }
+
+            for (const field of ['legalName', 'gstin', 'invoicePrefix', 'billFooter', 'upiName']) {
                 if (updates.store[field] !== undefined) {
                     settings.store[field] = updates.store[field];
                 }

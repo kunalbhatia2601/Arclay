@@ -36,6 +36,18 @@ const SettingsSchema = new mongoose.Schema({
         billFooter: {
             type: String,
             default: 'Thank you! Visit again.'
+        },
+        // UPI VPA money is collected into at the counter, e.g. "store@okhdfcbank".
+        // The POS turns this plus the bill total into a scannable QR; it is never
+        // used for online storefront payments, which go through the gateways below.
+        upiId: {
+            type: String,
+            default: ''
+        },
+        // Name the customer sees in their UPI app. Falls back to the legal name.
+        upiName: {
+            type: String,
+            default: ''
         }
     },
     payment: {

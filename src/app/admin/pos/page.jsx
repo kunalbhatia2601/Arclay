@@ -170,6 +170,8 @@ export default function POSPage() {
                     phone: w.phone || "",
                     gstin: s.gstin || "",
                     billFooter: s.billFooter || "Thank you! Visit again.",
+                    upiId: s.upiId || "",
+                    upiName: s.upiName || "",
                 });
                 setTaxConfig({
                     taxEnabled: !!s.taxEnabled,
@@ -1094,6 +1096,7 @@ export default function POSPage() {
                     taxConfig={taxConfig}
                     cartPayload={cartPayload}
                     processing={processing}
+                    storeInfo={storeInfo}
                     onConfirm={createOrder}
                     onClose={() => setShowCheckout(false)}
                 />

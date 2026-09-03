@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import QRCode from "qrcode";
+import { buildUpiLink } from "@/lib/upi";
 
 // Counter bill printers here are 3" wide (~76 mm). The printable copy is
 // portaled to document.body so the tall admin UI cannot create extra pages
@@ -44,6 +46,13 @@ export const RECEIPT_PRINT_CSS = `
         #receipt-sheet table {
             width: 100% !important;
             table-layout: fixed !important;
+        }
+        /* The QR must print at full contrast and exact size or it will not scan */
+        #receipt-sheet img {
+            filter: none !important;
+            image-rendering: pixelated;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
         }
         #receipt-sheet th,
         #receipt-sheet td,
@@ -113,7 +122,7 @@ const sheetStyle = {
     lineHeight: 1.35,
 };
 
-function ReceiptSheet({ order, store, tendered, id, className = "" }) {
+function ReceiptSheet({ order, store, tendered, id, className = "", upiQr = null }) {
     const billNo = order.billNumber || `#${String(order._id || "").slice(-8).toUpperCase()}`;
     const placedAt = order.createdAt ? new Date(order.createdAt) : new Date();
     const change = tendered != null ? Number(tendered) - Number(order.totalAmount || 0) : null;
@@ -297,6 +306,28 @@ function ReceiptSheet({ order, store, tendered, id, className = "" }) {
                 </>
             )}
 
+            {upiQr && (
+                <div
+                    style={{
+                        textAlign: "center",
+                        marginTop: "3mm",
+                        paddingTop: "2mm",
+                        borderTop: "1px dashed #000",
+                    }}
+                >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={upiQr}
+                        alt="Scan to pay by UPI"
+                        style={{ width: "26mm", height: "26mm", display: "inline-block" }}
+                    />
+                    <p style={{ fontWeight: 700, marginTop: "1mm" }}>
+                        Scan to pay {money(order.totalAmount)}
+                    </p>
+                    <p style={{ fontSize: "8.5px" }}>{store.upiId}</p>
+                </div>
+            )}
+
             <div
                 style={{
                     textAlign: "center",
@@ -319,10 +350,46 @@ function ReceiptSheet({ order, store, tendered, id, className = "" }) {
 
 export default function Receipt({ order, store = {}, tendered = null }) {
     const [mounted, setMounted] = useState(false);
+    // Keyed to its link, so a reprint of a different bill can never show the
+    // previous bill's amount while the new code is still being drawn.
+    const [qr, setQr] = useState({ link: null, url: "" });
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    const upiLink = order
+        ? buildUpiLink({
+              upiId: store.upiId,
+              payeeName: store.upiName || store.legalName || store.name,
+              amount: order.totalAmount,
+              note: order.billNumber || "",
+          })
+        : null;
+
+    useEffect(() => {
+        if (!upiLink) return undefined;
+        let cancelled = false;
+        // Pure black on white: thermal printers cannot render anti-aliased
+        // greys, and a soft-edged QR is what makes a printed code unscannable.
+        QRCode.toDataURL(upiLink, {
+            width: 512,
+            margin: 1,
+            errorCorrectionLevel: "M",
+            color: { dark: "#000000", light: "#ffffff" },
+        })
+            .then((url) => {
+                if (!cancelled) setQr({ link: upiLink, url });
+            })
+            .catch(() => {
+                if (!cancelled) setQr({ link: upiLink, url: "" });
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [upiLink]);
+
+    const upiQr = qr.link === upiLink ? qr.url : "";
 
     if (!order) return null;
 
@@ -330,7 +397,7 @@ export default function Receipt({ order, store = {}, tendered = null }) {
         <>
             {/* On-screen preview — never included in the print tree */}
             <div className="print:hidden">
-                <ReceiptSheet order={order} store={store} tendered={tendered} />
+                <ReceiptSheet order={order} store={store} tendered={tendered} upiQr={upiQr} />
             </div>
 
             {/* Single print copy as a direct body child — CSS keeps only this node */}
@@ -342,6 +409,7 @@ export default function Receipt({ order, store = {}, tendered = null }) {
                         order={order}
                         store={store}
                         tendered={tendered}
+                        upiQr={upiQr}
                     />,
                     document.body
                 )}
